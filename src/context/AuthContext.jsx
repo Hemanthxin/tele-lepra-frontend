@@ -9,9 +9,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
+      // Re-enter the loading state every time the auth identity changes so
+      // downstream components don't fall back to a stale/default role while
+      // the new profile is being fetched.
+      setLoading(true);
+      setProfileError(null);
       setUser(u);
       if (u) {
         try {
@@ -28,6 +34,7 @@ export function AuthProvider({ children }) {
         } catch (e) {
           console.error('Failed to load profile', e);
           setProfile(null);
+          setProfileError(e?.message || 'Failed to load profile');
         }
       } else {
         setProfile(null);
@@ -39,9 +46,12 @@ export function AuthProvider({ children }) {
 
   const signOut = () => fbSignOut(auth);
 
-  const role = profile?.role || 'patient';
+  // role is undefined until the profile actually loads — callers must check
+  // `loading` first. Never default to a privileged role like "patient" here;
+  // that would silently misroute agents/MOs/admins when /auth/me lags.
+  const role = profile?.role;
   return (
-    <AuthContext.Provider value={{ user, profile, role, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, role, loading, profileError, signOut }}>
       {children}
     </AuthContext.Provider>
   );

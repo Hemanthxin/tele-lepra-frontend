@@ -89,7 +89,7 @@ export default function Layout({ children }) {
 
               <div className="hidden md:flex flex-col items-end leading-tight">
                 <span className="text-sm font-semibold t-ink">{displayName}</span>
-                <span className="text-[11px] t-muted">{t('role.' + role)}</span>
+                <span className="text-[11px] t-muted">{role ? t('role.' + role) : '…'}</span>
               </div>
               <Link
                 to="/settings"
