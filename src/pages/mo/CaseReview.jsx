@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
-import ZoomConsult from '../../components/ZoomConsult';
 
 const RISK_PILL = {
   rule_out: { cls: 'pill-green', label: 'Low Risk' },
@@ -37,7 +36,6 @@ export default function CaseReview() {
   const [busy, setBusy] = useState(false);
   const [appointmentId, setAppointmentId] = useState(null);
   const [appointment, setAppointment] = useState(null);
-  const [showZoom, setShowZoom] = useState(false);
   const [when, setWhen] = useState(defaultWhen());
   const [duration, setDuration] = useState(20);
   const [schedBusy, setSchedBusy] = useState(false);
@@ -389,15 +387,22 @@ export default function CaseReview() {
                   </div>
                 )}
               </div>
-              {!showZoom ? (
-                <button className="btn-primary" onClick={() => setShowZoom(true)}>
+              {appointment && (appointment.zoom_start_url || appointment.zoom_join_url) && (
+                <a
+                  className="btn-primary inline-flex items-center gap-2"
+                  href={appointment.zoom_start_url || appointment.zoom_join_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
                   Start Zoom consult
-                </button>
-              ) : null}
+                </a>
+              )}
             </div>
-            {showZoom && (
-              <div className="mt-4">
-                <ZoomConsult appointmentId={appointmentId} />
+            {appointment?.zoom_join_url && (
+              <div className="mt-3 rounded-xl neu-inset px-3 py-2 text-xs t-muted">
+                <div className="font-semibold t-soft mb-0.5">Patient join link (also sent via WhatsApp)</div>
+                <div className="truncate font-mono text-[11px]">{appointment.zoom_join_url}</div>
               </div>
             )}
           </>
