@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/admin/audit" element={wrapRole(['admin'], <Audit />)} />
         </Routes>
       </BrowserRouter>
+      <Analytics />
     </AuthProvider>
   );
 }
