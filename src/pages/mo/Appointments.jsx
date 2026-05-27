@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
+import MeetingDetails from '../../components/MeetingDetails';
 
 const STATUS_PILL = {
   scheduled: 'pill-brand',
@@ -82,7 +83,7 @@ export default function MOAppointments() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-3">
                   <a
                     href={hasUrl ? hostUrl : undefined}
                     target="_blank"
@@ -104,6 +105,15 @@ export default function MOAppointments() {
                     Case
                   </Link>
                 </div>
+
+                {(a.zoom_meeting_id || a.zoom_join_url) && (
+                  <MeetingDetails
+                    meetingId={a.zoom_meeting_id}
+                    password={a.zoom_password}
+                    joinUrl={a.zoom_join_url}
+                    compact
+                  />
+                )}
               </div>
             );
           })}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import MeetingDetails from '../../components/MeetingDetails';
 
 const RISK_PILL = {
   rule_out: { cls: 'pill-green', label: 'Low Risk' },
@@ -399,10 +400,16 @@ export default function CaseReview() {
                 </a>
               )}
             </div>
-            {appointment?.zoom_join_url && (
-              <div className="mt-3 rounded-xl neu-inset px-3 py-2 text-xs t-muted">
-                <div className="font-semibold t-soft mb-0.5">Patient join link (also sent via WhatsApp)</div>
-                <div className="truncate font-mono text-[11px]">{appointment.zoom_join_url}</div>
+            {appointment && (appointment.zoom_meeting_id || appointment.zoom_join_url) && (
+              <div className="mt-3">
+                <MeetingDetails
+                  meetingId={appointment.zoom_meeting_id}
+                  password={appointment.zoom_password}
+                  joinUrl={appointment.zoom_join_url}
+                />
+                <p className="text-[10px] t-muted mt-1.5">
+                  Patient receives the same details via WhatsApp.
+                </p>
               </div>
             )}
           </>

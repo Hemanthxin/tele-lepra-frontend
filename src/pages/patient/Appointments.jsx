@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import MeetingDetails from '../../components/MeetingDetails';
 
 const STATUS_PILL = {
   scheduled: 'pill-brand',
@@ -125,6 +126,20 @@ export default function PatientAppointments() {
                 <svg {...svg} width="14" height="14"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
                 {isPast ? 'Consult ended' : isOpen ? 'Join now' : 'Open Zoom link'}
               </a>
+
+              {!isPast && (a.zoom_meeting_id || a.zoom_password) && (
+                <div className="mt-3">
+                  <MeetingDetails
+                    meetingId={a.zoom_meeting_id}
+                    password={a.zoom_password}
+                    joinUrl={a.zoom_join_url}
+                    compact
+                  />
+                  <p className="text-[10px] t-muted mt-1.5">
+                    Keep this password handy in case Zoom asks for it when joining.
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
