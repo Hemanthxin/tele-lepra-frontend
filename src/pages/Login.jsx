@@ -8,6 +8,7 @@ import {
 import { auth } from '../lib/firebase';
 import { api } from '../lib/api';
 import { useTranslation } from '../i18n/I18nContext';
+import PartnerLogos from '../components/PartnerLogos';
 
 const ROLES = [
   { key: 'agent', label: 'Agent / Mediator' },
@@ -220,10 +221,10 @@ export default function Login() {
         <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
       </div>
 
-      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 my-auto">
+      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 my-auto lg:items-stretch">
         {/* LEFT HERO */}
         <aside
-          className="hidden lg:flex lg:col-span-7 relative rounded-3xl overflow-hidden text-white p-10 xl:p-14 flex-col justify-between min-h-[640px] anim-float-hero"
+          className="hidden lg:flex lg:col-span-7 relative rounded-3xl overflow-hidden text-white p-8 xl:p-12 flex-col justify-between gap-8 min-h-[640px] anim-float-hero"
           style={{ background: 'linear-gradient(135deg, #047857 0%, #064e3b 60%, #022c22 100%)' }}
         >
           <DotGrid className="absolute top-6 left-6 text-white/20" />
@@ -278,11 +279,16 @@ export default function Login() {
             </div>
           </div>
 
+          {/* Partner logos pinned to bottom of hero */}
+          <div className="relative z-10 pt-4 border-t border-white/15">
+            <PartnerLogos onDark size="md" />
+          </div>
+
         </aside>
 
         {/* RIGHT FORM — floating card */}
-        <section className="lg:col-span-5 flex items-center">
-          <div className="w-full neu-raised rounded-3xl p-7 md:p-9 relative anim-float-card">
+        <section className="lg:col-span-5 flex">
+          <div className="w-full neu-raised rounded-3xl p-7 md:p-9 relative anim-float-card flex flex-col justify-center">
             <div className="lg:hidden flex items-center gap-2 mb-6">
               <span className="brand-mark anim-pulse-glow"><Logo /></span>
               <div className="leading-tight">
@@ -493,6 +499,11 @@ export default function Login() {
                 <div className="text-xs font-semibold t-ink">Secure & compliant platform</div>
                 <p className="text-[11px] t-muted leading-relaxed mt-0.5">{t('login.note')}</p>
               </div>
+            </div>
+
+            {/* Mobile-only partner strip — hero (with logos) is hidden below lg */}
+            <div className="lg:hidden mt-4 pt-4 border-t border-ink-200/60 dark:border-ink-700/40 flex justify-center">
+              <PartnerLogos size="sm" />
             </div>
           </div>
         </section>

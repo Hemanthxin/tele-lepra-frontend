@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
+import PartnerLogos from './PartnerLogos';
 
 export default function Layout({ children }) {
   const { profile, role, signOut } = useAuth();
@@ -134,9 +135,13 @@ export default function Layout({ children }) {
         </main>
 
         {/* ============ FOOTER ============ */}
-        <footer className="shrink-0 bg-white/80 dark:bg-ink-800/80 backdrop-blur-md border-t border-ink-200/60 dark:border-ink-700/40 px-4 md:px-6 h-10 flex items-center justify-between text-xs">
-          <span className="t-muted font-medium">{t('footer.copy')}</span>
-          <span className="hidden sm:inline t-muted">{t('footer.note')}</span>
+        <footer className="shrink-0 bg-white/80 dark:bg-ink-800/80 backdrop-blur-md border-t border-ink-200/60 dark:border-ink-700/40 px-4 md:px-6 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs">
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="t-muted font-medium">{t('footer.copy')}</span>
+            <span className="hidden md:inline t-muted">·</span>
+            <span className="hidden md:inline t-muted">{t('footer.note')}</span>
+          </div>
+          <PartnerLogos size="sm" />
         </footer>
       </div>
     </div>
