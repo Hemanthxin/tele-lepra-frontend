@@ -3,9 +3,11 @@ import { api } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import { STATES, STATES_DISTRICTS } from '../../../data/districts';
 
-export default function EnrollStep({ onDone }) {
+const onlyDigits = (s) => (s || '').replace(/\D/g, '');
+
+export default function EnrollStep({ onDone, initial }) {
   const { t } = useTranslation();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     name: '',
     age: '',
     sex: 'male',
@@ -13,20 +15,49 @@ export default function EnrollStep({ onDone }) {
     state: '',
     district: '',
     village: '',
+    aadhaar_id: '',
     abha_id: '',
     referred_by: '',
     consent_given: true,
-  });
+    ...(initial || {}),
+  }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [touched, setTouched] = useState({});
 
   const districts = useMemo(
     () => (form.state ? STATES_DISTRICTS[form.state] || [] : []),
     [form.state],
   );
 
+  const phoneDigits = onlyDigits(form.phone);
+  const aadhaarDigits = onlyDigits(form.aadhaar_id);
+  const abhaDigits = onlyDigits(form.abha_id);
+
+  const phoneError =
+    touched.phone && !form.phone.trim()
+      ? 'Phone number is required'
+      : touched.phone && phoneDigits.length < 10
+        ? 'Phone must be at least 10 digits'
+        : null;
+
+  const aadhaarError =
+    touched.aadhaar_id && aadhaarDigits.length > 0 && aadhaarDigits.length !== 12
+      ? 'Aadhaar must be exactly 12 digits'
+      : null;
+
+  const abhaError =
+    touched.abha_id && abhaDigits.length > 0 && abhaDigits.length !== 14
+      ? 'ABHA ID must be exactly 14 digits'
+      : null;
+
   const submit = async (e) => {
     e.preventDefault();
+    setTouched({ phone: true, aadhaar_id: true, abha_id: true });
+    if (!form.phone.trim() || phoneDigits.length < 10) return;
+    if (aadhaarDigits.length > 0 && aadhaarDigits.length !== 12) return;
+    if (abhaDigits.length > 0 && abhaDigits.length !== 14) return;
+
     setBusy(true);
     setError(null);
     try {
@@ -34,12 +65,18 @@ export default function EnrollStep({ onDone }) {
         .map((s) => (s || '').trim())
         .filter(Boolean)
         .join(', ');
-      const payload = { ...form, location };
+      const payload = {
+        ...form,
+        phone: form.phone.trim(),
+        aadhaar_id: aadhaarDigits || null,
+        abha_id: abhaDigits || null,
+        location,
+      };
       const p = await api('/patients', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      onDone(p);
+      onDone(p, form);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -87,12 +124,15 @@ export default function EnrollStep({ onDone }) {
               <option value="other">{t('enroll.sex.other')}</option>
             </select>
           </Field>
-          <Field label={t('enroll.phone')}>
+          <Field label={`${t('enroll.phone')} *`} error={phoneError}>
             <input
-              className="input"
+              className={`input ${phoneError ? 'ring-2 ring-red-400' : ''}`}
+              required
+              inputMode="tel"
               value={form.phone}
               onChange={(e) => f('phone', e.target.value)}
-              placeholder="Enter phone number"
+              onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
+              placeholder="10-digit mobile number"
             />
           </Field>
         </div>
@@ -140,17 +180,39 @@ export default function EnrollStep({ onDone }) {
         </div>
       </Section>
 
-      <Section title="Health Metadata" icon="health">
+      <Section title="Health Identifiers" icon="health">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Field label={t('enroll.abha')}>
+          <Field
+            label="Aadhaar number (12 digits)"
+            hint={aadhaarDigits ? `${aadhaarDigits.length}/12` : '12 digits'}
+            error={aadhaarError}
+          >
             <input
-              className="input"
-              value={form.abha_id}
-              onChange={(e) => f('abha_id', e.target.value)}
-              placeholder="Enter ABHA ID"
+              className={`input ${aadhaarError ? 'ring-2 ring-red-400' : ''}`}
+              inputMode="numeric"
+              value={form.aadhaar_id}
+              onChange={(e) => f('aadhaar_id', e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, aadhaar_id: true }))}
+              placeholder="XXXX XXXX XXXX"
+              maxLength={14}
             />
           </Field>
-          <Field label="Referred by (optional)">
+          <Field
+            label="ABHA ID (14 digits)"
+            hint={abhaDigits ? `${abhaDigits.length}/14` : '14 digits'}
+            error={abhaError}
+          >
+            <input
+              className={`input ${abhaError ? 'ring-2 ring-red-400' : ''}`}
+              inputMode="numeric"
+              value={form.abha_id}
+              onChange={(e) => f('abha_id', e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, abha_id: true }))}
+              placeholder="XX-XXXX-XXXX-XXXX"
+              maxLength={17}
+            />
+          </Field>
+          <Field label="Referred by (optional)" wide>
             <input
               className="input"
               value={form.referred_by}
@@ -220,14 +282,18 @@ function SectionIcon({ name }) {
   }
 }
 
-function Field({ label, required, wide, children }) {
+function Field({ label, required, wide, hint, error, children }) {
   return (
     <div className={wide ? 'md:col-span-2' : ''}>
-      <label className="label flex items-center gap-1">
-        <span>{label}</span>
-        {required && <span className="text-red-500" aria-hidden>*</span>}
+      <label className="label flex items-center justify-between gap-1">
+        <span className="flex items-center gap-1">
+          <span>{label}</span>
+          {required && <span className="text-red-500" aria-hidden>*</span>}
+        </span>
+        {hint && <span className="text-[10px] t-muted font-normal">{hint}</span>}
       </label>
       {children}
+      {error && <p className="text-[11px] text-red-600 mt-1 font-medium">{error}</p>}
     </div>
   );
 }

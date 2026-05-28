@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import MeetingDetails from '../../components/MeetingDetails';
+import { meetingPhase } from '../../lib/meetingPhase';
 
 const STATUS_PILL = {
   scheduled: 'pill-brand',
@@ -16,10 +17,13 @@ export default function PatientAppointments() {
   const [linkPhone, setLinkPhone] = useState('');
   const [linkMsg, setLinkMsg] = useState(null);
   const [linkBusy, setLinkBusy] = useState(false);
+  const [, setTick] = useState(0); // re-render every 30s so the join window flips correctly
 
   const load = () => api('/appointments/mine').then(setList).catch(() => setList([]));
   useEffect(() => {
     load();
+    const id = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(id);
   }, []);
 
   const linkSelf = async (e) => {
@@ -38,8 +42,6 @@ export default function PatientAppointments() {
       setLinkBusy(false);
     }
   };
-
-  const now = new Date();
 
   return (
     <div className="anim-fade-up space-y-5">
@@ -82,10 +84,14 @@ export default function PatientAppointments() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 anim-stagger">
         {list.map((a) => {
           const when = new Date(a.scheduled_at);
-          const minsUntil = Math.round((when - now) / 60000);
-          const isPast = minsUntil < -((a.duration_minutes || 30) + 15);
-          const isOpen = minsUntil <= 15 && !isPast; // open join window: 15 min before through end
+          const { phase, label } = meetingPhase(a.scheduled_at, a.duration_minutes || 30);
+          const isActive = phase === 'active';
+          const isExpired = phase === 'expired';
           const hasJoinUrl = Boolean(a.zoom_join_url);
+          const canJoin = isActive && hasJoinUrl;
+
+          const pillCls = isExpired ? 'pill-red' : isActive ? 'pill-amber' : STATUS_PILL[a.status] || 'pill-ink';
+          const pillLabel = isExpired ? 'expired' : isActive ? 'live now' : (a.status || '').replace('_', ' ');
 
           return (
             <div key={a.id} className="card">
@@ -99,46 +105,62 @@ export default function PatientAppointments() {
                     {' · '}{a.duration_minutes} min
                   </div>
                 </div>
-                <span className={STATUS_PILL[a.status] || 'pill-ink'}>{(a.status || '').replace('_', ' ')}</span>
+                <span className={pillCls}>{pillLabel}</span>
               </div>
 
-              {!isPast && (
-                <div className="text-xs t-muted mb-3">
-                  {minsUntil > 60 * 24
-                    ? `In ${Math.round(minsUntil / (60 * 24))} day(s)`
-                    : minsUntil > 60
-                      ? `In ${Math.round(minsUntil / 60)} hour(s)`
-                      : minsUntil > 0
-                        ? `In ${minsUntil} minute(s)`
-                        : 'Starting now'}
+              {label && (
+                <div className={`text-xs mb-3 ${isExpired ? 'text-red-600 font-semibold' : isActive ? 'text-emerald-600 font-semibold' : 't-muted'}`}>
+                  {label}
                 </div>
               )}
 
-              <a
-                href={hasJoinUrl ? a.zoom_join_url : undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`btn-primary w-full inline-flex items-center justify-center gap-2 ${
-                  !hasJoinUrl || isPast ? 'opacity-50 pointer-events-none' : ''
-                }`}
-                aria-disabled={!hasJoinUrl || isPast}
-              >
-                <svg {...svg} width="14" height="14"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
-                {isPast ? 'Consult ended' : isOpen ? 'Join now' : 'Open Zoom link'}
-              </a>
-
-              {!isPast && (a.zoom_meeting_id || a.zoom_password) && (
-                <div className="mt-3">
-                  <MeetingDetails
-                    meetingId={a.zoom_meeting_id}
-                    password={a.zoom_password}
-                    joinUrl={a.zoom_join_url}
-                    compact
-                  />
-                  <p className="text-[10px] t-muted mt-1.5">
-                    Keep this password handy in case Zoom asks for it when joining.
-                  </p>
+              {isExpired ? (
+                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 px-3 py-3">
+                  <div className="flex items-start gap-2">
+                    <svg {...svg} width="16" height="16" className="text-red-600 mt-0.5 shrink-0">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <div>
+                      <div className="text-sm font-semibold text-red-700 dark:text-red-300">Session expired</div>
+                      <p className="text-xs t-soft mt-0.5">
+                        This slot has passed. Please contact your Medical Officer to schedule a new tele-consult.
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <a
+                    href={canJoin ? a.zoom_join_url : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`btn-primary w-full inline-flex items-center justify-center gap-2 ${
+                      !canJoin ? 'opacity-50 pointer-events-none' : ''
+                    }`}
+                    aria-disabled={!canJoin}
+                    title={!canJoin && hasJoinUrl ? 'Join button activates 5 minutes before the scheduled time' : undefined}
+                  >
+                    <svg {...svg} width="14" height="14"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+                    {isActive ? 'Join now' : 'Join (available at slot time)'}
+                  </a>
+
+                  {(a.zoom_meeting_id || a.zoom_password) && (
+                    <div className="mt-3">
+                      <MeetingDetails
+                        meetingId={a.zoom_meeting_id}
+                        password={a.zoom_password}
+                        joinUrl={a.zoom_join_url}
+                        compact
+                      />
+                      {a.zoom_password && (
+                        <p className="text-[11px] t-soft mt-2 leading-snug">
+                          <strong className="t-ink">If Zoom asks for a passcode</strong>, tap the copy icon next
+                          to the password above and paste it into Zoom's <em>Enter meeting passcode</em> prompt.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           );

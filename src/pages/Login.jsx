@@ -25,8 +25,21 @@ const FEATURES = [
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-\[\];/\\`~+=]).{6,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Classify a patient identifier by digit count
+const onlyDigits = (s) => (s || '').replace(/\D/g, '');
+const identifierType = (s) => {
+  const d = onlyDigits(s);
+  if (d.length === 12) return 'aadhaar';
+  if (d.length === 14) return 'abha';
+  if (d.length >= 10 && d.length <= 15) return 'phone';
+  return 'unknown';
+};
+const identifierLabel = (t) => 'Phone / Aadhaar / ABHA';
+
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
+  // userKind: 'staff' (agent/MO email-based) | 'patient' (identifier-based)
+  const [userKind, setUserKind] = useState('staff');
   const [mode, setMode] = useState('signin');
   const [role, setRole] = useState('agent');
   const [email, setEmail] = useState('');
@@ -37,6 +50,13 @@ export default function Login() {
   const [notice, setNotice] = useState(null);
   const [touched, setTouched] = useState({});
   const [busy, setBusy] = useState(false);
+
+  // Patient-login state
+  const [patientId, setPatientId] = useState('');        // identifier input
+  const [patientPw, setPatientPw] = useState('');
+  const [patientPw2, setPatientPw2] = useState('');      // confirm (first-time)
+  const [patientStage, setPatientStage] = useState('lookup'); // lookup | signin | setup
+  const [patientName, setPatientName] = useState(null);
   const nav = useNavigate();
 
   const emailError =
@@ -93,6 +113,103 @@ export default function Login() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // ---------- Patient login flow ----------
+  const patientLookup = async (e) => {
+    e?.preventDefault?.();
+    setError(null);
+    setNotice(null);
+    const idType = identifierType(patientId);
+    if (idType === 'unknown') {
+      setError('Enter a valid 10-digit phone, 12-digit Aadhaar, or 14-digit ABHA number.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api('/patient-auth/lookup', {
+        method: 'POST',
+        body: JSON.stringify({ identifier: patientId }),
+      });
+      if (!r.exists) {
+        setError(
+          'No patient record found for that number. Please contact your health worker to enrol you first.',
+        );
+        return;
+      }
+      setPatientName(r.name || null);
+      setPatientStage(r.has_password ? 'signin' : 'setup');
+      setPatientPw('');
+      setPatientPw2('');
+    } catch (err) {
+      setError(prettifyAuthError(err.message, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const patientSignIn = async (e) => {
+    e?.preventDefault?.();
+    setError(null);
+    if (patientPw.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const prep = await api('/patient-auth/prepare-login', {
+        method: 'POST',
+        body: JSON.stringify({ identifier: patientId }),
+      });
+      if (prep.needs_init) {
+        setPatientStage('setup');
+        setError(null);
+        setNotice('Your account is new. Please set a password to continue.');
+        return;
+      }
+      await signInWithEmailAndPassword(auth, prep.email, patientPw);
+      nav('/');
+    } catch (err) {
+      setError(prettifyAuthError(err.message, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const patientSetPassword = async (e) => {
+    e?.preventDefault?.();
+    setError(null);
+    if (patientPw.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (patientPw !== patientPw2) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api('/patient-auth/init', {
+        method: 'POST',
+        body: JSON.stringify({ identifier: patientId, password: patientPw }),
+      });
+      await signInWithEmailAndPassword(auth, r.email, patientPw);
+      nav('/');
+    } catch (err) {
+      setError(prettifyAuthError(err.message, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPatientForm = () => {
+    setPatientId('');
+    setPatientPw('');
+    setPatientPw2('');
+    setPatientStage('lookup');
+    setPatientName(null);
+    setError(null);
+    setNotice(null);
   };
 
   return (
@@ -176,29 +293,65 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div className="anim-fade-up">
                 <h1 className="text-2xl font-bold tracking-tight t-ink flex items-center gap-2">
-                  {mode === 'signin' ? <>Welcome back <span aria-hidden>👋</span></> : t('login.register')}
+                  {userKind === 'patient'
+                    ? <>Patient sign in <span aria-hidden>🩺</span></>
+                    : mode === 'signin'
+                      ? <>Welcome back <span aria-hidden>👋</span></>
+                      : t('login.register')}
                 </h1>
                 <p className="text-sm t-muted mt-0.5">
-                  {mode === 'signin' ? t('login.welcome') : t('login.create_intro')}
+                  {userKind === 'patient'
+                    ? 'Use your phone, Aadhaar, or ABHA number to access your tele-consults.'
+                    : mode === 'signin' ? t('login.welcome') : t('login.create_intro')}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === 'signin' ? 'signup' : 'signin');
-                  setError(null);
-                  setNotice(null);
-                  setTouched({});
-                }}
-                className="neu-btn-ghost"
-              >
-                {mode === 'signin' ? t('login.register') : t('login.signin')}
-              </button>
+              {userKind === 'staff' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode(mode === 'signin' ? 'signup' : 'signin');
+                    setError(null);
+                    setNotice(null);
+                    setTouched({});
+                  }}
+                  className="neu-btn-ghost"
+                >
+                  {mode === 'signin' ? t('login.register') : t('login.signin')}
+                </button>
+              )}
             </div>
 
+            {/* Staff vs Patient tab toggle */}
+            <div className="flex p-1 rounded-2xl neu-inset mb-5 gap-1">
+              {[
+                { k: 'staff', label: 'Health worker' },
+                { k: 'patient', label: 'Patient' },
+              ].map((opt) => (
+                <button
+                  key={opt.k}
+                  type="button"
+                  onClick={() => {
+                    setUserKind(opt.k);
+                    setError(null);
+                    setNotice(null);
+                    setTouched({});
+                    if (opt.k === 'patient') resetPatientForm();
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition ${
+                    userKind === opt.k
+                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow'
+                      : 't-soft hover:t-ink'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {userKind === 'staff' && (
             <form onSubmit={submit} noValidate className="space-y-4 anim-stagger">
               {mode === 'signup' && (
                 <Field label={t('login.account_type')} required>
@@ -307,6 +460,30 @@ export default function Login() {
                 )}
               </button>
             </form>
+            )}
+
+            {userKind === 'patient' && (
+              <PatientLoginForm
+                stage={patientStage}
+                identifier={patientId}
+                setIdentifier={setPatientId}
+                pw={patientPw}
+                setPw={setPatientPw}
+                pw2={patientPw2}
+                setPw2={setPatientPw2}
+                showPw={showPw}
+                setShowPw={setShowPw}
+                name={patientName}
+                onLookup={patientLookup}
+                onSignIn={patientSignIn}
+                onSetPassword={patientSetPassword}
+                onChangeNumber={resetPatientForm}
+                busy={busy}
+                notice={notice}
+                error={error}
+                t={t}
+              />
+            )}
 
             <div className="mt-5 rounded-xl neu-inset px-4 py-3 flex items-start gap-3">
               <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 grid place-items-center shrink-0">
@@ -326,6 +503,133 @@ export default function Login() {
 
 function inputCls(error) {
   return `neu-input ${error ? 'ring-2 ring-red-400 dark:ring-red-500' : ''}`;
+}
+
+function PatientLoginForm({
+  stage, identifier, setIdentifier, pw, setPw, pw2, setPw2,
+  showPw, setShowPw, name,
+  onLookup, onSignIn, onSetPassword, onChangeNumber,
+  busy, notice, error, t,
+}) {
+  const idType = identifierType(identifier);
+  const idDigits = onlyDigits(identifier);
+  const idTypeLabel =
+    idType === 'aadhaar' ? 'Aadhaar (12 digits)' :
+    idType === 'abha' ? 'ABHA (14 digits)' :
+    idType === 'phone' ? 'Phone number' : null;
+
+  if (stage === 'lookup') {
+    return (
+      <form onSubmit={onLookup} noValidate className="space-y-4 anim-stagger">
+        <Field label={identifierLabel(t)} required>
+          <input
+            className={inputCls(null)}
+            inputMode="numeric"
+            autoFocus
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            placeholder="Enter your phone, Aadhaar or ABHA"
+            maxLength={20}
+          />
+          <p className="text-[11px] t-muted mt-1.5">
+            10-digit phone, 12-digit Aadhaar, or 14-digit ABHA number.
+            {idTypeLabel && <span className="ml-1 text-emerald-600 font-semibold">Detected: {idTypeLabel} ({idDigits.length} digits)</span>}
+          </p>
+        </Field>
+
+        {notice && (
+          <div className="text-sm text-emerald-800 dark:text-emerald-300 rounded-xl px-4 py-3 neu-inset">
+            {notice}
+          </div>
+        )}
+        {error && (
+          <div className="text-sm text-red-700 dark:text-red-300 rounded-xl px-4 py-3 neu-inset">
+            {error}
+          </div>
+        )}
+
+        <button className="neu-btn-primary mt-1" disabled={busy || idType === 'unknown'}>
+          {busy ? (<><Spinner /> {t('common.please_wait')}</>) : (<>Continue <Arrow /></>)}
+        </button>
+      </form>
+    );
+  }
+
+  // signin OR setup — both show the number + name above the password field
+  return (
+    <form onSubmit={stage === 'signin' ? onSignIn : onSetPassword} noValidate className="space-y-4 anim-stagger">
+      <div className="rounded-xl neu-inset px-4 py-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider t-muted font-bold">Signing in as</div>
+          <div className="text-sm font-bold t-ink truncate">{name || 'Patient'}</div>
+          <div className="text-[11px] t-muted font-mono truncate">{identifier}</div>
+        </div>
+        <button type="button" onClick={onChangeNumber} className="neu-btn-ghost !px-3 !py-1.5 !text-xs shrink-0">
+          Change
+        </button>
+      </div>
+
+      {stage === 'setup' && (
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-900/40 px-3 py-2.5 text-xs t-soft">
+          <strong className="t-ink">First time signing in?</strong> Please set a password to secure your account.
+        </div>
+      )}
+
+      <Field label={stage === 'setup' ? 'Choose a password' : 'Password'} required>
+        <div className="relative">
+          <input
+            className={inputCls(null) + ' pr-10'}
+            type={showPw ? 'text' : 'password'}
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="••••••••"
+            autoComplete={stage === 'signin' ? 'current-password' : 'new-password'}
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => setShowPw((s) => !s)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 t-muted hover:t-ink"
+            tabIndex={-1}
+          >
+            {showPw ? <EyeOff /> : <Eye />}
+          </button>
+        </div>
+      </Field>
+
+      {stage === 'setup' && (
+        <Field label="Confirm password" required>
+          <input
+            className={inputCls(null)}
+            type={showPw ? 'text' : 'password'}
+            value={pw2}
+            onChange={(e) => setPw2(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+          />
+        </Field>
+      )}
+
+      {error && (
+        <div className="text-sm text-red-700 dark:text-red-300 rounded-xl px-4 py-3 neu-inset">
+          {error}
+        </div>
+      )}
+      {notice && stage === 'signin' && (
+        <div className="text-sm text-emerald-800 dark:text-emerald-300 rounded-xl px-4 py-3 neu-inset">
+          {notice}
+        </div>
+      )}
+
+      <button className="neu-btn-primary mt-1" disabled={busy}>
+        {busy
+          ? <><Spinner /> {t('common.please_wait')}</>
+          : stage === 'setup'
+            ? <>Set password & sign in <Arrow /></>
+            : <>{t('login.signin')} <Arrow /></>}
+      </button>
+    </form>
+  );
 }
 
 function Field({ label, required, error, children }) {

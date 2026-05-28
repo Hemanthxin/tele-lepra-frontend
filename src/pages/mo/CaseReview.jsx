@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import MeetingDetails from '../../components/MeetingDetails';
+import { meetingPhase } from '../../lib/meetingPhase';
 
 const RISK_PILL = {
   rule_out: { cls: 'pill-green', label: 'Low Risk' },
@@ -45,16 +46,27 @@ export default function CaseReview() {
   const refresh = () => {
     api(`/cases/${id}`).then(setC);
     api('/appointments/mine').then((appts) => {
-      const a = (appts || []).find((x) => x.case_id === id);
-      if (a) {
-        setAppointmentId(a.id);
-        setAppointment(a);
+      // Pick the most recently scheduled appointment for this case
+      const matches = (appts || []).filter((x) => x.case_id === id);
+      const latest = matches.sort(
+        (a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at),
+      )[0];
+      if (latest) {
+        setAppointmentId(latest.id);
+        setAppointment(latest);
+      } else {
+        setAppointmentId(null);
+        setAppointment(null);
       }
     });
   };
 
+  const [, setNowTick] = useState(0);
+
   useEffect(() => {
     refresh();
+    const handle = setInterval(() => setNowTick((t) => t + 1), 30_000);
+    return () => clearInterval(handle);
   }, [id]);
 
   const schedule = async () => {
@@ -341,80 +353,17 @@ export default function CaseReview() {
       </div>
 
       {/* Tele-consult scheduler / launcher */}
-      <div className="card">
-        {!appointmentId ? (
-          <>
-            <h3 className="font-bold t-ink text-lg mb-1">Schedule tele-consult</h3>
-            <p className="text-xs t-muted mb-3">
-              Books a Zoom slot. Patient gets the join link via WhatsApp/SMS.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="label">When</label>
-                <input
-                  type="datetime-local"
-                  className="input"
-                  value={when}
-                  onChange={(e) => setWhen(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="label">Duration (min)</label>
-                <input
-                  type="number"
-                  className="input"
-                  value={duration}
-                  min={10}
-                  max={60}
-                  onChange={(e) => setDuration(+e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <button className="btn-primary w-full" onClick={schedule} disabled={schedBusy}>
-                  {schedBusy ? '…' : 'Book Zoom consult'}
-                </button>
-              </div>
-            </div>
-            {schedError && <p className="text-sm text-red-600 mt-2">{schedError}</p>}
-          </>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-bold t-ink text-lg">Tele-consult</h3>
-                {appointment && (
-                  <div className="text-xs t-muted mt-0.5">
-                    Scheduled <strong className="t-ink">{fmtDateTime(appointment.scheduled_at)}</strong> · {appointment.duration_minutes} min
-                  </div>
-                )}
-              </div>
-              {appointment && (appointment.zoom_start_url || appointment.zoom_join_url) && (
-                <a
-                  className="btn-primary inline-flex items-center gap-2"
-                  href={appointment.zoom_start_url || appointment.zoom_join_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
-                  Start Zoom consult
-                </a>
-              )}
-            </div>
-            {appointment && (appointment.zoom_meeting_id || appointment.zoom_join_url) && (
-              <div className="mt-3">
-                <MeetingDetails
-                  meetingId={appointment.zoom_meeting_id}
-                  password={appointment.zoom_password}
-                  joinUrl={appointment.zoom_join_url}
-                />
-                <p className="text-[10px] t-muted mt-1.5">
-                  Patient receives the same details via WhatsApp.
-                </p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <TeleConsultBlock
+        appointment={appointment}
+        when={when}
+        setWhen={setWhen}
+        duration={duration}
+        setDuration={setDuration}
+        schedule={schedule}
+        schedBusy={schedBusy}
+        schedError={schedError}
+      />
+
 
       {/* Action bar */}
       <div className="card flex flex-wrap items-center justify-between gap-3">
@@ -495,3 +444,129 @@ const fmtDateTime = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 };
+
+function TeleConsultBlock({
+  appointment, when, setWhen, duration, setDuration, schedule, schedBusy, schedError,
+}) {
+  const phaseInfo = appointment
+    ? meetingPhase(appointment.scheduled_at, appointment.duration_minutes || 30)
+    : null;
+  const isActive = phaseInfo?.phase === 'active';
+  const isExpired = phaseInfo?.phase === 'expired';
+  const isUpcoming = phaseInfo?.phase === 'upcoming';
+  const hostUrl = appointment?.zoom_start_url || appointment?.zoom_join_url;
+  const canStart = isActive && hostUrl;
+
+  const SchedulerForm = ({ title, subtitle }) => (
+    <div>
+      <h3 className="font-bold t-ink text-lg mb-1">{title}</h3>
+      <p className="text-xs t-muted mb-3">{subtitle}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="label">When</label>
+          <input
+            type="datetime-local"
+            className="input"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Duration (min)</label>
+          <input
+            type="number"
+            className="input"
+            value={duration}
+            min={10}
+            max={60}
+            onChange={(e) => setDuration(+e.target.value)}
+          />
+        </div>
+        <div className="flex items-end">
+          <button className="btn-primary w-full" onClick={schedule} disabled={schedBusy}>
+            {schedBusy ? '…' : 'Book Zoom consult'}
+          </button>
+        </div>
+      </div>
+      {schedError && <p className="text-sm text-red-600 mt-2">{schedError}</p>}
+    </div>
+  );
+
+  if (!appointment) {
+    return (
+      <div className="card">
+        <SchedulerForm
+          title="Schedule tele-consult"
+          subtitle="Books a Zoom slot. Patient gets the join link via WhatsApp/SMS."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold t-ink text-lg">Tele-consult</h3>
+            {isExpired && <span className="pill-red">expired</span>}
+            {isActive && <span className="pill-amber">live now</span>}
+            {isUpcoming && <span className="pill-brand">scheduled</span>}
+          </div>
+          <div className="text-xs t-muted mt-0.5">
+            <strong className="t-ink">{fmtDateTime(appointment.scheduled_at)}</strong> · {appointment.duration_minutes} min
+            {phaseInfo?.label && (
+              <span className={`ml-2 ${isExpired ? 'text-red-600 font-semibold' : isActive ? 'text-emerald-600 font-semibold' : ''}`}>
+                · {phaseInfo.label}
+              </span>
+            )}
+          </div>
+        </div>
+        {!isExpired && (
+          <a
+            className={`btn-primary inline-flex items-center gap-2 ${!canStart ? 'opacity-50 pointer-events-none' : ''}`}
+            href={canStart ? hostUrl : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!canStart}
+            title={!canStart ? 'Available 5 minutes before the scheduled time' : undefined}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+            {isActive ? 'Start Zoom consult' : 'Start (at slot time)'}
+          </a>
+        )}
+      </div>
+
+      {!isExpired && (appointment.zoom_meeting_id || appointment.zoom_join_url) && (
+        <div>
+          <MeetingDetails
+            meetingId={appointment.zoom_meeting_id}
+            password={appointment.zoom_password}
+            joinUrl={appointment.zoom_join_url}
+          />
+          <p className="text-[10px] t-muted mt-1.5">
+            Patient receives the same details via WhatsApp. Ask them to copy the passcode and paste it into Zoom if prompted.
+          </p>
+        </div>
+      )}
+
+      {isExpired && (
+        <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 px-3 py-3">
+          <div className="text-sm font-semibold text-red-700 dark:text-red-300">Session expired</div>
+          <p className="text-xs t-soft mt-0.5">
+            The scheduled slot has passed and the Zoom link is no longer active. Book a new session below if needed.
+          </p>
+        </div>
+      )}
+
+      {isExpired && (
+        <div className="border-t border-ink-200 dark:border-ink-700 pt-4">
+          <SchedulerForm
+            title="Schedule a new session"
+            subtitle="Pick a fresh date and time. A new Zoom meeting will be created."
+          />
+        </div>
+      )}
+    </div>
+  );
+}

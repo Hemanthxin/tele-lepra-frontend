@@ -64,7 +64,7 @@ function NumberInput({ value, onChange, max = 999, suffix }) {
   );
 }
 
-export default function ScreenStep({ caseId, condition, onDone }) {
+export default function ScreenStep({ caseId, condition, onDone, initial }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [s, setS] = useState({
@@ -78,6 +78,7 @@ export default function ScreenStep({ caseId, condition, onDone }) {
     family_history: false,
     image_urls: [],
     notes: '',
+    ...(initial || {}),
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -103,7 +104,7 @@ export default function ScreenStep({ caseId, condition, onDone }) {
         method: 'POST',
         body: JSON.stringify(s),
       });
-      onDone(result);
+      onDone(result, s);
     } catch (err) {
       setError(err.message);
     } finally {

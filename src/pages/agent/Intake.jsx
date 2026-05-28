@@ -42,6 +42,10 @@ export default function Intake() {
   const [condition, setCondition] = useState(null);
   const [caseId, setCaseId] = useState(null);
   const [triage, setTriage] = useState(null);
+  // Cached form drafts so going back preserves what was typed
+  const [draftEnroll, setDraftEnroll] = useState(null);
+  const [draftHistory, setDraftHistory] = useState(null);
+  const [draftScreen, setDraftScreen] = useState(null);
 
   const currentIdx = STEPS.findIndex((s) => s.key === step);
   const progress = Math.round(((currentIdx + 1) / STEPS.length) * 100);
@@ -55,6 +59,25 @@ export default function Intake() {
     setCondition(null);
     setCaseId(null);
     setTriage(null);
+    setDraftEnroll(null);
+    setDraftHistory(null);
+    setDraftScreen(null);
+  };
+
+  // Steps the user has already reached are clickable; future ones are not.
+  const canVisit = (key) => {
+    const idx = STEPS.findIndex((s) => s.key === key);
+    if (idx <= currentIdx) return true;
+    // Can also revisit a step if its dependency is already set
+    if (key === 'history') return Boolean(patient);
+    if (key === 'pick') return Boolean(patient);
+    if (key === 'screen') return Boolean(caseId);
+    if (key === 'triage') return Boolean(triage);
+    return false;
+  };
+
+  const goTo = (key) => {
+    if (canVisit(key)) setStep(key);
   };
 
   const svgProps = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' };
@@ -129,6 +152,7 @@ export default function Intake() {
                 const active = i === currentIdx;
                 const done = i < currentIdx;
                 const Icon = STEP_ICONS[s.key];
+                const clickable = canVisit(s.key);
                 return (
                   <li key={s.key} className="relative">
                     {i < STEPS.length - 1 && (
@@ -139,13 +163,18 @@ export default function Intake() {
                         }`}
                       />
                     )}
-                    <div
-                      className={`group relative flex items-center gap-3 px-2 sm:px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                    <button
+                      type="button"
+                      onClick={() => goTo(s.key)}
+                      disabled={!clickable}
+                      className={`group relative w-full text-left flex items-center gap-3 px-2 sm:px-3 py-2.5 rounded-xl transition-all duration-200 ${
                         active
                           ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/0 dark:from-emerald-900/30 dark:to-transparent'
-                          : 'hover:bg-ink-50 dark:hover:bg-ink-700/30'
+                          : clickable
+                            ? 'hover:bg-ink-50 dark:hover:bg-ink-700/30 cursor-pointer'
+                            : 'opacity-60 cursor-not-allowed'
                       }`}
-                      title={s.short}
+                      title={clickable ? `Go to ${s.short}` : `${s.short} (locked)`}
                     >
                       {active && (
                         <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
@@ -181,7 +210,7 @@ export default function Intake() {
                           <path d="M9 18l6-6-6-6" />
                         </svg>
                       )}
-                    </div>
+                    </button>
                   </li>
                 );
               })}
@@ -208,20 +237,42 @@ export default function Intake() {
         {/* MAIN */}
         <main className="flex-1 min-w-0 overflow-y-auto px-4 md:px-7 py-4 md:py-5">
           <div className="anim-fade-up" style={{ animationDelay: '80ms' }}>
+            {currentIdx > 0 && (
+              <button
+                type="button"
+                onClick={() => goTo(STEPS[currentIdx - 1].key)}
+                className="neu-btn-ghost !px-3 !py-1.5 !text-xs mb-3 inline-flex items-center gap-1.5"
+              >
+                <svg {...svgProps} width="14" height="14"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+                Back to {STEPS[currentIdx - 1].short}
+              </button>
+            )}
             {step === 'enroll' && (
-              <EnrollStep onDone={(p) => { setPatient(p); setStep('history'); }} />
+              <EnrollStep
+                initial={draftEnroll}
+                onDone={(p, draft) => { setPatient(p); setDraftEnroll(draft || null); setStep('history'); }}
+              />
             )}
             {step === 'history' && (
-              <HistoryStep patient={patient} onDone={(h) => { setHistory(h); setStep('pick'); }} />
+              <HistoryStep
+                patient={patient}
+                initial={draftHistory}
+                onDone={(h, draft) => { setHistory(h); setDraftHistory(draft || null); setStep('pick'); }}
+              />
             )}
             {step === 'pick' && (
               <PickConditionStep
                 patient={patient} history={history}
+                initial={condition ? { condition } : null}
                 onDone={(cid, cond) => { setCaseId(cid); setCondition(cond); setStep('screen'); }}
               />
             )}
             {step === 'screen' && (
-              <ScreenStep caseId={caseId} condition={condition} onDone={(r) => { setTriage(r); setStep('triage'); }} />
+              <ScreenStep
+                caseId={caseId} condition={condition}
+                initial={draftScreen}
+                onDone={(r, draft) => { setTriage(r); setDraftScreen(draft || null); setStep('triage'); }}
+              />
             )}
             {step === 'triage' && (
               <TriageResultStep

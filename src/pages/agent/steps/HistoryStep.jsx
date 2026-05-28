@@ -4,11 +4,11 @@ import { useTranslation } from '../../../i18n/I18nContext';
 
 const CHRONIC = ['Diabetes', 'Hypertension', 'TB', 'HIV', 'Pregnancy', 'None'];
 
-export default function HistoryStep({ patient, onDone }) {
+export default function HistoryStep({ patient, onDone, initial }) {
   const { t } = useTranslation();
-  const [chronic, setChronic] = useState([]);
-  const [notes, setNotes] = useState('');
-  const [rxUrls, setRxUrls] = useState([]);
+  const [chronic, setChronic] = useState(initial?.chronic_conditions || []);
+  const [notes, setNotes] = useState(initial?.past_visits_notes || '');
+  const [rxUrls, setRxUrls] = useState(initial?.prior_prescriptions_urls || []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,12 +28,13 @@ export default function HistoryStep({ patient, onDone }) {
     setBusy(true);
     setError(null);
     try {
-      onDone({
+      const draft = {
         chronic_conditions: chronic,
         prior_prescriptions_urls: rxUrls,
         prior_labs_urls: [],
         past_visits_notes: notes,
-      });
+      };
+      onDone(draft, draft);
     } catch (err) {
       setError(err.message);
     } finally {

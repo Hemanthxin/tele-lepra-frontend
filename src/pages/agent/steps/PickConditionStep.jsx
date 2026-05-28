@@ -12,9 +12,9 @@ const CONDITIONS = [
   { key: 'contact_dermatitis', enabled: false, icon: 'hand' },
 ];
 
-export default function PickConditionStep({ patient, history, onDone }) {
+export default function PickConditionStep({ patient, history, onDone, initial }) {
   const { t } = useTranslation();
-  const [condition, setCondition] = useState('leprosy');
+  const [condition, setCondition] = useState(initial?.condition || 'leprosy');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
