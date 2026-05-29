@@ -221,7 +221,7 @@ export default function Login() {
         <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
       </div>
 
-      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 lg:my-auto lg:items-start">
+      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 lg:my-auto lg:items-center">
         {/* LEFT HERO */}
         <aside
           className="hidden lg:flex lg:col-span-7 relative rounded-3xl overflow-hidden text-white p-8 xl:p-12 flex-col justify-between gap-8 min-h-[640px] anim-float-hero"
