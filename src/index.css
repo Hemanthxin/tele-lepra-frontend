@@ -5,47 +5,48 @@
 html, body, #root { height: 100%; }
 html, body { overflow-x: hidden; }
 
-/* ========== DESIGN TOKENS — Premium Beige + Grey ==========
+/* ========== DESIGN TOKENS — Hospital Grade · Silver + Light ==========
    Palette:
-     - Warm beige page background (#f5f1ea — cream)
-     - White card surfaces
-     - Subtle oat alt-surface for tables/hover
-     - Warm tan borders that blend with the beige bg
-     - Dark warm stone/charcoal for PRIMARY: buttons, brand mark, focus,
-       active nav, links. Premium, monochrome, restrained.
-     - Warm beige tan as the secondary accent (subtle highlights only).
-     - Slate text hierarchy (cool, for legibility against warm surfaces).
-   Status colors (green/amber/red/blue) reserved for DATA semantics only
-   (pills, donut slices), never for chrome.
+     - Page bg: very light cool gray (#f1f5f9 — slate-100). Soft, calm, clinical.
+     - Surface: pure white cards.
+     - Surface-2: light silver (#e2e8f0 — slate-200) for table stripes & hover.
+     - Borders: silver (#cbd5e1 — slate-300). Crisp but quiet.
+     - Brand (primary): brushed-steel slate-600 (#475569). Looks like polished
+       hospital instruments. White text contrasts well.
+     - Accent: clinical sky/medical blue (#0284c7) — used SPARINGLY for links,
+       info badges, and subtle highlights. Adds a touch of medical identity
+       without breaking the silver-monochrome feel.
+     - Text: dark slate hierarchy for legibility on silver surfaces.
+   Status colors (green/amber/red) reserved for data semantics only.
 */
 :root {
   /* Surfaces */
-  --bg:          #f5f1ea;   /* warm cream beige page bg */
-  --bg-soft:     #ede7d8;   /* darker beige for hero panels */
-  --surface:     #ffffff;   /* primary card surface */
-  --surface-2:   #f0ece4;   /* warm oat alt — table stripes, hover */
+  --bg:          #f1f5f9;   /* slate-100, light cool silver */
+  --bg-soft:     #e2e8f0;   /* slate-200 alt */
+  --surface:     #ffffff;   /* white cards */
+  --surface-2:   #f8fafc;   /* slate-50 — very light silver for hover/stripes */
 
   /* Borders */
-  --border:        #d4cdb9; /* warm tan border, blends with beige */
-  --border-strong: #a8a092; /* warm stone for emphasis */
-  --border-cool:   #e7e5e4; /* neutral stone-200 inside white cards */
+  --border:        #cbd5e1; /* slate-300 — silver */
+  --border-strong: #94a3b8; /* slate-400 — silver emphasis */
+  --border-cool:   #e2e8f0; /* slate-200 — soft silver inside cards */
 
   /* Text */
-  --text-ink:        #1c1917; /* stone-900 — primary */
-  --text-ink-soft:   #44403c; /* stone-700 — secondary */
-  --text-ink-muted:  #78716c; /* stone-500 — labels */
+  --text-ink:        #0f172a; /* slate-900 — primary */
+  --text-ink-soft:   #334155; /* slate-700 — secondary */
+  --text-ink-muted:  #64748b; /* slate-500 — labels */
 
-  /* Primary — Premium Dark Stone */
-  --brand:        #292524; /* stone-800 — primary buttons */
-  --brand-strong: #1c1917; /* stone-900 — hover */
-  --brand-soft:   #f5f5f4; /* stone-100 — subtle tint */
-  --brand-ring:   rgba(41, 37, 36, 0.20);
+  /* Primary — Brushed steel / silver */
+  --brand:        #475569; /* slate-600 */
+  --brand-strong: #334155; /* slate-700 */
+  --brand-soft:   #f1f5f9; /* slate-100 — subtle tint */
+  --brand-ring:   rgba(71, 85, 105, 0.25);
 
-  /* Accent — Warm Tan / Beige */
-  --accent:        #8a6e4d; /* accent-600 */
-  --accent-strong: #6e5740; /* accent-700 */
-  --accent-soft:   #faf6ed; /* accent-50 */
-  --accent-ring:   rgba(138, 110, 77, 0.20);
+  /* Accent — Clinical sky/medical blue */
+  --accent:        #0284c7; /* sky-600 */
+  --accent-strong: #0369a1; /* sky-700 */
+  --accent-soft:   #f0f9ff; /* sky-50 */
+  --accent-ring:   rgba(2, 132, 199, 0.22);
 
   /* Legacy aliases */
   --neu-bg:           var(--bg);
@@ -56,28 +57,28 @@ html, body { overflow-x: hidden; }
 }
 
 .dark {
-  --bg:          #1c1917;
-  --bg-soft:     #292524;
-  --surface:     #292524;
-  --surface-2:   #44403c;
+  --bg:          #0f172a;
+  --bg-soft:     #1e293b;
+  --surface:     #1e293b;
+  --surface-2:   #334155;
 
-  --border:        #44403c;
-  --border-strong: #57534e;
-  --border-cool:   #44403c;
+  --border:        #334155;
+  --border-strong: #475569;
+  --border-cool:   #334155;
 
-  --text-ink:        #fafaf9;
-  --text-ink-soft:   #d6d3d1;
-  --text-ink-muted:  #a8a29e;
+  --text-ink:        #f1f5f9;
+  --text-ink-soft:   #cbd5e1;
+  --text-ink-muted:  #94a3b8;
 
-  --brand:        #e7e5e4;
-  --brand-strong: #fafaf9;
-  --brand-soft:   rgba(231, 229, 228, 0.10);
-  --brand-ring:   rgba(231, 229, 228, 0.28);
+  --brand:        #cbd5e1;
+  --brand-strong: #e2e8f0;
+  --brand-soft:   rgba(203, 213, 225, 0.10);
+  --brand-ring:   rgba(203, 213, 225, 0.28);
 
-  --accent:        #c4a25b;
-  --accent-strong: #d6bb7d;
-  --accent-soft:   rgba(196, 162, 91, 0.10);
-  --accent-ring:   rgba(196, 162, 91, 0.24);
+  --accent:        #38bdf8;
+  --accent-strong: #7dd3fc;
+  --accent-soft:   rgba(56, 189, 248, 0.10);
+  --accent-ring:   rgba(56, 189, 248, 0.26);
 
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
@@ -107,7 +108,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border-cool);
   border-radius: 12px;
-  box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
 }
 
 .neu-raised-sm {
@@ -118,7 +119,7 @@ body {
 
 .neu-inset {
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   border-radius: 10px;
 }
 
@@ -169,9 +170,9 @@ body {
   @apply btn;
   color: var(--accent-strong);
   background: var(--accent-soft);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
 }
-.btn-secondary:hover:not(:disabled) { background: #f3ebd6; }
+.btn-secondary:hover:not(:disabled) { background: #e0f2fe; }
 
 .btn-ghost {
   @apply btn;
@@ -222,11 +223,11 @@ body {
   @apply rounded-xl p-6;
   background: var(--surface);
   border: 1px solid var(--border-cool);
-  box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
   color: var(--text-ink);
 }
 
-/* Accent card — warm tan left border for highlighted/info sections */
+/* Accent card — sky-blue left border for informational sections */
 .card-accent {
   @apply rounded-xl p-5;
   background: var(--surface);
@@ -234,7 +235,7 @@ body {
   border-left: 3px solid var(--accent);
   color: var(--text-ink);
 }
-/* Brand card — dark stone left border for primary/active sections */
+/* Brand card — steel-silver left border for primary/active sections */
 .card-brand {
   @apply rounded-xl p-5;
   background: var(--surface);
@@ -253,7 +254,7 @@ body {
 .t-soft  { color: var(--text-ink-soft); }
 .t-muted { color: var(--text-ink-muted); }
 
-/* ========== STATUS PILLS — for data semantics only ========== */
+/* ========== STATUS PILLS — data semantics only ========== */
 .pill { @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold; }
 .pill::before { content: ''; @apply inline-block w-1.5 h-1.5 rounded-full; }
 .pill-green { @apply pill bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200; }
@@ -265,9 +266,9 @@ body {
 .pill-red { @apply pill bg-red-50 text-red-700 ring-1 ring-inset ring-red-200; }
 .dark .pill-red { @apply bg-red-900/30 text-red-300 ring-red-700/50; }
 .pill-red::before { @apply bg-red-500; }
-.pill-blue { @apply pill bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200; }
-.dark .pill-blue { @apply bg-blue-900/30 text-blue-300 ring-blue-700/50; }
-.pill-blue::before { @apply bg-blue-500; }
+.pill-blue { @apply pill bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200; }
+.dark .pill-blue { @apply bg-sky-900/30 text-sky-300 ring-sky-700/50; }
+.pill-blue::before { @apply bg-sky-500; }
 .pill-brand {
   @apply pill;
   background: var(--brand-soft);
