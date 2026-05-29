@@ -6,33 +6,48 @@ html, body, #root { height: 100%; }
 html, body { overflow-x: hidden; }
 
 /* ========== DESIGN TOKENS — Clinical Hospital-Grade ==========
-   White surfaces, slate text, thin borders, single brand accent (teal).
-   No neumorphism, no shadows beyond a tiny card lift, no gradients.
-   Existing class names from the previous neumorphic system are kept
-   so JSX across all pages renders correctly — only the styles changed.
+   Palette:
+     - Clean white surfaces (cards)
+     - Warm beige/cream page background — gives subtle warmth without color
+     - Cool light gray for table stripes / hover surfaces
+     - Soft green (emerald) for the PRIMARY brand: CTAs, brand mark, focus rings,
+       active nav, success states. Conveys "go / safe / care".
+     - Light blue (clinical blue) as the SECONDARY accent: info badges,
+       informational status, secondary actions, links inside data tables.
+       Conveys "information / patient context / neutral".
+     - Slate text hierarchy.
+   No neumorphism, no animations, no shadows beyond a 1-pixel card lift.
 */
 :root {
   /* Surfaces */
-  --bg:          #f6f8fb;   /* page background — soft cool off-white */
-  --surface:     #ffffff;   /* cards, inputs, dropdowns */
-  --surface-2:   #f1f5f9;   /* table-row stripe / hover bg / chips */
+  --bg:          #faf8f3;   /* warm cream page bg */
+  --bg-soft:     #f5f1e8;   /* warm subtle alt (hero side panels, calm sections) */
+  --surface:     #ffffff;   /* primary card surface */
+  --surface-2:   #f4f5f7;   /* cool gray alt — table stripes, input bg on dark cards, hover */
 
   /* Borders */
-  --border:        #e2e8f0; /* slate-200 — default thin border */
-  --border-strong: #cbd5e1; /* slate-300 — emphasis (hover/active border) */
+  --border:        #e7e3d9; /* warm gray border, matched to beige bg */
+  --border-strong: #d4cebe; /* warm gray emphasis */
+  --border-cool:   #e2e8f0; /* cool slate border — used inside white cards next to data */
 
-  /* Text hierarchy */
-  --text-ink:        #0f172a; /* slate-900 — primary text */
-  --text-ink-soft:   #334155; /* slate-700 — secondary text */
-  --text-ink-muted:  #64748b; /* slate-500 — labels, captions, helper text */
+  /* Text */
+  --text-ink:        #0f172a; /* slate-900 — primary */
+  --text-ink-soft:   #475569; /* slate-600 — secondary */
+  --text-ink-muted:  #64748b; /* slate-500 — labels, captions */
 
-  /* Brand (teal) */
-  --brand:        #0f766e; /* brand-700 — primary buttons, focus, links */
-  --brand-strong: #115e59; /* brand-800 — hover */
-  --brand-soft:   #f0fdfa; /* brand-50  — subtle tinted surfaces */
-  --brand-ring:   rgba(15, 118, 110, 0.22);
+  /* Primary — Soft Green (emerald) */
+  --brand:        #059669; /* emerald-600 */
+  --brand-strong: #047857; /* emerald-700 */
+  --brand-soft:   #ecfdf5; /* emerald-50 */
+  --brand-ring:   rgba(5, 150, 105, 0.22);
 
-  /* Aliases kept for backwards compatibility with existing JSX */
+  /* Secondary — Light Blue (clinical) */
+  --accent:        #2563eb; /* blue-600 */
+  --accent-strong: #1d4ed8; /* blue-700 */
+  --accent-soft:   #eff6ff; /* blue-50 */
+  --accent-ring:   rgba(37, 99, 235, 0.20);
+
+  /* Legacy aliases */
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
   --neu-bg-dark:      var(--surface-2);
@@ -41,21 +56,28 @@ html, body { overflow-x: hidden; }
 }
 
 .dark {
-  --bg:          #0b1220;
-  --surface:     #111827;
-  --surface-2:   #1f2937;
+  --bg:          #0f172a;
+  --bg-soft:     #111827;
+  --surface:     #1e293b;
+  --surface-2:   #334155;
 
-  --border:        #1f2937;
-  --border-strong: #334155;
+  --border:        #334155;
+  --border-strong: #475569;
+  --border-cool:   #334155;
 
   --text-ink:        #f1f5f9;
   --text-ink-soft:   #cbd5e1;
   --text-ink-muted:  #94a3b8;
 
-  --brand:        #2dd4bf;
-  --brand-strong: #14b8a6;
-  --brand-soft:   rgba(45, 212, 191, 0.10);
-  --brand-ring:   rgba(45, 212, 191, 0.25);
+  --brand:        #34d399;
+  --brand-strong: #10b981;
+  --brand-soft:   rgba(52, 211, 153, 0.12);
+  --brand-ring:   rgba(52, 211, 153, 0.28);
+
+  --accent:        #60a5fa;
+  --accent-strong: #3b82f6;
+  --accent-soft:   rgba(96, 165, 250, 0.12);
+  --accent-ring:   rgba(96, 165, 250, 0.26);
 
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
@@ -78,7 +100,7 @@ body {
   font-feature-settings: 'kern', 'liga';
 }
 
-/* ========== SURFACES (legacy neumorphic names — now flat) ========== */
+/* ========== SURFACES ========== */
 .neu-surface { background: var(--surface); }
 
 .neu-raised {
@@ -96,13 +118,12 @@ body {
 
 .neu-inset {
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   border-radius: 10px;
 }
 
 .neu-pressable { transition: background-color 150ms ease, border-color 150ms ease; }
 .neu-pressable:hover { border-color: var(--border-strong); background: var(--surface-2); }
-.neu-pressable:active { background: var(--surface-2); }
 
 /* ========== INPUTS ========== */
 .neu-input,
@@ -110,7 +131,7 @@ body {
   @apply w-full text-sm rounded-lg px-3 py-2.5 outline-none transition;
   color: var(--text-ink);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
 }
 .neu-input::placeholder,
 .input::placeholder { color: var(--text-ink-muted); }
@@ -146,23 +167,23 @@ body {
 
 .btn-secondary {
   @apply btn;
-  color: var(--brand);
-  background: var(--brand-soft);
-  border: 1px solid var(--border);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-cool);
 }
-.btn-secondary:hover:not(:disabled) { background: var(--surface-2); }
+.btn-secondary:hover:not(:disabled) { background: #e0ecff; }
 
 .btn-ghost {
   @apply btn;
   color: var(--text-ink-soft);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
 }
-.btn-ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-strong); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-strong); color: var(--text-ink); }
 
 .btn-danger { @apply btn text-white bg-red-600 hover:bg-red-700; }
 
-/* Wider primary used in forms (legacy name kept) */
+/* Wider primary button used in forms */
 .neu-btn-primary {
   @apply inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-lg text-sm font-semibold text-white transition;
   background: var(--brand);
@@ -178,14 +199,14 @@ body {
   @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide uppercase transition;
   color: var(--text-ink-soft);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
 }
 .neu-btn-ghost:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--text-ink); }
 
 .neu-icon {
   @apply inline-flex items-center justify-center rounded-md;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   color: var(--text-ink-soft);
 }
 
@@ -193,17 +214,35 @@ body {
 .card {
   @apply rounded-xl p-5;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   color: var(--text-ink);
   transition: background-color 200ms ease, border-color 200ms ease;
 }
 .card-elev {
   @apply rounded-xl p-6;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
   color: var(--text-ink);
 }
+
+/* Accent card — blue-tinted left border for informational sections */
+.card-accent {
+  @apply rounded-xl p-5;
+  background: var(--surface);
+  border: 1px solid var(--border-cool);
+  border-left: 3px solid var(--accent);
+  color: var(--text-ink);
+}
+/* Brand card — green-tinted left border for primary/active sections */
+.card-brand {
+  @apply rounded-xl p-5;
+  background: var(--surface);
+  border: 1px solid var(--border-cool);
+  border-left: 3px solid var(--brand);
+  color: var(--text-ink);
+}
+
 .section-title {
   @apply text-[11px] font-semibold tracking-[0.12em] uppercase mb-2;
   color: var(--text-ink-muted);
@@ -226,6 +265,9 @@ body {
 .pill-red { @apply pill bg-red-50 text-red-700 ring-1 ring-inset ring-red-200; }
 .dark .pill-red { @apply bg-red-900/30 text-red-300 ring-red-700/50; }
 .pill-red::before { @apply bg-red-500; }
+.pill-blue { @apply pill bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200; }
+.dark .pill-blue { @apply bg-blue-900/30 text-blue-300 ring-blue-700/50; }
+.pill-blue::before { @apply bg-blue-500; }
 .pill-brand { @apply pill bg-brand-50 text-brand-800 ring-1 ring-inset ring-brand-200; }
 .dark .pill-brand { @apply bg-brand-900/40 text-brand-200 ring-brand-700/50; }
 .pill-brand::before { @apply bg-brand-600; }
@@ -238,22 +280,22 @@ body {
 .step-chip-active { @apply step-chip text-white; background: var(--brand); border-color: var(--brand); }
 .step-chip-done { @apply step-chip bg-emerald-50 text-emerald-700 border-emerald-200; }
 .dark .step-chip-done { @apply bg-emerald-900/30 text-emerald-300 border-emerald-700/50; }
-.step-chip-todo { @apply step-chip; background: var(--surface); color: var(--text-ink-muted); border-color: var(--border); }
+.step-chip-todo { @apply step-chip; background: var(--surface); color: var(--text-ink-muted); border-color: var(--border-cool); }
 
 /* ========== BRAND MARK + LINK ========== */
 .brand-mark {
   @apply inline-flex items-center justify-center w-8 h-8 rounded-md text-white;
   background: var(--brand);
 }
-.link { color: var(--brand); }
-.link:hover { color: var(--brand-strong); text-decoration: underline; text-underline-offset: 2px; }
+.link { color: var(--accent); }
+.link:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 2px; }
 
-/* ========== ANIMATIONS — neutralized for clinical look ==========
-   The class names are kept so existing markup doesn't error.
-   Decorative looping animations are no-ops; entrance fades are
-   reduced to a near-instant transition so the UI feels responsive
-   without theatrical motion.
-*/
+/* ========== KPI / METRIC TILE ACCENTS ========== */
+.kpi-tile-brand { border-left: 3px solid var(--brand); }
+.kpi-tile-accent { border-left: 3px solid var(--accent); }
+.kpi-tile-neutral { border-left: 3px solid var(--border-strong); }
+
+/* ========== ANIMATIONS — disabled for clinical look ========== */
 .anim-float, .anim-float-slow, .anim-drift, .anim-pulse-glow,
 .anim-float-card, .anim-float-hero, .shimmer-text {
   animation: none !important;
@@ -270,7 +312,6 @@ body {
   transform: none !important;
 }
 
-/* Reduced motion — already honored above since nothing animates */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; }
 }

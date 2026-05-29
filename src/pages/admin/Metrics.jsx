@@ -74,20 +74,20 @@ export default function Metrics() {
       <div className="space-y-5">
         {/* KPI tiles */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Kpi label="Total cases" value={total} delta="all-time" />
+          <Kpi label="Total cases" value={total} delta="all-time" tone="accent" />
           <Kpi
             label="Escalated"
             value={escalate}
             delta="Needs MO review"
-            tone={escalate > 0 ? 'amber' : 'muted'}
+            tone={escalate > 0 ? 'danger' : 'neutral'}
           />
           <Kpi
             label="Referral rate"
             value={`${m.referral_rate_pct}%`}
             delta="target ≤25%"
-            tone={m.referral_rate_pct > 25 ? 'red' : 'green'}
+            tone={m.referral_rate_pct > 25 ? 'danger' : 'brand'}
           />
-          <Kpi label="Closed remote" value={`${closedRemote}%`} delta="resolved in community" tone="green" />
+          <Kpi label="Closed remote" value={`${closedRemote}%`} delta="resolved in community" tone="brand" />
         </section>
 
         {/* Triage overview + system health */}
@@ -101,14 +101,14 @@ export default function Metrics() {
               <Donut
                 total={total}
                 segments={[
-                  { value: ruleOut, color: '#10b981', label: 'Rule out' },
+                  { value: ruleOut, color: '#059669', label: 'Rule out' },
                   { value: altDx, color: '#f59e0b', label: 'Alternative dx' },
                   { value: escalate, color: '#ef4444', label: 'Escalate' },
                   { value: pending, color: '#94a3b8', label: 'Pending' },
                 ]}
               />
               <ul className="space-y-3">
-                <LegendRow color="#10b981" label="Rule out" value={ruleOut} total={total} />
+                <LegendRow color="#059669" label="Rule out" value={ruleOut} total={total} />
                 <LegendRow color="#f59e0b" label="Alternative dx" value={altDx} total={total} />
                 <LegendRow color="#ef4444" label="Escalate" value={escalate} total={total} />
                 {pending > 0 && (
@@ -231,11 +231,25 @@ export default function Metrics() {
   );
 }
 
-function Kpi({ label, value, delta }) {
+function Kpi({ label, value, delta, tone = 'neutral' }) {
+  const borderCls = {
+    brand: 'kpi-tile-brand',
+    accent: 'kpi-tile-accent',
+    danger: 'border-l-[3px] border-l-red-500',
+    warning: 'border-l-[3px] border-l-amber-500',
+    neutral: 'kpi-tile-neutral',
+  }[tone] || 'kpi-tile-neutral';
+  const valueCls = {
+    brand: 'text-brand-700',
+    accent: 'text-accent-700',
+    danger: 'text-red-700',
+    warning: 'text-amber-700',
+    neutral: 't-ink',
+  }[tone] || 't-ink';
   return (
-    <div className="card">
+    <div className={`card ${borderCls}`}>
       <div className="section-title">{label}</div>
-      <div className="text-3xl font-semibold t-ink mt-1">{value}</div>
+      <div className={`text-3xl font-semibold mt-1 ${valueCls}`}>{value}</div>
       {delta && <div className="text-xs t-muted mt-1">{delta}</div>}
     </div>
   );
