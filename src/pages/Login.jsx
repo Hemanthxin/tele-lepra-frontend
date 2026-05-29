@@ -214,7 +214,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative overflow-hidden p-3 md:p-6 lg:p-8 min-h-full lg:flex lg:items-stretch">
+    <div className="relative overflow-hidden p-3 md:p-6 lg:p-8 lg:min-h-full lg:flex lg:items-stretch">
       <BackgroundShapes />
 
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-30">
