@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import MeetingDetails from '../../components/MeetingDetails';
@@ -15,6 +15,7 @@ const svg = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLineca
 
 export default function MOAppointments() {
   const [list, setList] = useState([]);
+  const [filter, setFilter] = useState('all');
   const [, setTick] = useState(0);
   useEffect(() => {
     api('/appointments/mine').then(setList).catch(() => setList([]));
@@ -22,119 +23,157 @@ export default function MOAppointments() {
     return () => clearInterval(id);
   }, []);
 
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    return (list || []).filter((a) => {
+      const t = new Date(a.scheduled_at).getTime();
+      const { phase } = meetingPhase(a.scheduled_at, a.duration_minutes || 30);
+      if (filter === 'today') {
+        const d = new Date(a.scheduled_at);
+        const today = new Date();
+        return d.toDateString() === today.toDateString();
+      }
+      if (filter === 'upcoming') return t > now && phase !== 'expired';
+      if (filter === 'past') return phase === 'expired';
+      return true;
+    });
+  }, [list, filter]);
+
   return (
-    <div className="anim-fade-up space-y-5">
-      <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <div className="section-title">Tele-consults</div>
-          <h1 className="text-3xl md:text-4xl font-bold t-ink tracking-tight">My Appointments</h1>
+          <h1 className="text-2xl font-semibold tracking-tight t-ink">My Appointments</h1>
           <p className="text-sm t-muted mt-1">Click "Start consult" to open Zoom as host.</p>
         </div>
-        <div className="pill-brand">{list.length} {list.length === 1 ? 'appointment' : 'appointments'}</div>
-      </header>
+        <div>
+          <span className="pill-brand">{list.length} {list.length === 1 ? 'appointment' : 'appointments'}</span>
+        </div>
+      </div>
 
-      {list.length === 0 ? (
-        <div className="card text-center py-12">
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        {[
+          { k: 'all', l: 'All' },
+          { k: 'today', l: 'Today' },
+          { k: 'upcoming', l: 'Upcoming' },
+          { k: 'past', l: 'Past' },
+        ].map((f) => (
+          <button
+            key={f.k}
+            type="button"
+            onClick={() => setFilter(f.k)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${
+              filter === f.k
+                ? 'border-brand-600 text-brand-700 bg-brand-50'
+                : 'border-[color:var(--border)] t-soft hover:border-[color:var(--border-strong)]'
+            }`}
+          >
+            {f.l}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="card-elev text-center">
           <div className="t-soft text-sm font-medium">No appointments yet.</div>
           <div className="t-muted text-xs mt-1">Scheduled tele-consults will appear here.</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 anim-stagger">
-          {list.map((a) => {
-            const when = new Date(a.scheduled_at);
-            const initials = (a.patient_name || '?').slice(0, 1).toUpperCase();
-            const { phase, label } = meetingPhase(a.scheduled_at, a.duration_minutes || 30);
-            const isActive = phase === 'active';
-            const isExpired = phase === 'expired';
-            // Host link: prefer start_url (host token), fall back to join_url.
-            const hostUrl = a.zoom_start_url || a.zoom_join_url;
-            const hasUrl = Boolean(hostUrl);
-            const canStart = isActive && hasUrl;
+        <div className="card-elev p-0 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="text-[11px] uppercase tracking-wider t-muted">
+              <tr className="border-b border-[color:var(--border)]">
+                <th className="text-left font-semibold px-4 py-2.5">Patient</th>
+                <th className="text-left font-semibold px-4 py-2.5">Date / Time</th>
+                <th className="text-left font-semibold px-4 py-2.5">Duration</th>
+                <th className="text-left font-semibold px-4 py-2.5">Status</th>
+                <th className="text-left font-semibold px-4 py-2.5">Meeting</th>
+                <th className="text-right font-semibold px-4 py-2.5">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((a) => {
+                const when = new Date(a.scheduled_at);
+                const { phase, label } = meetingPhase(a.scheduled_at, a.duration_minutes || 30);
+                const isActive = phase === 'active';
+                const isExpired = phase === 'expired';
+                const hostUrl = a.zoom_start_url || a.zoom_join_url;
+                const hasUrl = Boolean(hostUrl);
+                const canStart = isActive && hasUrl;
 
-            const pillCls = isExpired ? 'pill-red' : isActive ? 'pill-amber' : STATUS_PILL[a.status] || 'pill-ink';
-            const pillLabel = isExpired ? 'expired' : isActive ? 'live now' : (a.status || '').replace('_', ' ');
+                const pillCls = isExpired ? 'pill-red' : isActive ? 'pill-amber' : STATUS_PILL[a.status] || 'pill-ink';
+                const pillLabel = isExpired ? 'expired' : isActive ? 'live now' : (a.status || '').replace('_', ' ');
 
-            return (
-              <div key={a.id} className="card">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-700 text-white grid place-items-center text-base font-bold shadow shrink-0">
-                    {initials}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-bold t-ink truncate">{a.patient_name}</div>
-                      <span className={pillCls}>{pillLabel}</span>
-                    </div>
-                    <div className="text-xs t-muted mt-0.5">
-                      {when.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                      {' · '}
-                      {when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                      {' · '}
-                      {a.duration_minutes}m
-                    </div>
-                    {label && (
-                      <div className={`text-[11px] mt-1 ${isExpired ? 'text-red-600 font-semibold' : isActive ? 'text-emerald-600 font-semibold' : 't-muted'}`}>
-                        {label}
+                return (
+                  <tr key={a.id} className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--surface-2)]">
+                    <td className="px-4 py-3 t-ink font-medium">{a.patient_name}</td>
+                    <td className="px-4 py-3 t-soft">
+                      <div>{when.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                      <div className="text-xs t-muted">{when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</div>
+                    </td>
+                    <td className="px-4 py-3 t-soft">{a.duration_minutes}m</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <span className={pillCls}>{pillLabel}</span>
+                        {label && (
+                          <span className={`text-[11px] ${isExpired ? 'text-red-600 font-semibold' : isActive ? 'text-brand-700 font-semibold' : 't-muted'}`}>
+                            {label}
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {isExpired ? (
-                  <div className="space-y-2 mb-3">
-                    <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 px-3 py-2.5">
-                      <div className="text-xs font-semibold text-red-700 dark:text-red-300">Session expired</div>
-                      <p className="text-[11px] t-soft mt-0.5">
-                        Slot has passed. Reschedule a new tele-consult from the case file.
-                      </p>
-                    </div>
-                    <Link
-                      to={`/mo/case/${a.case_id}`}
-                      className="btn-primary w-full inline-flex items-center justify-center gap-2"
-                    >
-                      <svg {...svg} width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                      Schedule new session
-                    </Link>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex gap-2 mb-3">
-                      <a
-                        href={canStart ? hostUrl : undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`btn-primary flex-1 inline-flex items-center justify-center gap-2 ${
-                          !canStart ? 'opacity-50 pointer-events-none' : ''
-                        }`}
-                        aria-disabled={!canStart}
-                        title={!canStart && hasUrl ? 'Available 5 minutes before the scheduled time' : undefined}
-                      >
-                        <svg {...svg} width="14" height="14"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
-                        {isActive ? 'Start consult' : 'Start (at slot time)'}
-                      </a>
-                      <Link
-                        to={`/mo/case/${a.case_id}`}
-                        className="btn-ghost inline-flex items-center justify-center gap-1.5"
-                        title="Open case file"
-                      >
-                        <svg {...svg} width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                        Case
-                      </Link>
-                    </div>
-
-                    {(a.zoom_meeting_id || a.zoom_join_url) && (
-                      <MeetingDetails
-                        meetingId={a.zoom_meeting_id}
-                        password={a.zoom_password}
-                        joinUrl={a.zoom_join_url}
-                        compact
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
+                    </td>
+                    <td className="px-4 py-3">
+                      {!isExpired && (a.zoom_meeting_id || a.zoom_join_url) ? (
+                        <MeetingDetails
+                          meetingId={a.zoom_meeting_id}
+                          password={a.zoom_password}
+                          joinUrl={a.zoom_join_url}
+                          compact
+                        />
+                      ) : (
+                        <span className="text-xs t-muted">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        {isExpired ? (
+                          <Link
+                            to={`/mo/case/${a.case_id}`}
+                            className="btn-primary inline-flex items-center justify-center gap-2"
+                          >
+                            <svg {...svg} width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                            Reschedule
+                          </Link>
+                        ) : (
+                          <a
+                            href={canStart ? hostUrl : undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`btn-primary inline-flex items-center justify-center gap-2 ${
+                              !canStart ? 'opacity-50 pointer-events-none' : ''
+                            }`}
+                            aria-disabled={!canStart}
+                            title={!canStart && hasUrl ? 'Available 5 minutes before the scheduled time' : undefined}
+                          >
+                            <svg {...svg} width="14" height="14"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+                            {isActive ? 'Start' : 'Start at slot'}
+                          </a>
+                        )}
+                        <Link
+                          to={`/mo/case/${a.case_id}`}
+                          className="btn-ghost inline-flex items-center justify-center gap-1.5"
+                          title="Open case file"
+                        >
+                          Case
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

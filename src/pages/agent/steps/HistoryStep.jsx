@@ -43,17 +43,17 @@ export default function HistoryStep({ patient, onDone, initial }) {
   };
 
   return (
-    <form onSubmit={submit} className="card space-y-4 anim-fade-up">
-      <div>
-        <h2 className="font-semibold t-ink">{t('history.title')}</h2>
-        <p className="text-xs t-muted mt-0.5">
+    <form onSubmit={submit} className="card-elev">
+      <header className="mb-5">
+        <h2 className="text-lg font-semibold t-ink">{t('history.title')}</h2>
+        <p className="text-sm t-muted mt-1">
           {patient?.name} · {patient?.age}y · {patient?.sex}
         </p>
-      </div>
+      </header>
 
-      <div>
-        <label className="label">{t('history.chronic')}</label>
-        <div className="flex flex-wrap gap-2.5">
+      <section>
+        <div className="section-title mb-3">{t('history.chronic')}</div>
+        <div className="flex flex-wrap gap-2">
           {CHRONIC.map((c) => {
             const selected = chronic.includes(c);
             return (
@@ -61,45 +61,51 @@ export default function HistoryStep({ patient, onDone, initial }) {
                 type="button"
                 key={c}
                 onClick={() => toggleChronic(c)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={
                   selected
-                    ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md shadow-brand-700/30 scale-[1.03]'
-                    : 'neu-raised-sm t-soft hover:scale-[1.03] hover:text-brand-700 dark:hover:text-brand-300'
-                }`}
+                    ? 'px-3 py-1.5 rounded-md text-sm font-medium border bg-brand-50 text-brand-700 border-brand-200'
+                    : 'px-3 py-1.5 rounded-md text-sm font-medium border bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
+                }
               >
-                {selected && <span className="mr-1">✓</span>}
                 {t('chronic.' + c, c)}
               </button>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div>
-        <label className="label">{t('history.priorRx')}</label>
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">{t('history.priorRx')}</div>
         <input type="file" multiple accept="image/*" onChange={handleUpload} className="text-sm t-soft" />
         {rxUrls.length > 0 && (
-          <p className="text-xs t-muted mt-1">
+          <p className="text-xs t-muted mt-1.5">
             {t('history.files').replace('{n}', rxUrls.length)}
           </p>
         )}
-      </div>
+      </section>
 
-      <div>
-        <label className="label">{t('history.notes')}</label>
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">{t('history.notes')}</div>
         <textarea
-          className="input"
+          className="neu-input"
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder={t('history.notes_ph')}
         />
-      </div>
+      </section>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button className="btn-primary" disabled={busy}>
-        {busy ? '…' : t('history.submit')}
-      </button>
+      {error && (
+        <div className="text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2 mt-4">
+          {error}
+        </div>
+      )}
+
+      <div className="flex justify-end mt-6">
+        <button className="btn-primary" disabled={busy}>
+          {busy ? '…' : t('history.submit')}
+        </button>
+      </div>
     </form>
   );
 }

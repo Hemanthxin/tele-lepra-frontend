@@ -88,17 +88,18 @@ export default function EnrollStep({ onDone, initial }) {
   const onStateChange = (v) => setForm((s) => ({ ...s, state: v, district: '' }));
 
   return (
-    <form onSubmit={submit} className="card space-y-4 anim-fade-up !p-4 md:!p-5">
-      <header className="border-b border-ink-200/60 dark:border-ink-700/40 pb-3">
-        <h2 className="text-base font-bold t-ink">{t('enroll.title')}</h2>
-        <p className="text-[11px] t-muted mt-0.5">{t('enroll.subtitle')}</p>
+    <form onSubmit={submit} className="card-elev">
+      <header className="mb-5">
+        <h2 className="text-lg font-semibold t-ink">{t('enroll.title')}</h2>
+        <p className="text-sm t-muted mt-1">{t('enroll.subtitle')}</p>
       </header>
 
-      <Section title="Patient Identity" icon="user">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <section>
+        <div className="section-title mb-3">Patient Identity</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label={t('enroll.fullName')} required>
             <input
-              className="input"
+              className="neu-input"
               required
               value={form.name}
               onChange={(e) => f('name', e.target.value)}
@@ -107,7 +108,7 @@ export default function EnrollStep({ onDone, initial }) {
           </Field>
           <Field label={t('enroll.age')} required>
             <input
-              className="input"
+              className="neu-input"
               type="number"
               min={0}
               max={120}
@@ -118,15 +119,15 @@ export default function EnrollStep({ onDone, initial }) {
             />
           </Field>
           <Field label={t('enroll.sex')} required>
-            <select className="input" value={form.sex} onChange={(e) => f('sex', e.target.value)}>
+            <select className="neu-input" value={form.sex} onChange={(e) => f('sex', e.target.value)}>
               <option value="male">{t('enroll.sex.male')}</option>
               <option value="female">{t('enroll.sex.female')}</option>
               <option value="other">{t('enroll.sex.other')}</option>
             </select>
           </Field>
-          <Field label={`${t('enroll.phone')} *`} error={phoneError}>
+          <Field label={t('enroll.phone')} required error={phoneError}>
             <input
-              className={`input ${phoneError ? 'ring-2 ring-red-400' : ''}`}
+              className="neu-input"
               required
               inputMode="tel"
               value={form.phone}
@@ -136,13 +137,14 @@ export default function EnrollStep({ onDone, initial }) {
             />
           </Field>
         </div>
-      </Section>
+      </section>
 
-      <Section title="Contact & Location" icon="map">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Contact &amp; Location</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label={t('enroll.state')} required>
             <select
-              className="input"
+              className="neu-input"
               required
               value={form.state}
               onChange={(e) => onStateChange(e.target.value)}
@@ -155,7 +157,7 @@ export default function EnrollStep({ onDone, initial }) {
           </Field>
           <Field label={t('enroll.district')} required>
             <select
-              className="input"
+              className="neu-input"
               required
               disabled={!form.state}
               value={form.district}
@@ -171,24 +173,25 @@ export default function EnrollStep({ onDone, initial }) {
           </Field>
           <Field label={t('enroll.village')} wide>
             <input
-              className="input"
+              className="neu-input"
               value={form.village}
               onChange={(e) => f('village', e.target.value)}
               placeholder="Enter village or area"
             />
           </Field>
         </div>
-      </Section>
+      </section>
 
-      <Section title="Health Identifiers" icon="health">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Health Identifiers</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field
             label="Aadhaar number (12 digits)"
             hint={aadhaarDigits ? `${aadhaarDigits.length}/12` : '12 digits'}
             error={aadhaarError}
           >
             <input
-              className={`input ${aadhaarError ? 'ring-2 ring-red-400' : ''}`}
+              className="neu-input"
               inputMode="numeric"
               value={form.aadhaar_id}
               onChange={(e) => f('aadhaar_id', e.target.value)}
@@ -203,7 +206,7 @@ export default function EnrollStep({ onDone, initial }) {
             error={abhaError}
           >
             <input
-              className={`input ${abhaError ? 'ring-2 ring-red-400' : ''}`}
+              className="neu-input"
               inputMode="numeric"
               value={form.abha_id}
               onChange={(e) => f('abha_id', e.target.value)}
@@ -214,40 +217,42 @@ export default function EnrollStep({ onDone, initial }) {
           </Field>
           <Field label="Referred by (optional)" wide>
             <input
-              className="input"
+              className="neu-input"
               value={form.referred_by}
               onChange={(e) => f('referred_by', e.target.value)}
               placeholder="ASHA / PHC name"
             />
           </Field>
         </div>
-      </Section>
+      </section>
 
-      <div className="flex items-start gap-2.5 rounded-xl neu-inset px-4 py-3">
-        <input
-          type="checkbox"
-          id="consent"
-          checked={form.consent_given}
-          onChange={(e) => f('consent_given', e.target.checked)}
-          className="mt-1 accent-emerald-600"
-        />
-        <label htmlFor="consent" className="text-sm t-soft">
-          {t('enroll.consent')} <span className="text-red-500">*</span>
+      <div className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <label htmlFor="consent" className="flex items-start gap-2.5 text-sm t-soft cursor-pointer">
+          <input
+            type="checkbox"
+            id="consent"
+            checked={form.consent_given}
+            onChange={(e) => f('consent_given', e.target.checked)}
+            className="mt-0.5 accent-brand-600"
+          />
+          <span>
+            {t('enroll.consent')} <span className="text-red-600">*</span>
+          </span>
         </label>
       </div>
 
       {error && (
-        <div className="text-sm text-red-700 dark:text-red-300 rounded-xl neu-inset px-4 py-3">
+        <div className="text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2 mt-4">
           {error}
         </div>
       )}
 
-      <div className="flex justify-end">
-        <button className="btn-primary px-5 py-2.5" disabled={busy}>
+      <div className="flex justify-end mt-6">
+        <button className="btn-primary inline-flex items-center gap-1.5" disabled={busy}>
           {busy ? '…' : (
             <>
               {t('enroll.submit')}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="ml-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
               </svg>
             </>
@@ -258,42 +263,18 @@ export default function EnrollStep({ onDone, initial }) {
   );
 }
 
-function Section({ title, icon, children }) {
-  return (
-    <section>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 grid place-items-center">
-          <SectionIcon name={icon} />
-        </span>
-        <h3 className="text-xs font-bold t-ink uppercase tracking-wider">{title}</h3>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function SectionIcon({ name }) {
-  const c = { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' };
-  switch (name) {
-    case 'user': return <svg {...c}><circle cx="12" cy="7" r="4" /><path d="M5.5 21a6.5 6.5 0 0 1 13 0" /></svg>;
-    case 'map': return <svg {...c}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
-    case 'health': return <svg {...c}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>;
-    default: return null;
-  }
-}
-
 function Field({ label, required, wide, hint, error, children }) {
   return (
     <div className={wide ? 'md:col-span-2' : ''}>
-      <label className="label flex items-center justify-between gap-1">
-        <span className="flex items-center gap-1">
-          <span>{label}</span>
-          {required && <span className="text-red-500" aria-hidden>*</span>}
+      <label className="flex items-center justify-between gap-1 mb-1.5">
+        <span className="text-xs font-medium t-soft">
+          {label}
+          {required && <span className="text-red-600 ml-0.5" aria-hidden>*</span>}
         </span>
-        {hint && <span className="text-[10px] t-muted font-normal">{hint}</span>}
+        {hint && <span className="text-[11px] t-muted">{hint}</span>}
       </label>
       {children}
-      {error && <p className="text-[11px] text-red-600 mt-1 font-medium">{error}</p>}
+      {error && <p className="text-[11px] text-red-600 mt-1">{error}</p>}
     </div>
   );
 }

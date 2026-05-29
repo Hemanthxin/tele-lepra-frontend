@@ -28,36 +28,38 @@ export default function Queue() {
   const statusLabel = (s) => t('status.' + s, s.replace('_', ' '));
 
   return (
-    <div className="anim-fade-up">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <div className="section-title">{t('role.mo')}</div>
-          <h1 className="text-3xl font-bold tracking-tight t-ink">{t('queue.title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight t-ink">{t('queue.title')}</h1>
           <p className="text-sm t-muted mt-1">{t('queue.subtitle')}</p>
         </div>
-        <div className="pill-brand">
-          {cases.length} {cases.length === 1 ? t('queue.case') : t('queue.cases')} · {t('queue.pending')}
+        <div>
+          <span className="pill-brand">
+            {cases.length} {cases.length === 1 ? t('queue.case') : t('queue.cases')} · {t('queue.pending')}
+          </span>
         </div>
       </div>
 
       {loading ? (
-        <div className="neu-raised rounded-2xl p-8 t-muted text-sm">{t('common.loading')}</div>
+        <div className="card-elev t-muted text-sm">{t('common.loading')}</div>
       ) : cases.length === 0 ? (
-        <div className="neu-raised rounded-2xl p-12 text-center">
+        <div className="card-elev text-center">
           <div className="t-soft text-sm font-medium">{t('queue.empty')}</div>
           <div className="t-muted text-xs mt-1">{t('queue.empty_hint')}</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 anim-stagger">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {cases.map((c) => (
             <Link
               to={`/mo/case/${c.id}`}
               key={c.id}
-              className="neu-raised neu-pressable rounded-2xl p-5 block"
+              className="card block border-[color:var(--border)] hover:border-[color:var(--border-strong)]"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="min-w-0">
-                  <div className="font-bold t-ink truncate">{c.patient_name}</div>
+                  <div className="font-semibold t-ink truncate">{c.patient_name}</div>
                   <div className="text-xs t-muted mt-0.5">
                     {c.condition} · #{c.id.slice(0, 8)}
                   </div>
@@ -78,7 +80,7 @@ export default function Queue() {
               )}
 
               {c.triage?.reasons && (
-                <p className="text-xs t-soft line-clamp-2 mt-2 border-t border-ink-200/40 dark:border-ink-700/40 pt-2">
+                <p className="text-xs t-soft line-clamp-2 mt-2 border-t border-[color:var(--border)] pt-2">
                   {c.triage.reasons.join(' · ')}
                 </p>
               )}

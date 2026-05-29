@@ -45,54 +45,64 @@ export default function ScheduleStep({ caseId, onDone }) {
   };
 
   return (
-    <form onSubmit={submit} className="card space-y-3">
-      <div>
-        <h2 className="font-semibold">Step 6 · Schedule MO consult</h2>
-        <p className="text-xs text-slate-500">
+    <form onSubmit={submit} className="card-elev">
+      <header className="mb-5">
+        <h2 className="text-lg font-semibold t-ink">Schedule MO consult</h2>
+        <p className="text-sm t-muted mt-1">
           Books a Zoom slot. Patient gets a join link via WhatsApp (stub).
         </p>
-      </div>
+      </header>
 
-      <div>
-        <label className="label">Medical Officer</label>
-        <select className="input" value={moUid} onChange={(e) => setMoUid(e.target.value)}>
-          {mos.length === 0 && <option value="">(no MOs configured)</option>}
-          {mos.map((m) => (
-            <option key={m.uid} value={m.uid}>
-              {m.name || m.email}
-            </option>
-          ))}
-        </select>
-      </div>
+      <section>
+        <div className="section-title mb-3">Consult Details</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium t-soft mb-1.5">Medical Officer</label>
+            <select className="neu-input" value={moUid} onChange={(e) => setMoUid(e.target.value)}>
+              {mos.length === 0 && <option value="">(no MOs configured)</option>}
+              {mos.map((m) => (
+                <option key={m.uid} value={m.uid}>
+                  {m.name || m.email}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">When</label>
-          <input
-            type="datetime-local"
-            className="input"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
-            required
-          />
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">When</label>
+            <input
+              type="datetime-local"
+              className="neu-input"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">Duration (min)</label>
+            <input
+              type="number"
+              className="neu-input"
+              value={duration}
+              min={10}
+              max={60}
+              onChange={(e) => setDuration(+e.target.value)}
+            />
+          </div>
         </div>
-        <div>
-          <label className="label">Duration (min)</label>
-          <input
-            type="number"
-            className="input"
-            value={duration}
-            min={10}
-            max={60}
-            onChange={(e) => setDuration(+e.target.value)}
-          />
-        </div>
-      </div>
+      </section>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button className="btn-primary" disabled={busy || !moUid}>
-        {busy ? '…' : 'Book appointment'}
-      </button>
+      {error && (
+        <div className="text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2 mt-4">
+          {error}
+        </div>
+      )}
+
+      <div className="flex justify-end mt-6">
+        <button className="btn-primary" disabled={busy || !moUid}>
+          {busy ? '…' : 'Book appointment'}
+        </button>
+      </div>
     </form>
   );
 }

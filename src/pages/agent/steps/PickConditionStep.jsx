@@ -37,22 +37,21 @@ export default function PickConditionStep({ patient, history, onDone, initial })
   };
 
   return (
-    <form onSubmit={submit} className="card space-y-5 anim-fade-up">
-      <div>
-        <h2 className="font-semibold t-ink text-lg">{t('pick.title')}</h2>
-        <p className="text-xs t-muted mt-1">{t('pick.subtitle')}</p>
-      </div>
+    <form onSubmit={submit} className="card-elev">
+      <header className="mb-5">
+        <h2 className="text-lg font-semibold t-ink">{t('pick.title')}</h2>
+        <p className="text-sm t-muted mt-1">{t('pick.subtitle')}</p>
+      </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 anim-stagger">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {CONDITIONS.map((c) => {
           const selected = condition === c.key;
-          const base =
-            'relative text-left p-4 rounded-2xl transition-all duration-300 overflow-hidden group';
+          const baseCls = 'relative text-left p-4 rounded-md border transition';
           const stateCls = selected
-            ? 'bg-gradient-to-br from-brand-500 to-brand-800 text-white shadow-lg shadow-brand-700/30 scale-[1.02] ring-2 ring-brand-300/50'
+            ? 'bg-brand-50 border-brand-300 ring-1 ring-brand-200'
             : c.enabled
-            ? 'neu-raised-sm hover:-translate-y-1 hover:shadow-md cursor-pointer'
-            : 'neu-raised-sm opacity-60 cursor-not-allowed';
+              ? 'bg-[color:var(--surface)] border-[color:var(--border)] hover:border-[color:var(--border-strong)] cursor-pointer'
+              : 'bg-[color:var(--surface)] border-[color:var(--border)] opacity-60 cursor-not-allowed';
 
           return (
             <button
@@ -60,42 +59,33 @@ export default function PickConditionStep({ patient, history, onDone, initial })
               type="button"
               disabled={!c.enabled}
               onClick={() => c.enabled && setCondition(c.key)}
-              className={`${base} ${stateCls}`}
+              className={`${baseCls} ${stateCls}`}
             >
-              {/* corner accent on selected */}
-              {selected && (
-                <span className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-white/10" />
-              )}
-
-              <div className="flex items-start justify-between gap-2 relative">
+              <div className="flex items-start justify-between gap-2">
                 <div
-                  className={`w-10 h-10 rounded-xl grid place-items-center transition ${
+                  className={
                     selected
-                      ? 'bg-white/20 text-white'
-                      : 'neu-icon text-brand-700 dark:text-brand-300 group-hover:scale-110'
-                  }`}
+                      ? 'w-9 h-9 rounded-md bg-brand-100 text-brand-700 grid place-items-center'
+                      : 'w-9 h-9 rounded-md bg-[color:var(--surface-2)] text-brand-700 grid place-items-center border border-[color:var(--border)]'
+                  }
                 >
                   <CondIcon name={c.icon} />
                 </div>
                 {!c.enabled ? (
-                  <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-ink-200/70 dark:bg-ink-700/70 t-muted">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-[color:var(--surface-2)] t-muted border border-[color:var(--border)]">
                     {t('pick.coming_soon')}
                   </span>
                 ) : selected ? (
-                  <span className="w-6 h-6 rounded-full bg-white text-brand-700 grid place-items-center text-xs font-bold shadow">
-                    ✓
+                  <span className="w-5 h-5 rounded-full bg-brand-600 text-white grid place-items-center">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
                   </span>
                 ) : null}
               </div>
 
-              <div className={`mt-3 font-semibold ${selected ? 'text-white' : 't-ink'}`}>
-                {t('cond.' + c.key)}
-              </div>
-              <div
-                className={`text-xs mt-0.5 leading-relaxed ${
-                  selected ? 'text-white/85' : 't-muted'
-                }`}
-              >
+              <div className="mt-3 font-semibold t-ink">{t('cond.' + c.key)}</div>
+              <div className="text-xs t-muted mt-0.5 leading-relaxed">
                 {t('cond.' + c.key + '.hint')}
               </div>
             </button>
@@ -103,15 +93,17 @@ export default function PickConditionStep({ patient, history, onDone, initial })
         })}
       </div>
 
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-ink-200/40 dark:border-ink-700/40">
+      <div className="border-t border-[color:var(--border)] pt-5 mt-6 flex items-center justify-between flex-wrap gap-3">
         <p className="text-xs t-muted">
           {t('pick.patient_chip')}:{' '}
-          <strong className="t-ink">{patient?.name}</strong> · {patient?.age}y · {patient?.sex}
+          <strong className="t-ink font-medium">{patient?.name}</strong> · {patient?.age}y · {patient?.sex}
         </p>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button className="btn-primary" disabled={busy}>
-          {busy ? '…' : t('pick.submit')}
-        </button>
+        <div className="flex items-center gap-3">
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button className="btn-primary" disabled={busy}>
+            {busy ? '…' : t('pick.submit')}
+          </button>
+        </div>
       </div>
     </form>
   );

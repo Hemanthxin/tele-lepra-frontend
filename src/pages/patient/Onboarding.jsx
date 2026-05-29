@@ -5,9 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 
 const CHRONIC = ['Diabetes', 'Hypertension', 'TB', 'HIV', 'Pregnancy', 'None'];
 const STEPS = [
-  { key: 'about', label: '1. About you' },
-  { key: 'history', label: '2. Health history' },
-  { key: 'symptoms', label: '3. Symptoms' },
+  { key: 'about', label: 'About you' },
+  { key: 'history', label: 'Health history' },
+  { key: 'symptoms', label: 'Symptoms' },
 ];
 
 export default function Onboarding() {
@@ -92,106 +92,124 @@ export default function Onboarding() {
     }
   };
 
-  return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-1">Welcome — let's get to know you</h1>
-      <p className="text-sm text-slate-500 mb-4">
-        Answer a few quick questions so an agent can help you.
-      </p>
+  const stepIndex = STEPS.findIndex((s) => s.key === step);
 
-      <ol className="flex gap-2 mb-6 overflow-x-auto">
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <div className="section-title">Patient enrollment</div>
+        <h1 className="text-2xl font-semibold tracking-tight t-ink">Welcome — let's get to know you</h1>
+        <p className="text-sm t-muted mt-1">
+          Answer a few quick questions so a health worker can help you.
+        </p>
+      </div>
+
+      <ol className="flex items-center gap-2 mb-5">
         {STEPS.map((s, i) => {
           const active = s.key === step;
-          const done = STEPS.findIndex((x) => x.key === step) > i;
+          const done = stepIndex > i;
           return (
-            <li
-              key={s.key}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap
-                ${active ? 'bg-blue-600 text-white' : done ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}
-            >
-              {s.label}
+            <li key={s.key} className="flex items-center gap-2 flex-1">
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap border ${
+                  active
+                    ? 'border-brand-600 text-brand-700 bg-brand-50'
+                    : done
+                      ? 'border-[color:var(--border)] text-brand-700 bg-brand-50'
+                      : 'border-[color:var(--border)] t-muted bg-[color:var(--surface)]'
+                }`}
+              >
+                <span className="font-mono">{i + 1}</span>
+                <span>{s.label}</span>
+              </div>
+              {i < STEPS.length - 1 && (
+                <span className="h-px flex-1 bg-[color:var(--border)]" />
+              )}
             </li>
           );
         })}
       </ol>
 
       {step === 'about' && (
-        <div className="card grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="md:col-span-2">
-            <h2 className="font-semibold">Step 1 · About you</h2>
-            <p className="text-xs text-slate-500">Demographics + consent. ABHA optional.</p>
+        <section className="card-elev">
+          <div className="mb-4">
+            <div className="section-title">Step 1</div>
+            <h2 className="text-lg font-semibold t-ink">About you</h2>
+            <p className="text-xs t-muted mt-1">Demographics and consent. ABHA optional.</p>
           </div>
-          <Field label="Full name">
-            <input className="input" value={about.name} onChange={(e) => setAbout({ ...about, name: e.target.value })} />
-          </Field>
-          <Field label="Phone">
-            <input className="input" value={about.phone} onChange={(e) => setAbout({ ...about, phone: e.target.value })} />
-          </Field>
-          <Field label="Age">
-            <input type="number" min={0} max={120} required className="input" value={about.age} onChange={(e) => setAbout({ ...about, age: e.target.value === '' ? '' : +e.target.value })} />
-          </Field>
-          <Field label="Sex">
-            <select className="input" value={about.sex} onChange={(e) => setAbout({ ...about, sex: e.target.value })}>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </Field>
-          <Field label="Location (village / mandal / district)" wide>
-            <input className="input" value={about.location} onChange={(e) => setAbout({ ...about, location: e.target.value })} />
-          </Field>
-          <Field label="ABHA ID (optional)">
-            <input className="input" value={about.abha_id} onChange={(e) => setAbout({ ...about, abha_id: e.target.value })} />
-          </Field>
-          <div className="md:col-span-2 flex items-start gap-2 mt-1">
-            <input
-              id="consent"
-              type="checkbox"
-              checked={about.consent_given}
-              onChange={(e) => setAbout({ ...about, consent_given: e.target.checked })}
-              className="mt-1"
-            />
-            <label htmlFor="consent" className="text-sm">
-              I give informed consent for tele-consultation and storage of my health data.
-            </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label="Full name">
+              <input className="neu-input" value={about.name} onChange={(e) => setAbout({ ...about, name: e.target.value })} />
+            </Field>
+            <Field label="Phone">
+              <input className="neu-input" value={about.phone} onChange={(e) => setAbout({ ...about, phone: e.target.value })} />
+            </Field>
+            <Field label="Age">
+              <input type="number" min={0} max={120} required className="neu-input" value={about.age} onChange={(e) => setAbout({ ...about, age: e.target.value === '' ? '' : +e.target.value })} />
+            </Field>
+            <Field label="Sex">
+              <select className="neu-input" value={about.sex} onChange={(e) => setAbout({ ...about, sex: e.target.value })}>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </Field>
+            <Field label="Location (village / mandal / district)" wide>
+              <input className="neu-input" value={about.location} onChange={(e) => setAbout({ ...about, location: e.target.value })} />
+            </Field>
+            <Field label="ABHA ID (optional)">
+              <input className="neu-input" value={about.abha_id} onChange={(e) => setAbout({ ...about, abha_id: e.target.value })} />
+            </Field>
+            <div className="md:col-span-2 flex items-start gap-2 mt-2">
+              <input
+                id="consent"
+                type="checkbox"
+                checked={about.consent_given}
+                onChange={(e) => setAbout({ ...about, consent_given: e.target.checked })}
+                className="mt-1"
+              />
+              <label htmlFor="consent" className="text-sm t-soft">
+                I give informed consent for tele-consultation and storage of my health data.
+              </label>
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
       {step === 'history' && (
-        <div className="card space-y-4">
-          <div>
-            <h2 className="font-semibold">Step 2 · Health history</h2>
-            <p className="text-xs text-slate-500">Existing conditions and past treatment.</p>
+        <section className="card-elev">
+          <div className="mb-4">
+            <div className="section-title">Step 2</div>
+            <h2 className="text-lg font-semibold t-ink">Health history</h2>
+            <p className="text-xs t-muted mt-1">Existing conditions and past treatment.</p>
           </div>
-          <div>
-            <label className="label">Chronic conditions (select all that apply)</label>
-            <div className="flex flex-wrap gap-2">
-              {CHRONIC.map((c) => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => toggleChronic(c)}
-                  className={`px-3 py-1 rounded-full text-sm border ${
-                    chronic.includes(c)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white border-slate-300'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+          <label className="label">Chronic conditions (select all that apply)</label>
+          <div className="flex flex-wrap gap-2">
+            {CHRONIC.map((c) => (
+              <button
+                type="button"
+                key={c}
+                onClick={() => toggleChronic(c)}
+                className={`px-3 py-1.5 rounded-md text-sm border ${
+                  chronic.includes(c)
+                    ? 'bg-brand-50 text-brand-700 border-brand-600'
+                    : 'bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
           </div>
-        </div>
+        </section>
       )}
 
       {step === 'symptoms' && (
-        <div className="card space-y-4">
+        <section className="card-elev space-y-4">
           <div>
-            <h2 className="font-semibold">Step 3 · Symptoms</h2>
-            <p className="text-xs text-slate-500">
-              Tell us what you're experiencing. A trained agent will follow up.
+            <div className="section-title">Step 3</div>
+            <h2 className="text-lg font-semibold t-ink">Symptoms</h2>
+            <p className="text-xs t-muted mt-1">
+              Tell us what you're experiencing. A trained health worker will follow up.
             </p>
           </div>
 
@@ -238,7 +256,7 @@ export default function Onboarding() {
             <input type="file" multiple accept="image/*" capture="environment" onChange={handleUpload} />
             <div className="flex flex-wrap gap-2 mt-2">
               {symptoms.image_urls.map((u, i) => (
-                <img key={i} src={u} alt="" className="w-20 h-20 object-cover rounded-md" />
+                <img key={i} src={u} alt="" className="w-20 h-20 object-cover rounded-md border border-[color:var(--border)]" />
               ))}
             </div>
           </div>
@@ -246,21 +264,21 @@ export default function Onboarding() {
           <div>
             <label className="label">Anything else you'd like the doctor to know?</label>
             <textarea
-              className="input"
+              className="neu-input"
               rows={3}
               value={symptoms.notes}
               onChange={(e) => setSymptoms({ ...symptoms, notes: e.target.value })}
               placeholder="e.g. itching at night, previous treatment, when symptoms started…"
             />
           </div>
-        </div>
+        </section>
       )}
 
       {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between mt-5">
         <button
-          className="px-4 py-2 rounded-md text-sm bg-slate-100 text-slate-700 disabled:opacity-50"
+          className="btn-ghost"
           disabled={step === 'about' || busy}
           onClick={goBack}
         >
@@ -302,8 +320,10 @@ function YesNo({ label, value, onChange }) {
             key={l}
             type="button"
             onClick={() => onChange(v)}
-            className={`px-3 py-1 rounded-md text-sm border ${
-              value === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-slate-300'
+            className={`px-3 py-1.5 rounded-md text-sm border ${
+              value === v
+                ? 'bg-brand-50 text-brand-700 border-brand-600'
+                : 'bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
             }`}
           >
             {l}
@@ -321,7 +341,7 @@ function NumberField({ label, value, onChange }) {
       <input
         type="number"
         min={0}
-        className="input max-w-xs"
+        className="neu-input max-w-xs"
         value={value}
         onChange={(e) => onChange(+e.target.value)}
       />
