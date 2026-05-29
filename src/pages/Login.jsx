@@ -221,7 +221,7 @@ export default function Login() {
         <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
       </div>
 
-      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 lg:my-auto lg:items-stretch">
+      <div className="anim-fade-up w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 lg:my-auto lg:items-start">
         {/* LEFT HERO */}
         <aside
           className="hidden lg:flex lg:col-span-7 relative rounded-3xl overflow-hidden text-white p-8 xl:p-12 flex-col justify-between gap-8 min-h-[640px] anim-float-hero"
@@ -288,7 +288,7 @@ export default function Login() {
 
         {/* RIGHT FORM — floating card */}
         <section className="lg:col-span-5 flex">
-          <div className="w-full neu-raised rounded-3xl p-6 md:p-9 relative anim-float-card flex flex-col lg:justify-center">
+          <div className="w-full neu-raised rounded-3xl p-6 md:p-9 relative anim-float-card flex flex-col">
             <div className="lg:hidden flex items-center gap-2 mb-6">
               <span className="brand-mark anim-pulse-glow"><Logo /></span>
               <div className="leading-tight">
