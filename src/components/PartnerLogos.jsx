@@ -6,6 +6,9 @@
  *  Two render variants:
  *    <PartnerLogos />          standard, dark text — for light backgrounds (footer)
  *    <PartnerLogos onDark />   inverted/light text — for dark backgrounds (login hero)
+ *
+ *  LEPRA Society is rendered as a non-clickable label; IIHMR Bangalore is
+ *  the only outgoing link (per partner-attribution preference).
  */
 export default function PartnerLogos({ onDark = false, size = 'sm', className = '' }) {
   const sizeMap = {
@@ -16,50 +19,79 @@ export default function PartnerLogos({ onDark = false, size = 'sm', className = 
   };
   const s = sizeMap[size] || sizeMap.sm;
   const labelCls = onDark ? 'text-emerald-100/80' : 't-muted';
-  const bgChip = onDark ? 'bg-white/95' : 'bg-white';
 
   return (
     <div className={`flex items-center gap-3 md:gap-4 ${className}`}>
       <span className={`${labelCls} ${s.label} uppercase tracking-[0.18em] font-semibold shrink-0`}>
         In partnership with
       </span>
-      <div className="flex items-center gap-2.5 md:gap-3">
+      <div className="flex items-center gap-3 md:gap-4">
         <LogoChip
           src="/logos/lepra.png"
           alt="LEPRA Society"
-          href="https://www.leprahealthinaction.in/"
           heightCls={s.box}
-          bgChip={bgChip}
+          onDark={onDark}
         />
+        <span className={onDark ? 'text-emerald-100/40' : 'text-ink-300'} aria-hidden="true">·</span>
         <LogoChip
           src="/logos/iihmr.png"
           alt="IIHMR Bangalore"
           href="https://iihmrbangalore.edu.in/"
           heightCls={s.box}
-          bgChip={bgChip}
+          onDark={onDark}
         />
       </div>
     </div>
   );
 }
 
-function LogoChip({ src, alt, href, heightCls, bgChip }) {
+function LogoChip({ src, alt, href, heightCls, onDark }) {
+  const baseCls = `inline-flex items-center justify-center ${heightCls} px-1`;
+  // Light text on a dark hero — for the textual fallback when the image
+  // file is missing — otherwise the dark-on-dark alt label is invisible.
+  const fallbackTextCls = onDark
+    ? 'text-emerald-50 text-xs font-semibold tracking-wide'
+    : 'text-ink-700 text-xs font-semibold tracking-wide';
+
+  const handleImgError = (e) => {
+    const img = e.currentTarget;
+    img.style.display = 'none';
+    const parent = img.parentElement;
+    if (parent && !parent.querySelector('.logo-fallback')) {
+      const span = document.createElement('span');
+      span.className = `logo-fallback ${fallbackTextCls}`;
+      span.textContent = alt;
+      parent.appendChild(span);
+    }
+  };
+
+  const img = (
+    <img
+      src={src}
+      alt={alt}
+      className={`${heightCls} w-auto object-contain block`}
+      loading="lazy"
+      onError={handleImgError}
+    />
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={alt}
+        className={`${baseCls} rounded-md transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400`}
+      >
+        {img}
+      </a>
+    );
+  }
+
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={alt}
-      className={`inline-flex items-center justify-center ${bgChip} rounded-md px-2.5 py-1.5 ring-1 ring-ink-200/60 hover:ring-emerald-400/60 hover:shadow-md transition`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        className={`${heightCls} w-auto object-contain block`}
-        loading="lazy"
-        // If the file is missing, hide the broken-image icon gracefully.
-        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.textContent = alt; }}
-      />
-    </a>
+    <span title={alt} className={baseCls}>
+      {img}
+    </span>
   );
 }
