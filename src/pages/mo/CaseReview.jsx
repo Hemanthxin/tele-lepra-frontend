@@ -11,14 +11,6 @@ const RISK_PILL = {
   escalate: { cls: 'pill-red', label: 'High Risk' },
 };
 
-const REVIEW_STEPS = [
-  { key: 'enrollment', label: 'Enrollment' },
-  { key: 'history', label: 'History' },
-  { key: 'symptoms', label: 'Symptoms' },
-  { key: 'screening', label: 'AI Screening' },
-  { key: 'decision', label: 'Decision' },
-];
-
 const defaultWhen = () => {
   const d = new Date(Date.now() + 60 * 60 * 1000);
   d.setSeconds(0, 0);
@@ -30,7 +22,6 @@ export default function CaseReview() {
   const nav = useNavigate();
   const { user } = useAuth();
   const [c, setC] = useState(null);
-  const [tab, setTab] = useState('summary');
   const [decision, setDecision] = useState('close_remote');
   const [rx, setRx] = useState('');
   const [referral, setReferral] = useState('');
@@ -46,7 +37,6 @@ export default function CaseReview() {
   const refresh = () => {
     api(`/cases/${id}`).then(setC);
     api('/appointments/mine').then((appts) => {
-      // Pick the most recently scheduled appointment for this case
       const matches = (appts || []).filter((x) => x.case_id === id);
       const latest = matches.sort(
         (a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at),
@@ -116,17 +106,14 @@ export default function CaseReview() {
   const conf = t ? Math.round((t.confidence || 0) * 100) : null;
   const reasons = t?.reasons || [];
   const screen = c.screening || {};
+  const hist = c.history || {};
 
   return (
     <div>
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div className="flex items-start gap-3">
-          <button
-            onClick={() => nav('/mo')}
-            className="btn-ghost !px-2.5 !py-2"
-            aria-label="Back"
-          >
+          <button onClick={() => nav('/mo')} className="btn-ghost !px-2.5 !py-2" aria-label="Back">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
             </svg>
@@ -135,7 +122,7 @@ export default function CaseReview() {
             <div className="section-title">MO · Case Review</div>
             <h1 className="text-2xl font-semibold tracking-tight t-ink">{c.patient_name}</h1>
             <p className="text-sm t-muted mt-1">
-              Step 5 of 5 · MO Decision · <span className="font-mono">#{c.id.slice(0, 8)}</span>
+              <span className="font-mono">#{c.id.slice(0, 8)}</span> · Submitted {fmtDateTime(c.created_at)}
             </p>
           </div>
         </div>
@@ -144,117 +131,154 @@ export default function CaseReview() {
           {t?.suspected_condition && (
             <span className="pill-amber">{t.suspected_condition}</span>
           )}
+          {c.condition && <span className="pill-brand">{c.condition}</span>}
         </div>
       </div>
 
       <div className="space-y-5">
-        {/* Stepper */}
-        <section className="card">
-          <ol className="flex items-center justify-between gap-2 overflow-x-auto">
-            {REVIEW_STEPS.map((s, i) => {
-              const active = s.key === 'decision';
-              return (
-                <li key={s.key} className="flex items-center gap-2 min-w-0">
-                  <div className="flex flex-col items-center">
-                    <span
-                      className={`w-8 h-8 rounded-full grid place-items-center text-xs font-semibold ${
-                        active
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-brand-600 text-white'
-                      }`}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L9 11.6l6.3-6.3a1 1 0 0 1 1.4 0z" />
-                      </svg>
-                    </span>
-                    <span className={`text-[11px] mt-1.5 font-semibold ${active ? 't-ink' : 't-muted'}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                  {i < REVIEW_STEPS.length - 1 && (
-                    <span className="h-px flex-1 bg-[color:var(--border-strong)] self-start mt-4" />
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+        {/* TELE-CONSULT — at the top, core feature */}
+        <TeleConsultBlock
+          appointment={appointment}
+          when={when}
+          setWhen={setWhen}
+          duration={duration}
+          setDuration={setDuration}
+          schedule={schedule}
+          schedBusy={schedBusy}
+          schedError={schedError}
+        />
 
-        {/* Patient summary */}
-        <section className="card-elev">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div className="min-w-0">
-              <div className="section-title">Patient</div>
-              <h2 className="text-lg font-semibold t-ink">{c.patient_name}</h2>
-              <div className="text-xs t-muted mt-1">
-                {c.patient_age ? `${c.patient_age} yrs` : ''}
-                {c.patient_age && c.patient_sex ? ' · ' : ''}
-                {c.patient_sex ? cap(c.patient_sex) : ''}
-                {' · '}
-                Condition <strong className="t-ink">{c.condition}</strong>
-              </div>
-            </div>
-            <div className="text-left md:text-right">
-              <div className="text-[11px] uppercase tracking-wider t-muted">Submitted</div>
-              <div className="text-sm font-semibold t-ink">{fmtDateTime(c.created_at)}</div>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="mt-5 border-b border-[color:var(--border)] flex gap-1 overflow-x-auto">
-            {[
-              { k: 'summary', label: 'Summary' },
-              { k: 'history', label: 'History' },
-              { k: 'symptoms', label: 'Symptoms' },
-              { k: 'images', label: `Images (${(screen.image_urls || []).length})` },
-              { k: 'analysis', label: 'AI Analysis' },
-            ].map((x) => (
-              <button
-                key={x.k}
-                type="button"
-                onClick={() => setTab(x.k)}
-                className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px ${
-                  tab === x.k
-                    ? 'border-brand-600 text-brand-700'
-                    : 'border-transparent t-soft hover:t-ink'
-                }`}
-              >
-                {x.label}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* AI Findings */}
+        {/* AGENT-COLLECTED INTAKE — every section visible at once */}
         <section className="card-elev">
           <div className="flex items-baseline justify-between mb-4">
             <div>
-              <div className="section-title">Triage</div>
-              <h3 className="text-lg font-semibold t-ink">AI Findings</h3>
+              <div className="section-title">Intake by field agent</div>
+              <h3 className="text-lg font-semibold t-ink">Patient record</h3>
             </div>
-            <span className="pill-brand">AI</span>
+            {c.agent_name && (
+              <span className="text-xs t-muted">Submitted by {c.agent_name}</span>
+            )}
           </div>
 
-          {t && (
+          {/* Demographics */}
+          <SectionLabel>Demographics</SectionLabel>
+          <DataGrid>
+            <DataRow label="Full name" value={c.patient_name} />
+            <DataRow label="Age" value={c.patient_age ? `${c.patient_age} years` : null} />
+            <DataRow label="Sex" value={cap(c.patient_sex)} />
+            <DataRow label="Phone" value={c.patient_phone} mono />
+          </DataGrid>
+
+          {/* Location & IDs */}
+          <Divider />
+          <SectionLabel>Location & identifiers</SectionLabel>
+          <DataGrid>
+            <DataRow label="Village" value={c.patient_village} />
+            <DataRow label="District" value={c.patient_district} />
+            <DataRow label="State" value={c.patient_state} />
+            <DataRow label="Aadhaar" value={c.patient_aadhaar_id} mono />
+            <DataRow label="ABHA" value={c.patient_abha_id} mono />
+            <DataRow label="Referred by" value={c.referred_by} />
+          </DataGrid>
+
+          {/* Medical history */}
+          <Divider />
+          <SectionLabel>Medical history</SectionLabel>
+          <div className="space-y-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-2">Chronic conditions</div>
+              {Array.isArray(hist.chronic_conditions) && hist.chronic_conditions.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {hist.chronic_conditions.map((cc, i) => (
+                    <span key={i} className="pill-brand">{cc}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm t-muted">None reported</p>
+              )}
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Past visits / notes</div>
+              <p className="text-sm t-ink whitespace-pre-wrap">{hist.past_visits_notes || <span className="t-muted">—</span>}</p>
+            </div>
+            {Array.isArray(hist.prior_prescriptions_urls) && hist.prior_prescriptions_urls.length > 0 && (
+              <div>
+                <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-2">Prior prescriptions</div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {hist.prior_prescriptions_urls.map((u, i) => (
+                    <a key={i} href={u} target="_blank" rel="noreferrer" className="aspect-square rounded-md overflow-hidden block border border-[color:var(--border-cool)] hover:border-[color:var(--border-strong)]">
+                      <img src={u} alt="" className="w-full h-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Symptoms & screening */}
+          <Divider />
+          <SectionLabel>Symptoms & screening</SectionLabel>
+          <DataGrid>
+            <YesNoRow label="Skin patches present" value={screen.has_skin_patches} />
+            <DataRow label="Patch count" value={screen.patch_count > 0 ? screen.patch_count : null} />
+            <YesNoRow label="Loss of sensation in patches" value={screen.patch_loss_of_sensation} />
+            <YesNoRow label="Enlarged nerves" value={screen.enlarged_nerves} />
+            <YesNoRow label="Weakness in hands or feet" value={screen.weakness_in_hands_or_feet} />
+            <YesNoRow label="Glove / stocking anaesthesia" value={screen.glove_stocking_anesthesia} />
+            <YesNoRow label="Symmetric lesions" value={screen.symmetric_lesions} />
+            <YesNoRow label="Family history of leprosy" value={screen.family_history} />
+            <DataRow label="Duration" value={screen.duration_weeks > 0 ? `${screen.duration_weeks} weeks` : null} />
+          </DataGrid>
+          {screen.notes && (
+            <div className="mt-4">
+              <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Agent notes</div>
+              <p className="text-sm t-ink whitespace-pre-wrap">{screen.notes}</p>
+            </div>
+          )}
+
+          {/* Screening images */}
+          {Array.isArray(screen.image_urls) && screen.image_urls.length > 0 && (
+            <>
+              <Divider />
+              <SectionLabel>Screening images ({screen.image_urls.length})</SectionLabel>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                {screen.image_urls.map((u, i) => (
+                  <a key={i} href={u} target="_blank" rel="noreferrer" className="aspect-square rounded-md overflow-hidden block border border-[color:var(--border-cool)] hover:border-[color:var(--border-strong)]">
+                    <img src={u} alt="" className="w-full h-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* AI / Triage findings */}
+        {t && (
+          <section className="card-elev">
+            <div className="flex items-baseline justify-between mb-4">
+              <div>
+                <div className="section-title">Automated triage</div>
+                <h3 className="text-lg font-semibold t-ink">AI findings</h3>
+              </div>
+              <span className="pill-brand">AI</span>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="text-sm t-soft">Leprosy Confidence</span>
+                  <span className="text-sm t-soft">Leprosy confidence</span>
                   <span className="text-sm font-semibold t-ink">{conf}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-[color:var(--surface-2)] overflow-hidden border border-[color:var(--border)]">
-                  <div
-                    className="h-full bg-brand-600"
-                    style={{ width: `${conf}%` }}
-                  />
+                <div className="h-2 rounded-full bg-[color:var(--surface-2)] overflow-hidden border border-[color:var(--border-cool)]">
+                  <div className="h-full" style={{ width: `${conf}%`, background: 'var(--brand)' }} />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <FindingRow label="Lesion Detected" value={screen.has_skin_patches ? 'Yes' : 'No'} tone={screen.has_skin_patches ? 'good' : 'muted'} />
-                <FindingRow label="Nerve Involvement" value={yn(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) || 'No'} tone={(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) ? 'warn' : 'muted'} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FindingRow label="Lesion detected" value={screen.has_skin_patches ? 'Yes' : 'No'} tone={screen.has_skin_patches ? 'good' : 'muted'} />
+                <FindingRow label="Nerve involvement" value={yn(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) || 'No'} tone={(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) ? 'warn' : 'muted'} />
                 <FindingRow label="Symmetry" value={yn(screen.symmetric_lesions) || 'No'} tone="muted" />
-                <FindingRow label="Risk Score" value={risk.label} tone={t.outcome === 'escalate' ? 'bad' : t.outcome === 'alternative_dx' ? 'warn' : 'good'} />
+                <FindingRow label="Risk score" value={risk.label} tone={t.outcome === 'escalate' ? 'bad' : t.outcome === 'alternative_dx' ? 'warn' : 'good'} />
               </div>
 
               {reasons.length > 0 && (
@@ -263,32 +287,22 @@ export default function CaseReview() {
                   <ul className="text-sm t-soft space-y-0.5">
                     {reasons.map((r, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-brand-700 mt-0.5">•</span>
+                        <span className="t-ink mt-0.5">•</span>
                         <span>{r}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-
-              {(screen.image_urls || []).length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {screen.image_urls.slice(0, 6).map((u, i) => (
-                    <a key={i} href={u} target="_blank" rel="noreferrer" className="aspect-square rounded-md overflow-hidden block border border-[color:var(--border)]">
-                      <img src={u} alt="" className="w-full h-full object-cover" />
-                    </a>
-                  ))}
-                </div>
-              )}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* MO Decision */}
         <section className="card-elev">
           <div className="mb-4">
             <div className="section-title">Action</div>
-            <h3 className="text-lg font-semibold t-ink">MO Decision</h3>
+            <h3 className="text-lg font-semibold t-ink">MO decision</h3>
           </div>
           <div className="space-y-2.5">
             <DecisionRadio
@@ -317,61 +331,25 @@ export default function CaseReview() {
           {decision === 'close_remote' ? (
             <div className="mt-4">
               <label className="label">Prescription / care plan</label>
-              <textarea
-                className="neu-input"
-                rows={3}
-                value={rx}
-                onChange={(e) => setRx(e.target.value)}
-                placeholder="MDT-MB regimen, dose, duration…"
-              />
+              <textarea className="neu-input" rows={3} value={rx} onChange={(e) => setRx(e.target.value)} placeholder="MDT-MB regimen, dose, duration…" />
             </div>
           ) : decision === 'refer' ? (
             <div className="mt-4">
               <label className="label">Referral note (optional)</label>
-              <textarea
-                className="neu-input"
-                rows={3}
-                value={referral}
-                onChange={(e) => setReferral(e.target.value)}
-                placeholder="Add referral notes or instructions…"
-              />
+              <textarea className="neu-input" rows={3} value={referral} onChange={(e) => setReferral(e.target.value)} placeholder="Add referral notes or instructions…" />
             </div>
           ) : (
             <div className="mt-4">
               <label className="label">Treatment notes</label>
-              <textarea
-                className="neu-input"
-                rows={3}
-                value={rx}
-                onChange={(e) => setRx(e.target.value)}
-                placeholder="Recommended treatment for alternative diagnosis…"
-              />
+              <textarea className="neu-input" rows={3} value={rx} onChange={(e) => setRx(e.target.value)} placeholder="Recommended treatment for alternative diagnosis…" />
             </div>
           )}
 
           <div className="mt-3">
             <label className="label">Internal notes</label>
-            <textarea
-              className="neu-input"
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes for the audit log…"
-            />
+            <textarea className="neu-input" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add notes for the audit log…" />
           </div>
         </section>
-
-        {/* Tele-consult scheduler / launcher */}
-        <TeleConsultBlock
-          appointment={appointment}
-          when={when}
-          setWhen={setWhen}
-          duration={duration}
-          setDuration={setDuration}
-          schedule={schedule}
-          schedBusy={schedBusy}
-          schedError={schedError}
-        />
 
         {/* Action bar */}
         <section className="card-elev">
@@ -389,7 +367,6 @@ export default function CaseReview() {
                 Generate Referral
               </button>
               <button type="button" className="btn-primary" disabled={busy} onClick={submit}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>
                 {busy ? 'Submitting…' : 'Send via WhatsApp'}
               </button>
             </div>
@@ -401,20 +378,60 @@ export default function CaseReview() {
 }
 
 const TONE = {
-  good: 'bg-emerald-50 text-emerald-700 border-emerald-300',
-  warn: 'bg-amber-50 text-amber-700 border-amber-300',
-  bad: 'bg-red-50 text-red-700 border-red-300',
-  muted: 'bg-[color:var(--surface-2)] t-soft border-[color:var(--border)]',
+  good: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  warn: 'bg-amber-50 text-amber-800 border-amber-200',
+  bad: 'bg-red-50 text-red-700 border-red-200',
+  muted: 'bg-[color:var(--surface-2)] t-soft border-[color:var(--border-cool)]',
 };
+
+function SectionLabel({ children }) {
+  return <div className="text-[11px] uppercase tracking-[0.12em] t-muted font-semibold mb-3">{children}</div>;
+}
+
+function Divider() {
+  return <div className="border-t border-[color:var(--border-cool)] my-5" />;
+}
+
+function DataGrid({ children }) {
+  return <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">{children}</dl>;
+}
+
+function DataRow({ label, value, mono }) {
+  const empty = value == null || value === '';
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] uppercase tracking-wider t-muted font-semibold">{label}</dt>
+      <dd className={`text-sm mt-0.5 truncate ${empty ? 't-muted' : 't-ink'} ${mono ? 'font-mono' : ''}`}>
+        {empty ? '—' : value}
+      </dd>
+    </div>
+  );
+}
+
+function YesNoRow({ label, value }) {
+  if (value === undefined || value === null) {
+    return (
+      <div className="flex items-center justify-between gap-3 py-1.5">
+        <span className="text-sm t-soft">{label}</span>
+        <span className="text-xs t-muted">—</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <span className="text-sm t-soft">{label}</span>
+      {value
+        ? <span className="pill-amber">Yes</span>
+        : <span className="pill-ink">No</span>}
+    </div>
+  );
+}
 
 function FindingRow({ label, value, tone }) {
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="t-soft flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
-        {label}
-      </span>
-      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${TONE[tone] || TONE.muted}`}>
+    <div className="flex items-center justify-between text-sm py-1">
+      <span className="t-soft">{label}</span>
+      <span className={`text-xs px-2 py-0.5 rounded-md font-semibold border ${TONE[tone] || TONE.muted}`}>
         {value}
       </span>
     </div>
@@ -430,15 +447,14 @@ function DecisionRadio({ checked, onChange, title, subtitle, tone }) {
   return (
     <label
       className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer ${
-        checked ? accent : 'border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
+        checked ? accent : 'border-[color:var(--border-cool)] hover:border-[color:var(--border-strong)]'
       }`}
     >
       <span
-        className={`mt-0.5 w-5 h-5 rounded-full border-2 grid place-items-center shrink-0 ${
-          checked ? 'border-brand-600' : 'border-[color:var(--border-strong)]'
-        }`}
+        className={`mt-0.5 w-5 h-5 rounded-full border-2 grid place-items-center shrink-0`}
+        style={{ borderColor: checked ? 'var(--brand)' : 'var(--border-strong)' }}
       >
-        {checked && <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />}
+        {checked && <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--brand)' }} />}
       </span>
       <input type="radio" checked={checked} onChange={onChange} className="sr-only" />
       <div>
@@ -476,23 +492,11 @@ function TeleConsultBlock({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="label">When</label>
-          <input
-            type="datetime-local"
-            className="neu-input"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
-          />
+          <input type="datetime-local" className="neu-input" value={when} onChange={(e) => setWhen(e.target.value)} />
         </div>
         <div>
           <label className="label">Duration (min)</label>
-          <input
-            type="number"
-            className="neu-input"
-            value={duration}
-            min={10}
-            max={60}
-            onChange={(e) => setDuration(+e.target.value)}
-          />
+          <input type="number" className="neu-input" value={duration} min={10} max={60} onChange={(e) => setDuration(+e.target.value)} />
         </div>
         <div className="flex items-end">
           <button className="btn-primary w-full" onClick={schedule} disabled={schedBusy}>
@@ -504,19 +508,20 @@ function TeleConsultBlock({
     </div>
   );
 
+  // No appointment yet — show scheduler with a calm brand-bordered card so it draws the eye
   if (!appointment) {
     return (
-      <section className="card-elev">
+      <section className="card-brand p-6">
         <SchedulerForm
           title="Schedule tele-consult"
-          subtitle="Books a Zoom slot. Patient gets the join link via WhatsApp/SMS."
+          subtitle="Books a Zoom slot. Patient receives the join link via WhatsApp/SMS."
         />
       </section>
     );
   }
 
   return (
-    <section className="card-elev space-y-4">
+    <section className="card-brand p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="section-title">Tele-consult</div>
@@ -529,7 +534,7 @@ function TeleConsultBlock({
           <div className="text-xs t-muted mt-1">
             <strong className="t-ink">{fmtDateTime(appointment.scheduled_at)}</strong> · {appointment.duration_minutes} min
             {phaseInfo?.label && (
-              <span className={`ml-2 ${isExpired ? 'text-red-600 font-semibold' : isActive ? 'text-brand-700 font-semibold' : ''}`}>
+              <span className={`ml-2 ${isExpired ? 'text-red-600 font-semibold' : isActive ? 't-ink font-semibold' : ''}`}>
                 · {phaseInfo.label}
               </span>
             )}
@@ -564,7 +569,7 @@ function TeleConsultBlock({
       )}
 
       {isExpired && (
-        <div className="neu-inset px-3 py-3 border-red-200">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-3">
           <div className="text-sm font-semibold text-red-700">Session expired</div>
           <p className="text-xs t-soft mt-0.5">
             The scheduled slot has passed and the Zoom link is no longer active. Book a new session below if needed.
@@ -573,7 +578,7 @@ function TeleConsultBlock({
       )}
 
       {isExpired && (
-        <div className="border-t border-[color:var(--border)] pt-4">
+        <div className="border-t border-[color:var(--border-cool)] pt-4">
           <SchedulerForm
             title="Schedule a new session"
             subtitle="Pick a fresh date and time. A new Zoom meeting will be created."

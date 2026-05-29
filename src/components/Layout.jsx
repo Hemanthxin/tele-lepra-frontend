@@ -16,9 +16,9 @@ export default function Layout({ children }) {
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
       <header
-        className="shrink-0 border-b"
+        className="shrink-0 sticky top-0 z-40 border-b"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <div className="px-4 md:px-8 h-14 flex items-center justify-between gap-3 max-w-[1600px] mx-auto w-full">
@@ -124,15 +124,15 @@ export default function Layout({ children }) {
         )}
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      <main className="flex-1">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-6 md:py-8">
           {children}
         </div>
       </main>
 
       <footer
-        className="shrink-0 border-t"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        className="shrink-0 border-t mt-auto"
+        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
       >
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs">
           <div className="flex items-center gap-4 flex-wrap">

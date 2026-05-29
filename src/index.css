@@ -5,79 +5,79 @@
 html, body, #root { height: 100%; }
 html, body { overflow-x: hidden; }
 
-/* ========== DESIGN TOKENS — Clinical Hospital-Grade ==========
+/* ========== DESIGN TOKENS — Premium Beige + Grey ==========
    Palette:
-     - Clean white surfaces (cards)
-     - Warm beige/cream page background — gives subtle warmth without color
-     - Cool light gray for table stripes / hover surfaces
-     - Soft green (emerald) for the PRIMARY brand: CTAs, brand mark, focus rings,
-       active nav, success states. Conveys "go / safe / care".
-     - Light blue (clinical blue) as the SECONDARY accent: info badges,
-       informational status, secondary actions, links inside data tables.
-       Conveys "information / patient context / neutral".
-     - Slate text hierarchy.
-   No neumorphism, no animations, no shadows beyond a 1-pixel card lift.
+     - Warm beige page background (#f5f1ea — cream)
+     - White card surfaces
+     - Subtle oat alt-surface for tables/hover
+     - Warm tan borders that blend with the beige bg
+     - Dark warm stone/charcoal for PRIMARY: buttons, brand mark, focus,
+       active nav, links. Premium, monochrome, restrained.
+     - Warm beige tan as the secondary accent (subtle highlights only).
+     - Slate text hierarchy (cool, for legibility against warm surfaces).
+   Status colors (green/amber/red/blue) reserved for DATA semantics only
+   (pills, donut slices), never for chrome.
 */
 :root {
   /* Surfaces */
-  --bg:          #faf8f3;   /* warm cream page bg */
-  --bg-soft:     #f5f1e8;   /* warm subtle alt (hero side panels, calm sections) */
+  --bg:          #f5f1ea;   /* warm cream beige page bg */
+  --bg-soft:     #ede7d8;   /* darker beige for hero panels */
   --surface:     #ffffff;   /* primary card surface */
-  --surface-2:   #f4f5f7;   /* cool gray alt — table stripes, input bg on dark cards, hover */
+  --surface-2:   #f0ece4;   /* warm oat alt — table stripes, hover */
 
   /* Borders */
-  --border:        #e7e3d9; /* warm gray border, matched to beige bg */
-  --border-strong: #d4cebe; /* warm gray emphasis */
-  --border-cool:   #e2e8f0; /* cool slate border — used inside white cards next to data */
+  --border:        #d4cdb9; /* warm tan border, blends with beige */
+  --border-strong: #a8a092; /* warm stone for emphasis */
+  --border-cool:   #e7e5e4; /* neutral stone-200 inside white cards */
 
   /* Text */
-  --text-ink:        #0f172a; /* slate-900 — primary */
-  --text-ink-soft:   #475569; /* slate-600 — secondary */
-  --text-ink-muted:  #64748b; /* slate-500 — labels, captions */
+  --text-ink:        #1c1917; /* stone-900 — primary */
+  --text-ink-soft:   #44403c; /* stone-700 — secondary */
+  --text-ink-muted:  #78716c; /* stone-500 — labels */
 
-  /* Primary — Soft Green (emerald) */
-  --brand:        #059669; /* emerald-600 */
-  --brand-strong: #047857; /* emerald-700 */
-  --brand-soft:   #ecfdf5; /* emerald-50 */
-  --brand-ring:   rgba(5, 150, 105, 0.22);
+  /* Primary — Premium Dark Stone */
+  --brand:        #292524; /* stone-800 — primary buttons */
+  --brand-strong: #1c1917; /* stone-900 — hover */
+  --brand-soft:   #f5f5f4; /* stone-100 — subtle tint */
+  --brand-ring:   rgba(41, 37, 36, 0.20);
 
-  /* Secondary — Light Blue (clinical) */
-  --accent:        #2563eb; /* blue-600 */
-  --accent-strong: #1d4ed8; /* blue-700 */
-  --accent-soft:   #eff6ff; /* blue-50 */
-  --accent-ring:   rgba(37, 99, 235, 0.20);
+  /* Accent — Warm Tan / Beige */
+  --accent:        #8a6e4d; /* accent-600 */
+  --accent-strong: #6e5740; /* accent-700 */
+  --accent-soft:   #faf6ed; /* accent-50 */
+  --accent-ring:   rgba(138, 110, 77, 0.20);
 
   /* Legacy aliases */
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
   --neu-bg-dark:      var(--surface-2);
   --card-bg:          var(--surface);
-  --card-border:      var(--border);
+  --card-border:      var(--border-cool);
 }
 
 .dark {
-  --bg:          #0f172a;
-  --bg-soft:     #111827;
-  --surface:     #1e293b;
-  --surface-2:   #334155;
+  --bg:          #1c1917;
+  --bg-soft:     #292524;
+  --surface:     #292524;
+  --surface-2:   #44403c;
 
-  --border:        #334155;
-  --border-strong: #475569;
-  --border-cool:   #334155;
+  --border:        #44403c;
+  --border-strong: #57534e;
+  --border-cool:   #44403c;
 
-  --text-ink:        #f1f5f9;
-  --text-ink-soft:   #cbd5e1;
-  --text-ink-muted:  #94a3b8;
+  --text-ink:        #fafaf9;
+  --text-ink-soft:   #d6d3d1;
+  --text-ink-muted:  #a8a29e;
 
-  --brand:        #34d399;
-  --brand-strong: #10b981;
-  --brand-soft:   rgba(52, 211, 153, 0.12);
-  --brand-ring:   rgba(52, 211, 153, 0.28);
+  --brand:        #e7e5e4;
+  --brand-strong: #fafaf9;
+  --brand-soft:   rgba(231, 229, 228, 0.10);
+  --brand-ring:   rgba(231, 229, 228, 0.28);
 
-  --accent:        #60a5fa;
-  --accent-strong: #3b82f6;
-  --accent-soft:   rgba(96, 165, 250, 0.12);
-  --accent-ring:   rgba(96, 165, 250, 0.26);
+  --accent:        #c4a25b;
+  --accent-strong: #d6bb7d;
+  --accent-soft:   rgba(196, 162, 91, 0.10);
+  --accent-ring:   rgba(196, 162, 91, 0.24);
 
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
@@ -105,20 +105,20 @@ body {
 
 .neu-raised {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   border-radius: 12px;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.04);
 }
 
 .neu-raised-sm {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-cool);
   border-radius: 10px;
 }
 
 .neu-inset {
   background: var(--surface-2);
-  border: 1px solid var(--border-cool);
+  border: 1px solid var(--border);
   border-radius: 10px;
 }
 
@@ -169,9 +169,9 @@ body {
   @apply btn;
   color: var(--accent-strong);
   background: var(--accent-soft);
-  border: 1px solid var(--border-cool);
+  border: 1px solid var(--border);
 }
-.btn-secondary:hover:not(:disabled) { background: #e0ecff; }
+.btn-secondary:hover:not(:disabled) { background: #f3ebd6; }
 
 .btn-ghost {
   @apply btn;
@@ -181,9 +181,9 @@ body {
 }
 .btn-ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-strong); color: var(--text-ink); }
 
-.btn-danger { @apply btn text-white bg-red-600 hover:bg-red-700; }
+.btn-danger { @apply btn text-white bg-red-700 hover:bg-red-800; }
 
-/* Wider primary button used in forms */
+/* Wider primary used in forms */
 .neu-btn-primary {
   @apply inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-lg text-sm font-semibold text-white transition;
   background: var(--brand);
@@ -222,11 +222,11 @@ body {
   @apply rounded-xl p-6;
   background: var(--surface);
   border: 1px solid var(--border-cool);
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.04);
   color: var(--text-ink);
 }
 
-/* Accent card — blue-tinted left border for informational sections */
+/* Accent card — warm tan left border for highlighted/info sections */
 .card-accent {
   @apply rounded-xl p-5;
   background: var(--surface);
@@ -234,7 +234,7 @@ body {
   border-left: 3px solid var(--accent);
   color: var(--text-ink);
 }
-/* Brand card — green-tinted left border for primary/active sections */
+/* Brand card — dark stone left border for primary/active sections */
 .card-brand {
   @apply rounded-xl p-5;
   background: var(--surface);
@@ -253,12 +253,12 @@ body {
 .t-soft  { color: var(--text-ink-soft); }
 .t-muted { color: var(--text-ink-muted); }
 
-/* ========== STATUS PILLS ========== */
+/* ========== STATUS PILLS — for data semantics only ========== */
 .pill { @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold; }
 .pill::before { content: ''; @apply inline-block w-1.5 h-1.5 rounded-full; }
-.pill-green { @apply pill bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200; }
+.pill-green { @apply pill bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200; }
 .dark .pill-green { @apply bg-emerald-900/30 text-emerald-300 ring-emerald-700/50; }
-.pill-green::before { @apply bg-emerald-500; }
+.pill-green::before { @apply bg-emerald-600; }
 .pill-amber { @apply pill bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200; }
 .dark .pill-amber { @apply bg-amber-900/30 text-amber-200 ring-amber-700/50; }
 .pill-amber::before { @apply bg-amber-500; }
@@ -268,9 +268,13 @@ body {
 .pill-blue { @apply pill bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200; }
 .dark .pill-blue { @apply bg-blue-900/30 text-blue-300 ring-blue-700/50; }
 .pill-blue::before { @apply bg-blue-500; }
-.pill-brand { @apply pill bg-brand-50 text-brand-800 ring-1 ring-inset ring-brand-200; }
-.dark .pill-brand { @apply bg-brand-900/40 text-brand-200 ring-brand-700/50; }
-.pill-brand::before { @apply bg-brand-600; }
+.pill-brand {
+  @apply pill;
+  background: var(--brand-soft);
+  color: var(--text-ink);
+  box-shadow: inset 0 0 0 1px var(--border-cool);
+}
+.pill-brand::before { background: var(--brand); }
 .pill-ink { @apply pill bg-ink-100 text-ink-700 ring-1 ring-inset ring-ink-200; }
 .dark .pill-ink { @apply bg-ink-800 text-ink-200 ring-ink-700; }
 .pill-ink::before { @apply bg-ink-400; }
@@ -278,8 +282,12 @@ body {
 /* ========== WIZARD STEPS ========== */
 .step-chip { @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap border transition; }
 .step-chip-active { @apply step-chip text-white; background: var(--brand); border-color: var(--brand); }
-.step-chip-done { @apply step-chip bg-emerald-50 text-emerald-700 border-emerald-200; }
-.dark .step-chip-done { @apply bg-emerald-900/30 text-emerald-300 border-emerald-700/50; }
+.step-chip-done {
+  @apply step-chip;
+  background: var(--brand-soft);
+  color: var(--text-ink);
+  border-color: var(--border);
+}
 .step-chip-todo { @apply step-chip; background: var(--surface); color: var(--text-ink-muted); border-color: var(--border-cool); }
 
 /* ========== BRAND MARK + LINK ========== */
@@ -290,7 +298,7 @@ body {
 .link { color: var(--accent); }
 .link:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 2px; }
 
-/* ========== KPI / METRIC TILE ACCENTS ========== */
+/* ========== KPI TILE ACCENTS ========== */
 .kpi-tile-brand { border-left: 3px solid var(--brand); }
 .kpi-tile-accent { border-left: 3px solid var(--accent); }
 .kpi-tile-neutral { border-left: 3px solid var(--border-strong); }
