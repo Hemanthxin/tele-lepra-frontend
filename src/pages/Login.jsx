@@ -213,37 +213,37 @@ export default function Login() {
         <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
       </div>
 
-      <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 lg:items-center">
         {/* LEFT — informational panel (desktop only) */}
         <aside
-          className="hidden lg:flex lg:col-span-7 rounded-2xl p-10 xl:p-12 flex-col justify-between"
+          className="hidden lg:flex lg:col-span-7 rounded-2xl p-12 xl:p-14 flex-col justify-between gap-10 min-h-[640px]"
           style={{ background: 'var(--brand)', color: '#ffffff' }}
         >
           <div>
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-md bg-white text-brand-700 grid place-items-center">
-                <Logo />
+              <span className="w-12 h-12 rounded-md bg-white text-brand-700 grid place-items-center">
+                <LargeLogo />
               </span>
               <div className="leading-tight">
-                <div className="font-semibold tracking-wide text-sm">TELE-LEPROSY</div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-white/70">
+                <div className="font-semibold tracking-wide text-base">TELE-LEPROSY</div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white/70">
                   {t('brand.subtitle')}
                 </div>
               </div>
             </div>
 
-            <h1 className="mt-10 text-3xl xl:text-4xl font-semibold leading-tight tracking-tight">
+            <h1 className="mt-12 text-4xl xl:text-5xl font-semibold leading-[1.15] tracking-tight">
               AI-assisted triage for community health workers.
             </h1>
-            <p className="mt-3 text-white/80 text-sm max-w-md leading-relaxed">
+            <p className="mt-5 text-white/85 text-base max-w-lg leading-relaxed">
               Standardised screening, decision support, and a complete audit trail —
               from first contact in the field to specialist review.
             </p>
 
-            <ul className="mt-8 space-y-2.5">
+            <ul className="mt-10 space-y-3.5">
               {FEATURES.map((f) => (
-                <li key={f.key} className="flex items-center gap-3 text-sm text-white/90">
-                  <span className="w-7 h-7 rounded-md bg-white/15 grid place-items-center text-white">
+                <li key={f.key} className="flex items-center gap-3.5 text-base text-white/90">
+                  <span className="w-8 h-8 rounded-md bg-white/15 grid place-items-center text-white shrink-0">
                     <FeatureIcon name={f.icon} />
                   </span>
                   <span>{t(f.key)}</span>
@@ -257,9 +257,9 @@ export default function Login() {
           </div>
         </aside>
 
-        {/* RIGHT — form card */}
-        <section className="lg:col-span-5">
-          <div className="card-elev">
+        {/* RIGHT — form card (vertically centered against the hero) */}
+        <section className="lg:col-span-5 lg:self-center w-full">
+          <div className="card-elev p-7 md:p-9">
             {/* Mobile-only brand header */}
             <div className="lg:hidden flex items-center gap-2.5 mb-6">
               <span className="brand-mark"><Logo /></span>
@@ -269,14 +269,14 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-start justify-between gap-4 mb-5">
+            <div className="flex items-start justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-semibold tracking-tight t-ink">
+                <h2 className="text-2xl font-semibold tracking-tight t-ink">
                   {userKind === 'patient'
                     ? 'Patient sign in'
                     : mode === 'signin' ? 'Sign in' : t('login.register')}
                 </h2>
-                <p className="text-sm t-muted mt-1">
+                <p className="text-sm t-muted mt-1.5">
                   {userKind === 'patient'
                     ? 'Use your phone, Aadhaar, or ABHA number.'
                     : mode === 'signin' ? t('login.welcome') : t('login.create_intro')}
@@ -646,6 +646,13 @@ function Chevron() {
 function Logo() {
   return (
     <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v6" /><path d="M9 7h6" /><path d="M3 17h3l2-4 3 8 2-6 2 2h6" />
+    </svg>
+  );
+}
+function LargeLogo() {
+  return (
+    <svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 4v6" /><path d="M9 7h6" /><path d="M3 17h3l2-4 3 8 2-6 2 2h6" />
     </svg>
   );
