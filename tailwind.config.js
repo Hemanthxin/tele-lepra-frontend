@@ -18,18 +18,18 @@ export default {
         ],
       },
       colors: {
-        // Primary brand — silver / brushed steel (slate scale)
+        // Primary brand — premium hospital-grade teal blue (calm, decent, not bright)
         brand: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+          50: '#f1f7f8',
+          100: '#dceaed',
+          200: '#b8d5da',
+          300: '#8bb8c0',
+          400: '#5e98a4',
+          500: '#3b7d8a',
+          600: '#2d6571',
+          700: '#245360',
+          800: '#1e4450',
+          900: '#173640',
         },
         // Secondary accent — clinical medical blue (sparingly)
         accent: {

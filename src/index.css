@@ -5,48 +5,48 @@
 html, body, #root { height: 100%; }
 html, body { overflow-x: hidden; }
 
-/* ========== DESIGN TOKENS — Hospital Grade · Silver + Light ==========
+/* ========== DESIGN TOKENS — Hospital Grade · Teal Blue + Light ==========
    Palette:
-     - Page bg: very light cool gray (#f1f5f9 — slate-100). Soft, calm, clinical.
+     - Page bg: very light teal-tinted off-white (#f3f7f8). Calm, clean, clinical
+       — not bright, not gray. Reads as a premium hospital lobby.
      - Surface: pure white cards.
-     - Surface-2: light silver (#e2e8f0 — slate-200) for table stripes & hover.
-     - Borders: silver (#cbd5e1 — slate-300). Crisp but quiet.
-     - Brand (primary): brushed-steel slate-600 (#475569). Looks like polished
-       hospital instruments. White text contrasts well.
-     - Accent: clinical sky/medical blue (#0284c7) — used SPARINGLY for links,
-       info badges, and subtle highlights. Adds a touch of medical identity
-       without breaking the silver-monochrome feel.
-     - Text: dark slate hierarchy for legibility on silver surfaces.
-   Status colors (green/amber/red) reserved for data semantics only.
+     - Surface-2: very light teal wash (#f7fbfb) for table stripes & hover.
+     - Borders: soft teal-gray (#dde8ea). Crisp but quiet.
+     - Brand (primary): calm hospital teal-blue (#3b7d8a). Decent, professional,
+       not saturated. White text on it stays legible.
+     - Accent: slightly deeper clinical teal (#0e7a8c) — used SPARINGLY for
+       links, info badges, and subtle highlights.
+     - Text: deep teal-slate hierarchy for legibility on warm-white surfaces.
+   Status colors (green/amber/red/sky) reserved for data semantics only.
 */
 :root {
   /* Surfaces */
-  --bg:          #f1f5f9;   /* slate-100, light cool silver */
-  --bg-soft:     #e2e8f0;   /* slate-200 alt */
+  --bg:          #f3f7f8;   /* very light teal-tinted off-white */
+  --bg-soft:     #e6eff1;   /* slightly deeper wash */
   --surface:     #ffffff;   /* white cards */
-  --surface-2:   #f8fafc;   /* slate-50 — very light silver for hover/stripes */
+  --surface-2:   #f7fbfb;   /* hover / table stripes */
 
   /* Borders */
-  --border:        #cbd5e1; /* slate-300 — silver */
-  --border-strong: #94a3b8; /* slate-400 — silver emphasis */
-  --border-cool:   #e2e8f0; /* slate-200 — soft silver inside cards */
+  --border:        #cbdadd; /* teal-tinted silver */
+  --border-strong: #9ab4ba; /* emphasis */
+  --border-cool:   #dde8ea; /* soft inside-card border */
 
   /* Text */
-  --text-ink:        #0f172a; /* slate-900 — primary */
-  --text-ink-soft:   #334155; /* slate-700 — secondary */
-  --text-ink-muted:  #64748b; /* slate-500 — labels */
+  --text-ink:        #14313a; /* deep teal-slate — primary */
+  --text-ink-soft:   #3d5963; /* secondary */
+  --text-ink-muted:  #6b8089; /* labels */
 
-  /* Primary — Brushed steel / silver */
-  --brand:        #475569; /* slate-600 */
-  --brand-strong: #334155; /* slate-700 */
-  --brand-soft:   #f1f5f9; /* slate-100 — subtle tint */
-  --brand-ring:   rgba(71, 85, 105, 0.25);
+  /* Primary — Premium hospital teal blue */
+  --brand:        #3b7d8a; /* calm teal-blue */
+  --brand-strong: #245360; /* hover / pressed */
+  --brand-soft:   #f1f7f8; /* subtle tint background */
+  --brand-ring:   rgba(59, 125, 138, 0.25);
 
-  /* Accent — Clinical sky/medical blue */
-  --accent:        #0284c7; /* sky-600 */
-  --accent-strong: #0369a1; /* sky-700 */
-  --accent-soft:   #f0f9ff; /* sky-50 */
-  --accent-ring:   rgba(2, 132, 199, 0.22);
+  /* Accent — Deeper clinical teal (paired with brand) */
+  --accent:        #0e7a8c;
+  --accent-strong: #085b6b;
+  --accent-soft:   #ecf6f8;
+  --accent-ring:   rgba(14, 122, 140, 0.22);
 
   /* Legacy aliases */
   --neu-bg:           var(--bg);
@@ -57,28 +57,28 @@ html, body { overflow-x: hidden; }
 }
 
 .dark {
-  --bg:          #0f172a;
-  --bg-soft:     #1e293b;
-  --surface:     #1e293b;
-  --surface-2:   #334155;
+  --bg:          #0d1f24;
+  --bg-soft:     #15303a;
+  --surface:     #15303a;
+  --surface-2:   #1f4150;
 
-  --border:        #334155;
-  --border-strong: #475569;
-  --border-cool:   #334155;
+  --border:        #1f4150;
+  --border-strong: #2e5c6b;
+  --border-cool:   #1f4150;
 
-  --text-ink:        #f1f5f9;
-  --text-ink-soft:   #cbd5e1;
-  --text-ink-muted:  #94a3b8;
+  --text-ink:        #eaf2f3;
+  --text-ink-soft:   #c2d2d6;
+  --text-ink-muted:  #8ea4aa;
 
-  --brand:        #cbd5e1;
-  --brand-strong: #e2e8f0;
-  --brand-soft:   rgba(203, 213, 225, 0.10);
-  --brand-ring:   rgba(203, 213, 225, 0.28);
+  --brand:        #7fb3bc;
+  --brand-strong: #a8cdd3;
+  --brand-soft:   rgba(127, 179, 188, 0.10);
+  --brand-ring:   rgba(127, 179, 188, 0.28);
 
-  --accent:        #38bdf8;
-  --accent-strong: #7dd3fc;
-  --accent-soft:   rgba(56, 189, 248, 0.10);
-  --accent-ring:   rgba(56, 189, 248, 0.26);
+  --accent:        #42a8b8;
+  --accent-strong: #7fc4d0;
+  --accent-soft:   rgba(66, 168, 184, 0.10);
+  --accent-ring:   rgba(66, 168, 184, 0.26);
 
   --neu-bg:           var(--bg);
   --neu-bg-light:     var(--surface);
@@ -172,7 +172,7 @@ body {
   background: var(--accent-soft);
   border: 1px solid var(--border-cool);
 }
-.btn-secondary:hover:not(:disabled) { background: #e0f2fe; }
+.btn-secondary:hover:not(:disabled) { background: #dceaed; }
 
 .btn-ghost {
   @apply btn;
