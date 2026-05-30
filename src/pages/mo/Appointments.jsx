@@ -80,8 +80,9 @@ export default function MOAppointments() {
           <div className="t-muted text-xs mt-1">Scheduled tele-consults will appear here.</div>
         </div>
       ) : (
-        <div className="card-elev p-0 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card-elev !p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[820px]">
             <thead className="text-[11px] uppercase tracking-wider t-muted">
               <tr className="border-b border-[color:var(--border)]">
                 <th className="text-left font-semibold px-4 py-2.5">Patient</th>
@@ -174,6 +175,7 @@ export default function MOAppointments() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

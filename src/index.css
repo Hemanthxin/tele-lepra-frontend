@@ -213,14 +213,14 @@ body {
 
 /* ========== CARDS ========== */
 .card {
-  @apply rounded-xl p-5;
+  @apply rounded-xl p-4 sm:p-5;
   background: var(--surface);
   border: 1px solid var(--border-cool);
   color: var(--text-ink);
   transition: background-color 200ms ease, border-color 200ms ease;
 }
 .card-elev {
-  @apply rounded-xl p-6;
+  @apply rounded-xl p-4 sm:p-5 md:p-6;
   background: var(--surface);
   border: 1px solid var(--border-cool);
   box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
@@ -229,7 +229,7 @@ body {
 
 /* Accent card — sky-blue left border for informational sections */
 .card-accent {
-  @apply rounded-xl p-5;
+  @apply rounded-xl p-4 sm:p-5;
   background: var(--surface);
   border: 1px solid var(--border-cool);
   border-left: 3px solid var(--accent);
@@ -237,7 +237,7 @@ body {
 }
 /* Brand card — steel-silver left border for primary/active sections */
 .card-brand {
-  @apply rounded-xl p-5;
+  @apply rounded-xl p-4 sm:p-5;
   background: var(--surface);
   border: 1px solid var(--border-cool);
   border-left: 3px solid var(--brand);

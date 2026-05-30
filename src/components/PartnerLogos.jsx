@@ -21,18 +21,18 @@ export default function PartnerLogos({ onDark = false, size = 'sm', className = 
   const labelCls = onDark ? 'text-emerald-100/80' : 't-muted';
 
   return (
-    <div className={`flex items-center gap-3 md:gap-4 ${className}`}>
-      <span className={`${labelCls} ${s.label} uppercase tracking-[0.18em] font-semibold shrink-0`}>
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 md:gap-x-4 ${className}`}>
+      <span className={`hidden sm:inline ${labelCls} ${s.label} uppercase tracking-[0.18em] font-semibold shrink-0`}>
         In partnership with
       </span>
-      <div className="flex items-center gap-3 md:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
         <LogoChip
           src="/logos/lepra.png"
           alt="LEPRA Society"
           heightCls={s.box}
           onDark={onDark}
         />
-        <span className={onDark ? 'text-emerald-100/40' : 'text-ink-300'} aria-hidden="true">·</span>
+        <span className={`hidden sm:inline ${onDark ? 'text-emerald-100/40' : 'text-ink-300'}`} aria-hidden="true">·</span>
         <LogoChip
           src="/logos/iihmr.png"
           alt="IIHMR Bangalore"

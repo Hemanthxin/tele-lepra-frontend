@@ -353,20 +353,20 @@ export default function CaseReview() {
 
         {/* Action bar */}
         <section className="card-elev">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
               Referral note (optional) is sent to the patient and field agent.
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn-ghost">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:justify-end">
+              <button type="button" className="btn-ghost w-full sm:w-auto">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
                 Request More Info
               </button>
-              <button type="button" className="btn-ghost">
+              <button type="button" className="btn-ghost w-full sm:w-auto">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
                 Generate Referral
               </button>
-              <button type="button" className="btn-primary" disabled={busy} onClick={submit}>
+              <button type="button" className="btn-primary w-full sm:w-auto" disabled={busy} onClick={submit}>
                 {busy ? 'Submitting…' : 'Send via WhatsApp'}
               </button>
             </div>

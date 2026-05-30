@@ -208,12 +208,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-full relative p-4 md:p-8 lg:p-10 lg:flex lg:items-center">
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-30">
+    <div className="min-h-full relative p-3 sm:p-4 md:p-8 lg:p-10 lg:flex lg:items-center">
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 z-30">
         <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
       </div>
 
-      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 lg:items-center">
+      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 lg:items-center">
         {/* LEFT — informational panel (desktop only) */}
         <aside
           className="hidden lg:flex lg:col-span-7 rounded-2xl p-12 xl:p-14 flex-col justify-between gap-10 min-h-[640px]"
@@ -259,9 +259,9 @@ export default function Login() {
 
         {/* RIGHT — form card (vertically centered against the hero) */}
         <section className="lg:col-span-5 lg:self-center w-full">
-          <div className="card-elev p-7 md:p-9">
+          <div className="card-elev !p-5 sm:!p-7 md:!p-9">
             {/* Mobile-only brand header */}
-            <div className="lg:hidden flex items-center gap-2.5 mb-6">
+            <div className="lg:hidden flex items-center gap-2.5 mb-5">
               <span className="brand-mark"><Logo /></span>
               <div className="leading-tight">
                 <div className="font-semibold tracking-wide text-sm t-ink">TELE-LEPROSY</div>
@@ -269,7 +269,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-start justify-between gap-4 mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
               <div>
                 <h2 className="text-2xl font-semibold tracking-tight t-ink">
                   {userKind === 'patient'
