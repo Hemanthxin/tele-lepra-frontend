@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api, downloadAuthFile } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import MeetingDetails from '../../components/MeetingDetails';
 import MOClinicalAssessment from './MOClinicalAssessment';
@@ -179,8 +179,6 @@ export default function CaseReview() {
           <SectionLabel>Programme context</SectionLabel>
           <DataGrid>
             <DataRow label="PHC / CHC" value={c.patient_phc} />
-            <DataRow label="Supervisor" value={c.patient_supervisor} />
-            <DataRow label="CHW" value={c.patient_chw} />
           </DataGrid>
 
           {/* Location & IDs */}
@@ -457,17 +455,28 @@ export default function CaseReview() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
               {assessmentSaved
-                ? 'Decision will be sent to the patient via WhatsApp.'
+                ? 'Decision will be sent to the patient via WhatsApp with the decision PDF attached.'
                 : 'Save the clinical assessment above before sending the decision.'}
             </div>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:justify-end">
-              <button type="button" className="btn-ghost w-full sm:w-auto">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
-                Request More Info
+              <button
+                type="button"
+                className="btn-ghost w-full sm:w-auto"
+                onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `intake-${c.id.slice(0, 8)}.pdf`)}
+                title="Download patient intake PDF"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Intake PDF
               </button>
-              <button type="button" className="btn-ghost w-full sm:w-auto">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
-                Generate Referral
+              <button
+                type="button"
+                className="btn-ghost w-full sm:w-auto"
+                onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `decision-${c.id.slice(0, 8)}.pdf`)}
+                disabled={!assessmentSaved}
+                title={assessmentSaved ? 'Download MO decision PDF' : 'Save the clinical assessment first'}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Decision PDF
               </button>
               <button
                 type="button"

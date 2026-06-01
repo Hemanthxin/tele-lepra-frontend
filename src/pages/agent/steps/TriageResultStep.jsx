@@ -4,13 +4,17 @@ const PILL = {
   rule_out: 'pill-green',
   alternative_dx: 'pill-amber',
   escalate: 'pill-red',
+  queued: 'pill-ink',
 };
 
 export default function TriageResultStep({ triage, onNext }) {
   const { t } = useTranslation();
   if (!triage) return null;
-  const title = t('triage.outcome.' + triage.outcome);
-  const blurb = t('triage.outcome.' + triage.outcome + '_blurb');
+  const isQueued = triage.outcome === 'queued';
+  const title = isQueued ? 'Saved offline — pending sync' : t('triage.outcome.' + triage.outcome);
+  const blurb = isQueued
+    ? 'The intake has been stored on this device. It will upload automatically when network returns.'
+    : t('triage.outcome.' + triage.outcome + '_blurb');
 
   return (
     <div className="card-elev">

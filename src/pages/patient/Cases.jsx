@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
+import { api, downloadAuthFile } from '../../lib/api';
 
 const PILL = {
   rule_out: { cls: 'pill-green', label: 'Rule out' },
@@ -58,6 +58,24 @@ export default function PatientCases() {
                     <div className="text-sm t-soft mt-0.5">{c.referral_note}</div>
                   </div>
                 )}
+                <div className="mt-3 pt-3 border-t border-[color:var(--border)] flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `intake-${c.id.slice(0, 8)}.pdf`)}
+                    className="btn-ghost text-xs"
+                  >
+                    Download intake PDF
+                  </button>
+                  {c.clinical_assessment && (
+                    <button
+                      type="button"
+                      onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `decision-${c.id.slice(0, 8)}.pdf`)}
+                      className="btn-ghost text-xs"
+                    >
+                      Download decision PDF
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

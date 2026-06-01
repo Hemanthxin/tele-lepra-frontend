@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import { STATES, STATES_DISTRICTS } from '../../../data/districts';
 import { getPhcMeta } from '../../../lib/phcMeta';
+
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '');
 
@@ -32,8 +32,6 @@ export default function EnrollStep({ onDone, initial }) {
     consent_given: true,
     // Programme context
     phc: '',
-    supervisor: '',
-    chw: '',
     // Address detail
     house_no: '',
     gram_panchayat: '',
@@ -52,13 +50,6 @@ export default function EnrollStep({ onDone, initial }) {
   useEffect(() => {
     getPhcMeta().then(setPhcMeta).catch(() => setPhcMeta([]));
   }, []);
-
-  const phcEntry = useMemo(
-    () => phcMeta.find((p) => p.name === form.phc) || null,
-    [phcMeta, form.phc],
-  );
-  const supervisors = phcEntry?.supervisors || [];
-  const chws = phcEntry?.chws || [];
 
   const districts = useMemo(
     () => (form.state ? STATES_DISTRICTS[form.state] || [] : []),
@@ -86,7 +77,7 @@ export default function EnrollStep({ onDone, initial }) {
       ? 'ABHA ID must be exactly 14 digits'
       : null;
 
-  const submit = async (e) => {
+  const submit = (e) => {
     e.preventDefault();
     setTouched({ phone: true, aadhaar_id: true, abha_id: true });
     if (!form.phone.trim() || phoneDigits.length < 10) return;
@@ -108,8 +99,6 @@ export default function EnrollStep({ onDone, initial }) {
         location,
         // Normalise empty strings → null for optional fields the backend treats as Optional
         phc: form.phc || null,
-        supervisor: form.supervisor || null,
-        chw: form.chw || null,
         house_no: form.house_no || null,
         gram_panchayat: form.gram_panchayat || null,
         household_number: form.household_number || null,
@@ -117,11 +106,10 @@ export default function EnrollStep({ onDone, initial }) {
         head_of_family_phone: form.head_of_family_phone || null,
         relation_to_head: form.relation_to_head || null,
       };
-      const p = await api('/patients', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      onDone(p, form);
+      // No backend POST here — the wizard accumulates state and the final
+      // /patients write happens at Screen submit, either online (immediate)
+      // or via the offline queue. This keeps the whole intake atomic.
+      onDone(payload, form);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -131,7 +119,6 @@ export default function EnrollStep({ onDone, initial }) {
 
   const f = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const onStateChange = (v) => setForm((s) => ({ ...s, state: v, district: '' }));
-  const onPhcChange = (v) => setForm((s) => ({ ...s, phc: v, supervisor: '', chw: '' }));
 
   return (
     <form onSubmit={submit} className="card-elev">
@@ -142,43 +129,17 @@ export default function EnrollStep({ onDone, initial }) {
 
       <section>
         <div className="section-title mb-3">Programme Context</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="PHC / CHC" required>
             <select
               className="neu-input"
               value={form.phc}
-              onChange={(e) => onPhcChange(e.target.value)}
+              onChange={(e) => f('phc', e.target.value)}
               required
             >
               <option value="">{phcMeta.length === 0 ? 'Loading…' : 'Select PHC'}</option>
               {phcMeta.map((p) => (
                 <option key={p.name} value={p.name}>{p.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Supervisor">
-            <select
-              className="neu-input"
-              value={form.supervisor}
-              onChange={(e) => f('supervisor', e.target.value)}
-              disabled={!form.phc}
-            >
-              <option value="">{form.phc ? 'Select supervisor' : 'Pick a PHC first'}</option>
-              {supervisors.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="CHW">
-            <select
-              className="neu-input"
-              value={form.chw}
-              onChange={(e) => f('chw', e.target.value)}
-              disabled={!form.phc}
-            >
-              <option value="">{form.phc ? 'Select CHW' : 'Pick a PHC first'}</option>
-              {chws.map((c) => (
-                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </Field>

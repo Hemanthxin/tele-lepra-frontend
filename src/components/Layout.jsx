@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
+import OfflineBanner from './OfflineBanner';
 import PartnerLogos from './PartnerLogos';
 
 export default function Layout({ children }) {
@@ -137,6 +138,8 @@ export default function Layout({ children }) {
           </nav>
         )}
       </header>
+
+      <OfflineBanner />
 
       <main className="flex-1">
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8">

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { api, uploadImage } from '../../../lib/api';
+import { uploadImage } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import GeoCaptureButton from '../../../components/GeoCaptureButton';
 
@@ -78,7 +78,7 @@ function NumberInput({ value, onChange, max = 999, suffix }) {
   );
 }
 
-export default function ScreenStep({ caseId, onDone, initial }) {
+export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [s, setS] = useState({
@@ -92,7 +92,9 @@ export default function ScreenStep({ caseId, onDone, initial }) {
     duration_months: 0,
     family_history: false,
     image_urls: [],
+    image_blobs: [],
     lab_urls: [],
+    lab_blobs: [],
     notes: '',
     symptoms_checklist: [],
     screened_at: '',
@@ -101,6 +103,7 @@ export default function ScreenStep({ caseId, onDone, initial }) {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const submitBusy = busy || parentBusy;
 
   const set = (k, v) => setS({ ...s, [k]: v });
 
@@ -115,23 +118,53 @@ export default function ScreenStep({ caseId, onDone, initial }) {
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     for (const f of files) {
-      const { url } = await uploadImage(f);
-      setS((cur) => ({ ...cur, image_urls: [...cur.image_urls, url] }));
+      try {
+        const { url } = await uploadImage(f);
+        setS((cur) => ({ ...cur, image_urls: [...cur.image_urls, url] }));
+      } catch (err) {
+        if (err.offline) {
+          // Offline — stash as Blob with a local preview URL; sync engine
+          // will multipart-upload it when network returns.
+          const localUrl = URL.createObjectURL(f);
+          const id = crypto.randomUUID();
+          setS((cur) => ({
+            ...cur,
+            image_blobs: [...cur.image_blobs, { id, blob: f, filename: f.name || 'image.jpg', localUrl }],
+          }));
+        } else {
+          throw err;
+        }
+      }
     }
   };
 
   const handleLabUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     for (const f of files) {
-      const { url } = await uploadImage(f);
-      setS((cur) => ({ ...cur, lab_urls: [...cur.lab_urls, url] }));
+      try {
+        const { url } = await uploadImage(f);
+        setS((cur) => ({ ...cur, lab_urls: [...cur.lab_urls, url] }));
+      } catch (err) {
+        if (err.offline) {
+          const localUrl = URL.createObjectURL(f);
+          const id = crypto.randomUUID();
+          setS((cur) => ({
+            ...cur,
+            lab_blobs: [...cur.lab_blobs, { id, blob: f, filename: f.name || 'lab.jpg', localUrl }],
+          }));
+        } else {
+          throw err;
+        }
+      }
     }
   };
 
   const removeImage = (idx) => setS((cur) => ({ ...cur, image_urls: cur.image_urls.filter((_, i) => i !== idx) }));
+  const removeImageBlob = (id) => setS((cur) => ({ ...cur, image_blobs: cur.image_blobs.filter((b) => b.id !== id) }));
   const removeLab = (idx) => setS((cur) => ({ ...cur, lab_urls: cur.lab_urls.filter((_, i) => i !== idx) }));
+  const removeLabBlob = (id) => setS((cur) => ({ ...cur, lab_blobs: cur.lab_blobs.filter((b) => b.id !== id) }));
 
-  const submit = async (e) => {
+  const submit = (e) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
@@ -142,11 +175,7 @@ export default function ScreenStep({ caseId, onDone, initial }) {
         duration_weeks: s.duration_months > 0 ? Math.max(s.duration_weeks, s.duration_months * 4) : s.duration_weeks,
         screened_at: s.screened_at ? new Date(s.screened_at).toISOString() : new Date().toISOString(),
       };
-      const result = await api(`/cases/${caseId}/screen`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      onDone(result, s);
+      onDone(payload, s);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -281,10 +310,10 @@ export default function ScreenStep({ caseId, onDone, initial }) {
             className="hidden"
           />
         </div>
-        {s.image_urls.length > 0 && (
+        {(s.image_urls.length > 0 || s.image_blobs.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-3">
             {s.image_urls.map((u, i) => (
-              <div key={i} className="relative group">
+              <div key={`url-${i}`} className="relative group">
                 <img
                   src={u}
                   alt=""
@@ -293,6 +322,28 @@ export default function ScreenStep({ caseId, onDone, initial }) {
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
+                  aria-label="Remove image"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {s.image_blobs.map((item) => (
+              <div key={item.id} className="relative group">
+                <img
+                  src={item.localUrl}
+                  alt=""
+                  className="w-24 h-24 object-cover rounded-md border border-amber-300"
+                />
+                <span className="absolute bottom-0 left-0 right-0 text-[9px] font-semibold text-center bg-amber-100/90 text-amber-800 py-0.5 rounded-b-md">
+                  Pending upload
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeImageBlob(item.id)}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
                   aria-label="Remove image"
                 >
@@ -320,10 +371,10 @@ export default function ScreenStep({ caseId, onDone, initial }) {
             className="text-sm t-soft"
           />
         </label>
-        {s.lab_urls.length > 0 && (
+        {(s.lab_urls.length > 0 || s.lab_blobs.length > 0) && (
           <div className="flex flex-wrap gap-3 mt-3">
             {s.lab_urls.map((u, i) => (
-              <div key={i} className="relative group">
+              <div key={`url-${i}`} className="relative group">
                 <img
                   src={u}
                   alt=""
@@ -332,6 +383,28 @@ export default function ScreenStep({ caseId, onDone, initial }) {
                 <button
                   type="button"
                   onClick={() => removeLab(i)}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
+                  aria-label="Remove lab report"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {s.lab_blobs.map((item) => (
+              <div key={item.id} className="relative group">
+                <img
+                  src={item.localUrl}
+                  alt=""
+                  className="w-24 h-24 object-cover rounded-md border border-amber-300"
+                />
+                <span className="absolute bottom-0 left-0 right-0 text-[9px] font-semibold text-center bg-amber-100/90 text-amber-800 py-0.5 rounded-b-md">
+                  Pending upload
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeLabBlob(item.id)}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
                   aria-label="Remove lab report"
                 >
@@ -363,8 +436,8 @@ export default function ScreenStep({ caseId, onDone, initial }) {
       )}
 
       <div className="flex justify-end mt-6">
-        <button className="btn-primary" disabled={busy}>
-          {busy ? '…' : t('screen.submit')}
+        <button className="btn-primary" disabled={submitBusy}>
+          {submitBusy ? '…' : t('screen.submit')}
         </button>
       </div>
     </form>

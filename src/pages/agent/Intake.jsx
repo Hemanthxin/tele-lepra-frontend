@@ -5,7 +5,8 @@ import ScreenStep from './steps/ScreenStep';
 import TriageResultStep from './steps/TriageResultStep';
 import { useTranslation } from '../../i18n/I18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../lib/api';
+import { getIntakeBundle, saveIntakeBundle } from '../../lib/offlineDB';
+import { drainQueue } from '../../lib/syncEngine';
 
 export default function Intake() {
   const { t } = useTranslation();
@@ -18,8 +19,10 @@ export default function Intake() {
   ];
 
   const [step, setStep] = useState('enroll');
+  // `patient` holds the EnrollStep form payload (NOT a server-created patient
+  // anymore — the wizard batches all writes for offline safety).
   const [patient, setPatient] = useState(null);
-  const [caseId, setCaseId] = useState(null);
+  const [history, setHistory] = useState(null);
   const [triage, setTriage] = useState(null);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState(null);
@@ -34,7 +37,7 @@ export default function Intake() {
   const reset = () => {
     setStep('enroll');
     setPatient(null);
-    setCaseId(null);
+    setHistory(null);
     setTriage(null);
     setDraftEnroll(null);
     setDraftHistory(null);
@@ -42,36 +45,67 @@ export default function Intake() {
     setAdvanceError(null);
   };
 
-  // Steps the user has already reached are clickable; future ones are not.
   const canVisit = (key) => {
     const idx = STEPS.findIndex((s) => s.key === key);
     if (idx <= currentIdx) return true;
     if (key === 'history') return Boolean(patient);
-    if (key === 'screen') return Boolean(caseId);
+    if (key === 'screen') return Boolean(history);
     if (key === 'triage') return Boolean(triage);
     return false;
   };
 
-  // After history submission: create the case (default to leprosy — the rule
-  // engine will suggest alternative diagnoses if symptoms don't fit) and post
-  // the collected history onto it, then advance to screening.
-  const onHistorySubmitted = async (historyPayload, draft) => {
-    setDraftHistory(draft || null);
+  // ----- Final submit: queue the full intake as a bundle, then trigger drain. -----
+  // If online, drainQueue() runs the 4 backend POSTs immediately and we get a
+  // real triage result back. If offline, the bundle stays in IndexedDB and the
+  // sync engine drains it when network returns.
+  const onScreenSubmitted = async (screenPayload, draft) => {
+    setDraftScreen(draft || null);
     setAdvanceError(null);
     setAdvancing(true);
     try {
-      const c = await api('/cases', {
-        method: 'POST',
-        body: JSON.stringify({ patient_id: patient.id, condition: 'leprosy' }),
-      });
-      await api(`/cases/${c.id}/history`, {
-        method: 'POST',
-        body: JSON.stringify(historyPayload),
-      });
-      setCaseId(c.id);
-      setStep('screen');
+      // Strip blob entries from the screen payload before persisting — they
+      // go in their own fields on the bundle so sync can multipart-upload them.
+      const { image_blobs = [], lab_blobs = [], ...screenJson } = screenPayload;
+      const bundle = {
+        id: crypto.randomUUID(),
+        status: 'pending',
+        created_at: Date.now(),
+        agent_uid: profile?.uid || null,
+        patient,
+        history: history || {
+          chronic_conditions: [],
+          prior_prescriptions_urls: [],
+          prior_labs_urls: [],
+          past_visits_notes: null,
+        },
+        screen: screenJson,
+        images: image_blobs.map((b) => ({ blob: b.blob, filename: b.filename })),
+        lab_images: lab_blobs.map((b) => ({ blob: b.blob, filename: b.filename })),
+      };
+      await saveIntakeBundle(bundle);
+      await drainQueue();
+
+      // Re-read the bundle to see whether the drain succeeded (synced) or it
+      // stayed in queue (pending / error / offline).
+      const updated = await getIntakeBundle(bundle.id);
+      if (updated?.status === 'synced' && updated.result?.triage) {
+        setTriage(updated.result.triage);
+      } else {
+        setTriage({
+          outcome: 'queued',
+          confidence: 0,
+          suspected_condition: 'Pending sync',
+          reasons: [
+            'Saved offline — will upload when network returns.',
+            updated?.last_error ? `Last sync error: ${updated.last_error}` : null,
+          ].filter(Boolean),
+          suggested_action:
+            'The intake is safely stored on this device. It will sync automatically when you have an internet connection.',
+        });
+      }
+      setStep('triage');
     } catch (err) {
-      setAdvanceError(err.message || 'Failed to start the case. Try again.');
+      setAdvanceError(err.message || 'Failed to save the intake. Try again.');
     } finally {
       setAdvancing(false);
     }
@@ -151,27 +185,27 @@ export default function Intake() {
           <HistoryStep
             patient={patient}
             initial={draftHistory}
-            busy={advancing}
-            onDone={onHistorySubmitted}
+            onDone={(h, draft) => { setHistory(h); setDraftHistory(draft || null); setStep('screen'); }}
           />
-        )}
-        {advanceError && step === 'history' && (
-          <div className="mt-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">
-            {advanceError}
-          </div>
         )}
         {step === 'screen' && (
           <ScreenStep
-            caseId={caseId}
             initial={draftScreen}
-            onDone={(r, draft) => { setTriage(r); setDraftScreen(draft || null); setStep('triage'); }}
+            busy={advancing}
+            onDone={onScreenSubmitted}
           />
+        )}
+        {advanceError && step === 'screen' && (
+          <div className="mt-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">
+            {advanceError}
+          </div>
         )}
         {step === 'triage' && (
           <TriageResultStep
             triage={triage}
             onNext={() => {
-              if (triage?.outcome === 'escalate') alert(t('intake.escalate_alert'));
+              if (triage?.outcome === 'queued') alert('Saved offline — will upload when you reconnect.');
+              else if (triage?.outcome === 'escalate') alert(t('intake.escalate_alert'));
               else if (triage?.outcome === 'alternative_dx') alert(t('intake.altdx_alert'));
               else alert(t('intake.ruleout_alert'));
               reset();
