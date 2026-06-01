@@ -20,11 +20,24 @@ export default function TriageResultStep({ triage, onNext }) {
       </header>
 
       <section>
-        <div className="flex items-center gap-3 flex-wrap mb-3">
+        <div className="flex items-center gap-2 flex-wrap mb-4">
           <span className={PILL[triage.outcome] || 'pill-amber'}>{title}</span>
-          <span className="text-sm t-muted">
-            {t('triage.confidence')} {(triage.confidence * 100).toFixed(0)}% · {t('triage.suspected')}: {triage.suspected_condition}
+          <span className="text-xs t-muted">
+            {t('triage.confidence')} {(triage.confidence * 100).toFixed(0)}%
           </span>
+        </div>
+        <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-3 mb-3">
+          <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">
+            {t('triage.suspected')}
+          </div>
+          <div className="text-base font-semibold t-ink capitalize">
+            {triage.suspected_condition}
+          </div>
+          {triage.alternative_dx_hint && (
+            <div className="text-xs t-soft mt-1">
+              May also be: <em className="t-ink not-italic font-medium">{triage.alternative_dx_hint}</em>
+            </div>
+          )}
         </div>
         <p className="text-sm t-soft">{blurb}</p>
       </section>

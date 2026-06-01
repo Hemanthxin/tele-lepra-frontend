@@ -78,7 +78,7 @@ function NumberInput({ value, onChange, max = 999, suffix }) {
   );
 }
 
-export default function ScreenStep({ caseId, condition, onDone, initial }) {
+export default function ScreenStep({ caseId, onDone, initial }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [s, setS] = useState({
@@ -157,14 +157,7 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
   return (
     <form onSubmit={submit} className="card-elev">
       <header className="mb-5">
-        <h2 className="text-lg font-semibold t-ink">
-          {t('screen.title')}
-          {condition && (
-            <span className="ml-2 text-sm font-normal t-muted">
-              ({t('cond.' + condition, condition)})
-            </span>
-          )}
-        </h2>
+        <h2 className="text-lg font-semibold t-ink">{t('screen.title')}</h2>
         <p className="text-sm t-muted mt-1">{t('screen.subtitle')}</p>
       </header>
 

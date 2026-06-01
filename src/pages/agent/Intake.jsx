@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import EnrollStep from './steps/EnrollStep';
 import HistoryStep from './steps/HistoryStep';
-import PickConditionStep from './steps/PickConditionStep';
 import ScreenStep from './steps/ScreenStep';
 import TriageResultStep from './steps/TriageResultStep';
 import { useTranslation } from '../../i18n/I18nContext';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../lib/api';
 
 export default function Intake() {
   const { t } = useTranslation();
@@ -13,17 +13,16 @@ export default function Intake() {
   const STEPS = [
     { key: 'enroll', short: t('intake.step.enroll.short'), desc: t('intake.step.enroll.desc') },
     { key: 'history', short: t('intake.step.history.short'), desc: t('intake.step.history.desc') },
-    { key: 'pick', short: t('intake.step.pick.short'), desc: t('intake.step.pick.desc') },
     { key: 'screen', short: t('intake.step.screen.short'), desc: t('intake.step.screen.desc') },
     { key: 'triage', short: t('intake.step.triage.short'), desc: t('intake.step.triage.desc') },
   ];
 
   const [step, setStep] = useState('enroll');
   const [patient, setPatient] = useState(null);
-  const [history, setHistory] = useState(null);
-  const [condition, setCondition] = useState(null);
   const [caseId, setCaseId] = useState(null);
   const [triage, setTriage] = useState(null);
+  const [advancing, setAdvancing] = useState(false);
+  const [advanceError, setAdvanceError] = useState(null);
   // Cached form drafts so going back preserves what was typed
   const [draftEnroll, setDraftEnroll] = useState(null);
   const [draftHistory, setDraftHistory] = useState(null);
@@ -35,25 +34,47 @@ export default function Intake() {
   const reset = () => {
     setStep('enroll');
     setPatient(null);
-    setHistory(null);
-    setCondition(null);
     setCaseId(null);
     setTriage(null);
     setDraftEnroll(null);
     setDraftHistory(null);
     setDraftScreen(null);
+    setAdvanceError(null);
   };
 
   // Steps the user has already reached are clickable; future ones are not.
   const canVisit = (key) => {
     const idx = STEPS.findIndex((s) => s.key === key);
     if (idx <= currentIdx) return true;
-    // Can also revisit a step if its dependency is already set
     if (key === 'history') return Boolean(patient);
-    if (key === 'pick') return Boolean(patient);
     if (key === 'screen') return Boolean(caseId);
     if (key === 'triage') return Boolean(triage);
     return false;
+  };
+
+  // After history submission: create the case (default to leprosy — the rule
+  // engine will suggest alternative diagnoses if symptoms don't fit) and post
+  // the collected history onto it, then advance to screening.
+  const onHistorySubmitted = async (historyPayload, draft) => {
+    setDraftHistory(draft || null);
+    setAdvanceError(null);
+    setAdvancing(true);
+    try {
+      const c = await api('/cases', {
+        method: 'POST',
+        body: JSON.stringify({ patient_id: patient.id, condition: 'leprosy' }),
+      });
+      await api(`/cases/${c.id}/history`, {
+        method: 'POST',
+        body: JSON.stringify(historyPayload),
+      });
+      setCaseId(c.id);
+      setStep('screen');
+    } catch (err) {
+      setAdvanceError(err.message || 'Failed to start the case. Try again.');
+    } finally {
+      setAdvancing(false);
+    }
   };
 
   const goTo = (key) => {
@@ -130,19 +151,18 @@ export default function Intake() {
           <HistoryStep
             patient={patient}
             initial={draftHistory}
-            onDone={(h, draft) => { setHistory(h); setDraftHistory(draft || null); setStep('pick'); }}
+            busy={advancing}
+            onDone={onHistorySubmitted}
           />
         )}
-        {step === 'pick' && (
-          <PickConditionStep
-            patient={patient} history={history}
-            initial={condition ? { condition } : null}
-            onDone={(cid, cond) => { setCaseId(cid); setCondition(cond); setStep('screen'); }}
-          />
+        {advanceError && step === 'history' && (
+          <div className="mt-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">
+            {advanceError}
+          </div>
         )}
         {step === 'screen' && (
           <ScreenStep
-            caseId={caseId} condition={condition}
+            caseId={caseId}
             initial={draftScreen}
             onDone={(r, draft) => { setTriage(r); setDraftScreen(draft || null); setStep('triage'); }}
           />

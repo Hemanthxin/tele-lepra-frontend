@@ -4,7 +4,7 @@ import { useTranslation } from '../../../i18n/I18nContext';
 
 const CHRONIC = ['Diabetes', 'Hypertension', 'TB', 'HIV', 'Pregnancy', 'None'];
 
-export default function HistoryStep({ patient, onDone, initial }) {
+export default function HistoryStep({ patient, onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
   const [chronic, setChronic] = useState(initial?.chronic_conditions || []);
   const [notes, setNotes] = useState(initial?.past_visits_notes || '');
@@ -12,6 +12,7 @@ export default function HistoryStep({ patient, onDone, initial }) {
   const [labUrls, setLabUrls] = useState(initial?.prior_labs_urls || []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const submitBusy = busy || parentBusy;
 
   const toggleChronic = (c) =>
     setChronic((arr) => (arr.includes(c) ? arr.filter((x) => x !== c) : [...arr, c]));
@@ -119,8 +120,8 @@ export default function HistoryStep({ patient, onDone, initial }) {
       )}
 
       <div className="flex justify-end mt-6">
-        <button className="btn-primary" disabled={busy}>
-          {busy ? '…' : t('history.submit')}
+        <button className="btn-primary" disabled={submitBusy}>
+          {submitBusy ? '…' : t('history.submit')}
         </button>
       </div>
     </form>
