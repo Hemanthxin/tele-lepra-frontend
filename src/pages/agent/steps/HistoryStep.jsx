@@ -9,6 +9,7 @@ export default function HistoryStep({ patient, onDone, initial }) {
   const [chronic, setChronic] = useState(initial?.chronic_conditions || []);
   const [notes, setNotes] = useState(initial?.past_visits_notes || '');
   const [rxUrls, setRxUrls] = useState(initial?.prior_prescriptions_urls || []);
+  const [labUrls, setLabUrls] = useState(initial?.prior_labs_urls || []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -23,6 +24,14 @@ export default function HistoryStep({ patient, onDone, initial }) {
     }
   };
 
+  const handleLabUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const f of files) {
+      const { url } = await uploadImage(f);
+      setLabUrls((u) => [...u, url]);
+    }
+  };
+
   const submit = (e) => {
     e.preventDefault();
     setBusy(true);
@@ -31,7 +40,7 @@ export default function HistoryStep({ patient, onDone, initial }) {
       const draft = {
         chronic_conditions: chronic,
         prior_prescriptions_urls: rxUrls,
-        prior_labs_urls: [],
+        prior_labs_urls: labUrls,
         past_visits_notes: notes,
       };
       onDone(draft, draft);
@@ -81,6 +90,14 @@ export default function HistoryStep({ patient, onDone, initial }) {
           <p className="text-xs t-muted mt-1.5">
             {t('history.files').replace('{n}', rxUrls.length)}
           </p>
+        )}
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Prior lab reports</div>
+        <input type="file" multiple accept="image/*" onChange={handleLabUpload} className="text-sm t-soft" />
+        {labUrls.length > 0 && (
+          <p className="text-xs t-muted mt-1.5">{labUrls.length} file{labUrls.length === 1 ? '' : 's'} uploaded</p>
         )}
       </section>
 

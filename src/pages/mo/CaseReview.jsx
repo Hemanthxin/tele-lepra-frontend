@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import MeetingDetails from '../../components/MeetingDetails';
+import MOClinicalAssessment from './MOClinicalAssessment';
 import { meetingPhase } from '../../lib/meetingPhase';
 
 const RISK_PILL = {
@@ -27,6 +28,7 @@ export default function CaseReview() {
   const [referral, setReferral] = useState('');
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+  const [assessmentSaved, setAssessmentSaved] = useState(false);
   const [appointmentId, setAppointmentId] = useState(null);
   const [appointment, setAppointment] = useState(null);
   const [when, setWhen] = useState(defaultWhen());
@@ -35,7 +37,10 @@ export default function CaseReview() {
   const [schedError, setSchedError] = useState(null);
 
   const refresh = () => {
-    api(`/cases/${id}`).then(setC);
+    api(`/cases/${id}`).then((d) => {
+      setC(d);
+      setAssessmentSaved(Boolean(d?.clinical_assessment));
+    });
     api('/appointments/mine').then((appts) => {
       const matches = (appts || []).filter((x) => x.case_id === id);
       const latest = matches.sort(
@@ -169,16 +174,37 @@ export default function CaseReview() {
             <DataRow label="Phone" value={c.patient_phone} mono />
           </DataGrid>
 
+          {/* Programme context */}
+          <Divider />
+          <SectionLabel>Programme context</SectionLabel>
+          <DataGrid>
+            <DataRow label="PHC / CHC" value={c.patient_phc} />
+            <DataRow label="Supervisor" value={c.patient_supervisor} />
+            <DataRow label="CHW" value={c.patient_chw} />
+          </DataGrid>
+
           {/* Location & IDs */}
           <Divider />
           <SectionLabel>Location & identifiers</SectionLabel>
           <DataGrid>
+            <DataRow label="House no" value={c.patient_house_no} />
             <DataRow label="Village" value={c.patient_village} />
+            <DataRow label="Gram Panchayat" value={c.patient_gram_panchayat} />
             <DataRow label="District" value={c.patient_district} />
             <DataRow label="State" value={c.patient_state} />
             <DataRow label="Aadhaar" value={c.patient_aadhaar_id} mono />
             <DataRow label="ABHA" value={c.patient_abha_id} mono />
-            <DataRow label="Referred by" value={c.referred_by} />
+            <DataRow label="Referred by" value={c.patient_referred_by} />
+          </DataGrid>
+
+          {/* Household */}
+          <Divider />
+          <SectionLabel>Household</SectionLabel>
+          <DataGrid>
+            <DataRow label="Household number" value={c.patient_household_number} />
+            <DataRow label="Relation to head" value={prettyRelation(c.patient_relation_to_head)} />
+            <DataRow label="Head-of-family name" value={c.patient_head_of_family_name} />
+            <DataRow label="Head-of-family phone" value={c.patient_head_of_family_phone} mono />
           </DataGrid>
 
           {/* Medical history */}
@@ -215,6 +241,30 @@ export default function CaseReview() {
             )}
           </div>
 
+          {/* Screening event context */}
+          {(screen.screened_at || screen.geolocation) && (
+            <>
+              <Divider />
+              <SectionLabel>Screening event</SectionLabel>
+              <DataGrid>
+                <DataRow label="Date of screening" value={screen.screened_at ? fmtDateTime(screen.screened_at) : null} />
+                <DataRow
+                  label="GPS"
+                  value={screen.geolocation ? (
+                    <a
+                      href={`https://maps.google.com/?q=${screen.geolocation.lat},${screen.geolocation.lng}`}
+                      target="_blank" rel="noreferrer"
+                      className="link font-mono text-xs"
+                    >
+                      {screen.geolocation.lat?.toFixed?.(5)}, {screen.geolocation.lng?.toFixed?.(5)}
+                      {screen.geolocation.accuracy != null && ` · ±${Math.round(screen.geolocation.accuracy)}m`}
+                    </a>
+                  ) : null}
+                />
+              </DataGrid>
+            </>
+          )}
+
           {/* Symptoms & screening */}
           <Divider />
           <SectionLabel>Symptoms & screening</SectionLabel>
@@ -226,9 +276,31 @@ export default function CaseReview() {
             <YesNoRow label="Weakness in hands or feet" value={screen.weakness_in_hands_or_feet} />
             <YesNoRow label="Glove / stocking anaesthesia" value={screen.glove_stocking_anesthesia} />
             <YesNoRow label="Symmetric lesions" value={screen.symmetric_lesions} />
-            <YesNoRow label="Family history of leprosy" value={screen.family_history} />
-            <DataRow label="Duration" value={screen.duration_weeks > 0 ? `${screen.duration_weeks} weeks` : null} />
+            <YesNoRow label="Household contact with leprosy" value={screen.family_history} />
+            <DataRow
+              label="Duration"
+              value={
+                screen.duration_months > 0
+                  ? `${screen.duration_months} months`
+                  : screen.duration_weeks > 0
+                    ? `${screen.duration_weeks} weeks`
+                    : null
+              }
+            />
           </DataGrid>
+
+          {/* PDF1 symptom checklist (multi-select) */}
+          {Array.isArray(screen.symptoms_checklist) && screen.symptoms_checklist.length > 0 && (
+            <>
+              <Divider />
+              <SectionLabel>Symptoms checklist (PDF1)</SectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {screen.symptoms_checklist.map((k) => (
+                  <span key={k} className="pill-amber">{prettySymptom(k)}</span>
+                ))}
+              </div>
+            </>
+          )}
           {screen.notes && (
             <div className="mt-4">
               <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Agent notes</div>
@@ -250,6 +322,28 @@ export default function CaseReview() {
               </div>
             </>
           )}
+
+          {/* Lab investigations (from screening or history) */}
+          {(() => {
+            const labs = [
+              ...(Array.isArray(screen.lab_urls) ? screen.lab_urls : []),
+              ...(Array.isArray(hist.prior_labs_urls) ? hist.prior_labs_urls : []),
+            ];
+            if (labs.length === 0) return null;
+            return (
+              <>
+                <Divider />
+                <SectionLabel>Lab investigations ({labs.length})</SectionLabel>
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {labs.map((u, i) => (
+                    <a key={i} href={u} target="_blank" rel="noreferrer" className="aspect-square rounded-md overflow-hidden block border border-[color:var(--border-cool)] hover:border-[color:var(--border-strong)]">
+                      <img src={u} alt="" className="w-full h-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </section>
 
         {/* AI / Triage findings */}
@@ -297,6 +391,13 @@ export default function CaseReview() {
             </div>
           </section>
         )}
+
+        {/* MO Clinical Assessment — required before decision */}
+        <MOClinicalAssessment
+          caseId={c.id}
+          initial={c.clinical_assessment || null}
+          onSaved={() => setAssessmentSaved(true)}
+        />
 
         {/* MO Decision */}
         <section className="card-elev">
@@ -355,7 +456,9 @@ export default function CaseReview() {
         <section className="card-elev">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
-              Referral note (optional) is sent to the patient and field agent.
+              {assessmentSaved
+                ? 'Decision will be sent to the patient via WhatsApp.'
+                : 'Save the clinical assessment above before sending the decision.'}
             </div>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:justify-end">
               <button type="button" className="btn-ghost w-full sm:w-auto">
@@ -366,7 +469,13 @@ export default function CaseReview() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
                 Generate Referral
               </button>
-              <button type="button" className="btn-primary w-full sm:w-auto" disabled={busy} onClick={submit}>
+              <button
+                type="button"
+                className="btn-primary w-full sm:w-auto"
+                disabled={busy || !assessmentSaved}
+                onClick={submit}
+                title={!assessmentSaved ? 'Save the clinical assessment first' : undefined}
+              >
                 {busy ? 'Submitting…' : 'Send via WhatsApp'}
               </button>
             </div>
@@ -467,6 +576,32 @@ function DecisionRadio({ checked, onChange, title, subtitle, tone }) {
 
 const yn = (b) => (b ? 'Yes' : null);
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+const SYMPTOM_LABELS = {
+  skin_patches: 'Light/reddish skin patches',
+  patch_loss_of_sensation: 'Loss of sensation over patches',
+  numb_tingling_burning: 'Tingling/numbness/burning hands/feet',
+  weakness_in_hands_or_feet: 'Weakness in hands or feet',
+  weak_grip: 'Weak grip / objects slipping',
+  painless_wounds: 'Painless wounds/burns/ulcers',
+  nerve_tenderness: 'Pain/tenderness near joints',
+  foot_drop: 'Foot drop / dragging',
+  eye_closure_difficulty: 'Difficulty closing eyes',
+  eyebrow_loss_nasal_collapse: 'Eyebrow loss / collapsed nose',
+  nodules_or_earlobe_swelling: 'Nodules / earlobe swelling',
+};
+const prettySymptom = (k) => SYMPTOM_LABELS[k] || k.replace(/_/g, ' ');
+
+const RELATION_LABELS = {
+  self: 'Self',
+  father_mother: 'Father / Mother',
+  husband_wife: 'Husband / Wife',
+  brother_sister: 'Brother / Sister',
+  son_daughter: 'Son / Daughter',
+  grand_son_grand_daughter: 'Grand Son / Grand Daughter',
+  others: 'Others',
+};
+const prettyRelation = (k) => (k ? RELATION_LABELS[k] || k : null);
 const fmtDateTime = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });

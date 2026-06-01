@@ -1,6 +1,21 @@
 import { useRef, useState } from 'react';
 import { api, uploadImage } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
+import GeoCaptureButton from '../../../components/GeoCaptureButton';
+
+const SYMPTOM_CHECKLIST = [
+  { key: 'skin_patches', label: 'Light-colored or reddish skin patch(es)' },
+  { key: 'patch_loss_of_sensation', label: 'Reduced or loss of sensation over skin patch(es)' },
+  { key: 'numb_tingling_burning', label: 'Tingling, numbness, or burning sensation in hands/feet' },
+  { key: 'weakness_in_hands_or_feet', label: 'Weakness in hands or feet' },
+  { key: 'weak_grip', label: 'Weak grip or objects slipping from hands' },
+  { key: 'painless_wounds', label: 'Painless wounds, burns, or ulcers on hands/feet' },
+  { key: 'nerve_tenderness', label: 'Pain or tenderness near elbow, wrist, knee, or ankle' },
+  { key: 'foot_drop', label: 'Foot slipping out of slippers/chappals or dragging while walking' },
+  { key: 'eye_closure_difficulty', label: 'Difficulty closing eyes completely or reduced blinking' },
+  { key: 'eyebrow_loss_nasal_collapse', label: 'Loss of eyebrows, collapsed nose' },
+  { key: 'nodules_or_earlobe_swelling', label: 'Lumps/nodules on skin or swelling of earlobes' },
+];
 
 function YesNo({ value, onChange, t }) {
   return (
@@ -74,15 +89,28 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
     weakness_in_hands_or_feet: false,
     glove_stocking_anesthesia: false,
     duration_weeks: 0,
+    duration_months: 0,
     family_history: false,
     image_urls: [],
+    lab_urls: [],
     notes: '',
+    symptoms_checklist: [],
+    screened_at: '',
+    geolocation: null,
     ...(initial || {}),
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   const set = (k, v) => setS({ ...s, [k]: v });
+
+  const toggleSymptom = (key) =>
+    setS((cur) => ({
+      ...cur,
+      symptoms_checklist: cur.symptoms_checklist.includes(key)
+        ? cur.symptoms_checklist.filter((x) => x !== key)
+        : [...cur.symptoms_checklist, key],
+    }));
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -92,16 +120,31 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
     }
   };
 
+  const handleLabUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const f of files) {
+      const { url } = await uploadImage(f);
+      setS((cur) => ({ ...cur, lab_urls: [...cur.lab_urls, url] }));
+    }
+  };
+
   const removeImage = (idx) => setS((cur) => ({ ...cur, image_urls: cur.image_urls.filter((_, i) => i !== idx) }));
+  const removeLab = (idx) => setS((cur) => ({ ...cur, lab_urls: cur.lab_urls.filter((_, i) => i !== idx) }));
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
+      // Keep duration_weeks roughly in sync with duration_months for the rule engine.
+      const payload = {
+        ...s,
+        duration_weeks: s.duration_months > 0 ? Math.max(s.duration_weeks, s.duration_months * 4) : s.duration_weeks,
+        screened_at: s.screened_at ? new Date(s.screened_at).toISOString() : new Date().toISOString(),
+      };
       const result = await api(`/cases/${caseId}/screen`, {
         method: 'POST',
-        body: JSON.stringify(s),
+        body: JSON.stringify(payload),
       });
       onDone(result, s);
     } catch (err) {
@@ -126,6 +169,28 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
       </header>
 
       <section>
+        <div className="section-title mb-3">Screening Context</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">Date of screening</label>
+            <input
+              type="datetime-local"
+              className="neu-input"
+              value={s.screened_at}
+              onChange={(e) => set('screened_at', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">Location (GPS)</label>
+            <GeoCaptureButton
+              value={s.geolocation}
+              onCapture={(g) => set('geolocation', g)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">Clinical Screening</div>
         <div className="divide-y divide-[color:var(--border)] border border-[color:var(--border)] rounded-md">
           <QuestionRow label={t('screen.has_patches')} required>
@@ -160,14 +225,45 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
             <YesNo value={s.family_history} onChange={(v) => set('family_history', v)} t={t} />
           </QuestionRow>
 
-          <QuestionRow label={t('screen.duration')}>
+          <QuestionRow label="Duration of symptoms">
             <NumberInput
-              value={s.duration_weeks}
-              onChange={(v) => set('duration_weeks', v)}
-              max={520}
-              suffix="weeks"
+              value={s.duration_months}
+              onChange={(v) => set('duration_months', v)}
+              max={120}
+              suffix="months"
             />
           </QuestionRow>
+        </div>
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Symptoms Checklist (PDF1)</div>
+        <p className="text-xs t-muted mb-3">
+          Tap every symptom the patient reports — this is the canonical clinical checklist alongside the Y/N rows above.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {SYMPTOM_CHECKLIST.map((sym) => {
+            const selected = s.symptoms_checklist.includes(sym.key);
+            return (
+              <button
+                key={sym.key}
+                type="button"
+                onClick={() => toggleSymptom(sym.key)}
+                className={
+                  selected
+                    ? 'text-left px-3 py-2.5 rounded-md border text-sm font-medium bg-brand-50 text-brand-700 border-brand-300'
+                    : 'text-left px-3 py-2.5 rounded-md border text-sm bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
+                }
+              >
+                <span className="flex items-start gap-2">
+                  <span className={selected ? 'text-brand-700 mt-0.5' : 't-muted mt-0.5'}>
+                    {selected ? '☑' : '☐'}
+                  </span>
+                  <span className="flex-1">{sym.label}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -206,6 +302,45 @@ export default function ScreenStep({ caseId, condition, onDone, initial }) {
                   onClick={() => removeImage(i)}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
                   aria-label="Remove image"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Lab investigations</div>
+        <p className="text-xs t-muted mb-3">
+          Upload prior lab reports (skin smear, biopsy, blood work) if available.
+        </p>
+        <label className="block">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleLabUpload}
+            className="text-sm t-soft"
+          />
+        </label>
+        {s.lab_urls.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-3">
+            {s.lab_urls.map((u, i) => (
+              <div key={i} className="relative group">
+                <img
+                  src={u}
+                  alt=""
+                  className="w-24 h-24 object-cover rounded-md border border-[color:var(--border)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeLab(i)}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center text-xs opacity-0 group-hover:opacity-100"
+                  aria-label="Remove lab report"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 6L6 18M6 6l12 12" />

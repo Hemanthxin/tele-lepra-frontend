@@ -1,9 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import { STATES, STATES_DISTRICTS } from '../../../data/districts';
+import { getPhcMeta } from '../../../lib/phcMeta';
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '');
+
+const RELATION_OPTIONS = [
+  { value: 'self', label: 'Self' },
+  { value: 'father_mother', label: 'Father / Mother' },
+  { value: 'husband_wife', label: 'Husband / Wife' },
+  { value: 'brother_sister', label: 'Brother / Sister' },
+  { value: 'son_daughter', label: 'Son / Daughter' },
+  { value: 'grand_son_grand_daughter', label: 'Grand Son / Grand Daughter' },
+  { value: 'others', label: 'Others' },
+];
 
 export default function EnrollStep({ onDone, initial }) {
   const { t } = useTranslation();
@@ -19,11 +30,35 @@ export default function EnrollStep({ onDone, initial }) {
     abha_id: '',
     referred_by: '',
     consent_given: true,
+    // Programme context
+    phc: '',
+    supervisor: '',
+    chw: '',
+    // Address detail
+    house_no: '',
+    gram_panchayat: '',
+    // Household
+    household_number: '',
+    head_of_family_name: '',
+    head_of_family_phone: '',
+    relation_to_head: '',
     ...(initial || {}),
   }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [touched, setTouched] = useState({});
+  const [phcMeta, setPhcMeta] = useState([]);
+
+  useEffect(() => {
+    getPhcMeta().then(setPhcMeta).catch(() => setPhcMeta([]));
+  }, []);
+
+  const phcEntry = useMemo(
+    () => phcMeta.find((p) => p.name === form.phc) || null,
+    [phcMeta, form.phc],
+  );
+  const supervisors = phcEntry?.supervisors || [];
+  const chws = phcEntry?.chws || [];
 
   const districts = useMemo(
     () => (form.state ? STATES_DISTRICTS[form.state] || [] : []),
@@ -71,6 +106,16 @@ export default function EnrollStep({ onDone, initial }) {
         aadhaar_id: aadhaarDigits || null,
         abha_id: abhaDigits || null,
         location,
+        // Normalise empty strings → null for optional fields the backend treats as Optional
+        phc: form.phc || null,
+        supervisor: form.supervisor || null,
+        chw: form.chw || null,
+        house_no: form.house_no || null,
+        gram_panchayat: form.gram_panchayat || null,
+        household_number: form.household_number || null,
+        head_of_family_name: form.head_of_family_name || null,
+        head_of_family_phone: form.head_of_family_phone || null,
+        relation_to_head: form.relation_to_head || null,
       };
       const p = await api('/patients', {
         method: 'POST',
@@ -86,6 +131,7 @@ export default function EnrollStep({ onDone, initial }) {
 
   const f = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const onStateChange = (v) => setForm((s) => ({ ...s, state: v, district: '' }));
+  const onPhcChange = (v) => setForm((s) => ({ ...s, phc: v, supervisor: '', chw: '' }));
 
   return (
     <form onSubmit={submit} className="card-elev">
@@ -95,6 +141,51 @@ export default function EnrollStep({ onDone, initial }) {
       </header>
 
       <section>
+        <div className="section-title mb-3">Programme Context</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Field label="PHC / CHC" required>
+            <select
+              className="neu-input"
+              value={form.phc}
+              onChange={(e) => onPhcChange(e.target.value)}
+              required
+            >
+              <option value="">{phcMeta.length === 0 ? 'Loading…' : 'Select PHC'}</option>
+              {phcMeta.map((p) => (
+                <option key={p.name} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Supervisor">
+            <select
+              className="neu-input"
+              value={form.supervisor}
+              onChange={(e) => f('supervisor', e.target.value)}
+              disabled={!form.phc}
+            >
+              <option value="">{form.phc ? 'Select supervisor' : 'Pick a PHC first'}</option>
+              {supervisors.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="CHW">
+            <select
+              className="neu-input"
+              value={form.chw}
+              onChange={(e) => f('chw', e.target.value)}
+              disabled={!form.phc}
+            >
+              <option value="">{form.phc ? 'Select CHW' : 'Pick a PHC first'}</option>
+              {chws.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">Patient Identity</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label={t('enroll.fullName')} required>
@@ -171,12 +262,71 @@ export default function EnrollStep({ onDone, initial }) {
               ))}
             </select>
           </Field>
-          <Field label={t('enroll.village')} wide>
+          <Field label={t('enroll.village')}>
             <input
               className="neu-input"
               value={form.village}
               onChange={(e) => f('village', e.target.value)}
               placeholder="Enter village or area"
+            />
+          </Field>
+          <Field label="Gram Panchayat">
+            <input
+              className="neu-input"
+              value={form.gram_panchayat}
+              onChange={(e) => f('gram_panchayat', e.target.value)}
+              placeholder="Enter Gram Panchayat"
+            />
+          </Field>
+          <Field label="House no">
+            <input
+              className="neu-input"
+              value={form.house_no}
+              onChange={(e) => f('house_no', e.target.value)}
+              placeholder="House / door number"
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Household</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Household number">
+            <input
+              className="neu-input"
+              value={form.household_number}
+              onChange={(e) => f('household_number', e.target.value)}
+              placeholder="Survey / household ID"
+            />
+          </Field>
+          <Field label="Relation with head of family">
+            <select
+              className="neu-input"
+              value={form.relation_to_head}
+              onChange={(e) => f('relation_to_head', e.target.value)}
+            >
+              <option value="">Select relation</option>
+              {RELATION_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Head-of-family name">
+            <input
+              className="neu-input"
+              value={form.head_of_family_name}
+              onChange={(e) => f('head_of_family_name', e.target.value)}
+              placeholder="Full name"
+            />
+          </Field>
+          <Field label="Head-of-family phone">
+            <input
+              className="neu-input"
+              inputMode="tel"
+              value={form.head_of_family_phone}
+              onChange={(e) => f('head_of_family_phone', e.target.value)}
+              placeholder="10-digit mobile number"
             />
           </Field>
         </div>
