@@ -1,84 +1,130 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { uploadImage } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import GeoCaptureButton from '../../../components/GeoCaptureButton';
 
-// ---- Suspect diseases (SHAKTHI Active Screening form) ----
-const DISEASES = [
-  { key: 'leprosy', label: 'Leprosy' },
-  { key: 'lymphatic_filariasis', label: 'Lymphatic Filariasis' },
-  { key: 'tuberculosis', label: 'Tuberculosis' },
-  { key: 'scabies', label: 'Scabies' },
-  { key: 'japanese_encephalitis', label: 'Japanese Encephalitis' },
-  { key: 'malaria', label: 'Malaria' },
-  { key: 'sickle_cell', label: 'Sickle Cell Disease' },
+/**
+ * Symptom-driven screening. The agent answers COMMON questions first; each
+ * "yes" reveals its follow-ups. The likely condition(s) are inferred live from
+ * the answers (mirrors the backend rule engine) — the agent never picks a
+ * disease.
+ */
+
+// Common questions, each with the follow-ups it reveals when answered "yes".
+const QUESTIONS = [
+  {
+    key: 'skin_changes',
+    q: 'Any skin patch, rash, or discoloured area?',
+    followups: [
+      { key: 'skin_pale_or_reddish_patch', q: 'Is the patch pale/light-coloured or reddish?' },
+      { key: 'skin_loss_of_sensation', q: 'Loss of sensation over the patch?', hint: 'Test with a pinprick or cotton wisp vs adjacent skin.' },
+      { key: 'skin_patch_count', q: 'How many patches?', type: 'number' },
+      { key: 'skin_itchy_worse_at_night', q: 'Itchy, worse at night?' },
+      { key: 'skin_household_others_affected', q: 'Others at home have similar itching?' },
+      { key: 'skin_nodules_or_earlobe', q: 'Lumps/nodules or ear-lobe swelling?' },
+    ],
+  },
+  {
+    key: 'numbness_or_weakness',
+    q: 'Numbness, tingling, or weakness in hands or feet?',
+    followups: [
+      { key: 'glove_stocking_anesthesia', q: 'Numbness in a glove / stocking pattern (both hands or feet)?' },
+      { key: 'enlarged_nerves', q: 'Thickened or tender nerves felt?' },
+      { key: 'eye_closure_or_foot_drop', q: 'Difficulty closing eyes, or foot dragging?' },
+      { key: 'painless_wounds', q: 'Painless wounds, burns, or ulcers on hands/feet?' },
+    ],
+  },
+  {
+    key: 'fever',
+    q: 'Fever in the last 2 weeks?',
+    followups: [
+      { key: 'fever_chills_rigor', q: 'With chills and shivering (rigor)?' },
+      { key: 'fever_periodic', q: 'Comes and goes in a pattern (every 1–2 days)?' },
+      { key: 'fever_altered_consciousness', q: 'With confusion, drowsiness, or fits?', hint: 'Acute emergency — escalate immediately.' },
+      { key: 'fever_neck_stiff_or_headache', q: 'With severe headache or neck stiffness?' },
+      { key: 'fever_night_sweats', q: 'With drenching night sweats?' },
+    ],
+  },
+  {
+    key: 'cough',
+    q: 'Any cough?',
+    followups: [
+      { key: 'cough_2_weeks_or_more', q: 'Lasting 2 weeks or more?' },
+      { key: 'cough_blood_in_sputum', q: 'Blood in the sputum?' },
+      { key: 'cough_weight_loss', q: 'With significant weight loss?' },
+    ],
+  },
+  {
+    key: 'swelling',
+    q: 'Swelling of any limb, breast, or genitals?',
+    followups: [
+      { key: 'swelling_limb_or_genitals', q: 'Persistent swelling of a limb or genitals?' },
+      { key: 'swelling_acute_attacks', q: 'Recurrent painful swelling attacks with fever?' },
+    ],
+  },
+  {
+    key: 'pain_or_fatigue',
+    q: 'Recurrent body/joint pain, severe tiredness, or yellow eyes?',
+    followups: [
+      { key: 'recurrent_pain_episodes', q: 'Recurrent severe body/bone pain episodes?' },
+      { key: 'anaemia_or_fatigue', q: 'Very pale, tired, or breathless (anaemia)?' },
+      { key: 'jaundice', q: 'Yellow eyes or skin (jaundice)?' },
+      { key: 'family_history_sickle_cell', q: 'Family history of sickle cell disease?' },
+    ],
+  },
 ];
 
-const LEPROSY_CHECKLIST = [
-  { key: 'skin_patches', label: 'Light-colored or reddish skin patch(es)' },
-  { key: 'patch_loss_of_sensation', label: 'Reduced or loss of sensation over skin patch(es)' },
-  { key: 'numb_tingling_burning', label: 'Tingling, numbness, or burning sensation in hands/feet' },
-  { key: 'weakness_in_hands_or_feet', label: 'Weakness in hands or feet' },
-  { key: 'weak_grip', label: 'Weak grip or objects slipping from hands' },
-  { key: 'painless_wounds', label: 'Painless wounds, burns, or ulcers on hands/feet' },
-  { key: 'nerve_tenderness', label: 'Pain or tenderness near elbow, wrist, knee, or ankle' },
-  { key: 'foot_drop', label: 'Foot slipping out of slippers/chappals or dragging while walking' },
-  { key: 'eye_closure_difficulty', label: 'Difficulty closing eyes completely or reduced blinking' },
-  { key: 'eyebrow_loss_nasal_collapse', label: 'Loss of eyebrows, collapsed nose' },
-  { key: 'nodules_or_earlobe_swelling', label: 'Lumps/nodules on skin or swelling of earlobes' },
+// General questions, always shown.
+const GENERAL = [
+  { key: 'family_history_leprosy', q: 'Household contact / family history of leprosy?' },
+  { key: 'duration_months', q: 'Duration of symptoms', type: 'number', suffix: 'months' },
 ];
 
-// Per-disease default sub-form state.
-const DEFAULTS = {
-  leprosy: {
-    has_skin_patches: false, patch_count: 0, patch_loss_of_sensation: false,
-    enlarged_nerves: false, weakness_in_hands_or_feet: false,
-    glove_stocking_anesthesia: false, family_history: false,
-    duration_weeks: 0, duration_months: 0, symptoms_checklist: [],
-  },
-  lymphatic_filariasis: {
-    history_of_mda: null, affected_body_parts: [], lymphedema_grade: null,
-    entry_lesions: null, acute_attacks: null, eva_footwear: null,
-    self_care_kit: null, swelling_limb_or_genitals: null,
-  },
-  tuberculosis: {
-    status_of_case: '', type_of_tb: '', nikshay_id: '',
-    cough_2_weeks_or_more: null, fever_evening_rise: null, weight_loss: null,
-    night_sweats: null, blood_in_sputum: null,
-  },
-  scabies: {
-    status_of_case: '', affected_body_parts: [], skin_burrows: null,
-    itching_worse_at_night: null, household_members_affected: null,
-  },
-  japanese_encephalitis: {
-    status_of_case: '', history_of_vaccination: null,
-    fever_with_altered_consciousness: null, seizures: null,
-    neck_stiffness_or_headache: null,
-  },
-  malaria: {
-    status_of_case: '', pathogen_type: '', insecticidal_net: null,
-    indoor_residual_spray: '', fever_with_chills_rigor: null, fever_periodic: null,
-  },
-  sickle_cell: {
-    status_of_case: '', card_number: '', sickle_cell_type: '',
-    recurrent_pain_episodes: null, anaemia_or_fatigue: null, jaundice: null,
-  },
+// Symptom -> condition weights for the live preview only. The authoritative
+// triage runs server-side at submit. Keep in sync with the backend source of
+// truth: backend/app/services/rule_engine.py (_SYMPTOM_MAP / _CARDINAL_HIGH).
+const WEIGHTS = {
+  skin_loss_of_sensation: { leprosy: 3 }, glove_stocking_anesthesia: { leprosy: 3 },
+  enlarged_nerves: { leprosy: 3 }, skin_pale_or_reddish_patch: { leprosy: 1 },
+  skin_nodules_or_earlobe: { leprosy: 1 }, eye_closure_or_foot_drop: { leprosy: 1 },
+  painless_wounds: { leprosy: 1 }, numbness_or_weakness: { leprosy: 1 },
+  family_history_leprosy: { leprosy: 1 },
+  skin_itchy_worse_at_night: { scabies: 2 }, skin_household_others_affected: { scabies: 2 },
+  fever_chills_rigor: { malaria: 3 }, fever_periodic: { malaria: 2 },
+  fever_altered_consciousness: { japanese_encephalitis: 3 }, fever_neck_stiff_or_headache: { japanese_encephalitis: 2 },
+  fever_night_sweats: { tuberculosis: 1 },
+  cough_2_weeks_or_more: { tuberculosis: 3 }, cough_blood_in_sputum: { tuberculosis: 3 }, cough_weight_loss: { tuberculosis: 1 },
+  swelling_limb_or_genitals: { lymphatic_filariasis: 3 }, swelling_acute_attacks: { lymphatic_filariasis: 2 },
+  recurrent_pain_episodes: { sickle_cell: 2 }, anaemia_or_fatigue: { sickle_cell: 1 },
+  jaundice: { sickle_cell: 1 }, family_history_sickle_cell: { sickle_cell: 1 },
+};
+const CARDINAL = {
+  leprosy: ['skin_loss_of_sensation', 'glove_stocking_anesthesia', 'enlarged_nerves'],
+  japanese_encephalitis: ['fever_altered_consciousness'],
+  tuberculosis: ['cough_2_weeks_or_more', 'cough_blood_in_sputum'],
+  malaria: ['fever_chills_rigor'], lymphatic_filariasis: ['swelling_limb_or_genitals'],
+};
+const DISEASE_LABELS = {
+  leprosy: 'Leprosy', lymphatic_filariasis: 'Lymphatic Filariasis', tuberculosis: 'Tuberculosis',
+  scabies: 'Scabies', japanese_encephalitis: 'Japanese Encephalitis', malaria: 'Malaria',
+  sickle_cell: 'Sickle Cell Disease',
 };
 
-const FILARIASIS_PARTS = [
-  ['right_hand', 'Right Hand'], ['right_leg', 'Right Leg'], ['right_breast', 'Right Breast'],
-  ['right_scrotum', 'Right Scrotum'], ['left_hand', 'Left Hand'], ['left_leg', 'Left Leg'],
-  ['left_breast', 'Left Breast'], ['left_scrotum', 'Left Scrotum'],
-];
-const SCABIES_PARTS = [
-  ['hands', 'Hands'], ['groin', 'Groin'], ['genitalia', 'Genitalia'], ['buttocks', 'Buttocks'],
-  ['axillae', 'Axillae'], ['breasts', 'Breasts'], ['torso', 'Torso'],
-];
-const TB_STATUS = [
-  ['new_untreated', 'New Untreated'], ['under_treatment', 'Under treatment'],
-  ['already_treated', 'Already treated'], ['defaulter', 'Defaulter'],
-  ['retreatment', 'Retreatment'], ['relapse', 'Relapse'], ['drug_resistant', 'Drug Resistant'],
-];
+function inferConditions(s) {
+  const scores = {};
+  for (const [key, contrib] of Object.entries(WEIGHTS)) {
+    if (s[key] === true) for (const [cond, w] of Object.entries(contrib)) scores[cond] = (scores[cond] || 0) + w;
+  }
+  const out = [];
+  for (const [cond, score] of Object.entries(scores)) {
+    const cardinal = (CARDINAL[cond] || []).some((k) => s[k] === true);
+    const risk = cardinal || score >= 3 ? 'high' : score >= 1 ? 'moderate' : 'low';
+    out.push({ cond, score, risk });
+  }
+  const rank = { high: 2, moderate: 1, low: 0 };
+  out.sort((a, b) => rank[b.risk] - rank[a.risk] || b.score - a.score);
+  return out;
+}
 
 function YesNo({ value, onChange }) {
   const { t } = useTranslation();
@@ -87,8 +133,7 @@ function YesNo({ value, onChange }) {
       {[{ v: true, label: t('common.yes') }, { v: false, label: t('common.no') }].map(({ v, label }, idx) => {
         const selected = value === v;
         return (
-          <button
-            key={String(v)} type="button" onClick={() => onChange(v)}
+          <button key={String(v)} type="button" onClick={() => onChange(v)}
             className={(selected ? 'bg-brand-600 text-white' : 'bg-[color:var(--surface)] t-soft hover:bg-[color:var(--surface-2)]')
               + ' px-4 py-1.5 text-sm font-medium' + (idx === 0 ? ' border-r border-[color:var(--border)]' : '')}
           >{label}</button>
@@ -98,12 +143,12 @@ function YesNo({ value, onChange }) {
   );
 }
 
-function NumberInput({ value, onChange, max = 999, min = 0, suffix }) {
+function NumberInput({ value, onChange, max = 999, suffix }) {
   return (
     <div className="inline-flex items-center border border-[color:var(--border)] rounded-md overflow-hidden bg-[color:var(--surface)]">
-      <button type="button" tabIndex={-1} onClick={() => onChange(Math.max(min, (value || 0) - 1))}
+      <button type="button" tabIndex={-1} onClick={() => onChange(Math.max(0, (value || 0) - 1))}
         className="w-8 h-8 grid place-items-center t-soft hover:bg-[color:var(--surface-2)] border-r border-[color:var(--border)]">−</button>
-      <input type="number" min={min} max={max} value={value ?? 0} onChange={(e) => onChange(+e.target.value)}
+      <input type="number" min={0} max={max} value={value ?? 0} onChange={(e) => onChange(+e.target.value)}
         className="w-16 bg-transparent text-center text-sm font-medium t-ink outline-none" />
       <button type="button" tabIndex={-1} onClick={() => onChange(Math.min(max, (value || 0) + 1))}
         className="w-8 h-8 grid place-items-center t-soft hover:bg-[color:var(--surface-2)] border-l border-[color:var(--border)]">+</button>
@@ -112,38 +157,11 @@ function NumberInput({ value, onChange, max = 999, min = 0, suffix }) {
   );
 }
 
-function Select({ value, onChange, options, placeholder = 'Select…' }) {
+function Row({ label, hint, indent, children }) {
   return (
-    <select value={value || ''} onChange={(e) => onChange(e.target.value)}
-      className="neu-input !py-1.5 text-sm max-w-[14rem]">
-      <option value="">{placeholder}</option>
-      {options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-    </select>
-  );
-}
-
-function Chips({ value, onToggle, options }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map(([key, label]) => {
-        const on = value.includes(key);
-        return (
-          <button key={key} type="button" onClick={() => onToggle(key)}
-            className={on
-              ? 'px-2.5 py-1 rounded-md border text-xs font-medium bg-brand-50 text-brand-700 border-brand-300'
-              : 'px-2.5 py-1 rounded-md border text-xs bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'}
-          >{on ? '☑ ' : '☐ '}{label}</button>
-        );
-      })}
-    </div>
-  );
-}
-
-function QuestionRow({ label, hint, required, children }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 px-4 py-3">
+    <div className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 px-4 py-3 ${indent ? 'pl-8 bg-[color:var(--surface-2)]/40' : ''}`}>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium t-ink">{label}{required && <span className="text-red-600 ml-0.5">*</span>}</div>
+        <div className="text-sm font-medium t-ink">{label}</div>
         {hint && <div className="text-xs t-muted mt-0.5">{hint}</div>}
       </div>
       <div className="shrink-0">{children}</div>
@@ -151,29 +169,13 @@ function QuestionRow({ label, hint, required, children }) {
   );
 }
 
-function SubForm({ title, children }) {
-  return (
-    <div className="border border-[color:var(--border)] rounded-md mt-4 overflow-hidden">
-      <div className="bg-[color:var(--surface-2)] px-4 py-2 border-b border-[color:var(--border)]">
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-700">{title}</span>
-      </div>
-      <div className="divide-y divide-[color:var(--border)]">{children}</div>
-    </div>
-  );
-}
+const RISK_PILL = { high: 'pill-red', moderate: 'pill-amber', low: 'pill-green' };
 
 export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [s, setS] = useState({
-    suspected_diseases: [],
-    leprosy: { ...DEFAULTS.leprosy },
-    lymphatic_filariasis: { ...DEFAULTS.lymphatic_filariasis },
-    tuberculosis: { ...DEFAULTS.tuberculosis },
-    scabies: { ...DEFAULTS.scabies },
-    japanese_encephalitis: { ...DEFAULTS.japanese_encephalitis },
-    malaria: { ...DEFAULTS.malaria },
-    sickle_cell: { ...DEFAULTS.sickle_cell },
+    skin_patch_count: 0, duration_months: 0,
     image_urls: [], image_blobs: [], lab_urls: [], lab_blobs: [],
     notes: '', screened_at: '', geolocation: null,
     ...(initial || {}),
@@ -182,28 +184,9 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const [error, setError] = useState(null);
   const submitBusy = busy || parentBusy;
 
-  const suspected = s.suspected_diseases;
-  const has = (d) => suspected.includes(d);
-  const setShared = (k, v) => setS((cur) => ({ ...cur, [k]: v }));
-  const setField = (disease, k, v) =>
-    setS((cur) => ({ ...cur, [disease]: { ...cur[disease], [k]: v } }));
-  const toggleDisease = (d) =>
-    setS((cur) => ({
-      ...cur,
-      suspected_diseases: cur.suspected_diseases.includes(d)
-        ? cur.suspected_diseases.filter((x) => x !== d)
-        : [...cur.suspected_diseases, d],
-    }));
-  const toggleArr = (disease, key, val) =>
-    setS((cur) => {
-      const arr = cur[disease][key] || [];
-      return { ...cur, [disease]: { ...cur[disease], [key]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val] } };
-    });
-  const toggleSymptom = (key) =>
-    setS((cur) => {
-      const arr = cur.leprosy.symptoms_checklist;
-      return { ...cur, leprosy: { ...cur.leprosy, symptoms_checklist: arr.includes(key) ? arr.filter((x) => x !== key) : [...arr, key] } };
-    });
+  const set = (k, v) => setS((cur) => ({ ...cur, [k]: v }));
+  const inferred = useMemo(() => inferConditions(s), [s]);
+  const topInferred = inferred.filter((i) => i.risk !== 'low');
 
   const uploadInto = (field, blobField, fallbackName) => async (e) => {
     const files = Array.from(e.target.files || []);
@@ -228,30 +211,18 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const submit = (e) => {
     e.preventDefault();
     setError(null);
-    if (suspected.length === 0) {
-      setError('Select at least one suspected disease.');
+    // Require every common question to be answered.
+    const unanswered = QUESTIONS.filter((q) => s[q.key] !== true && s[q.key] !== false);
+    if (unanswered.length) {
+      setError('Please answer all the main questions (Yes/No) before continuing.');
       return;
     }
     setBusy(true);
     try {
       const payload = {
-        suspected_diseases: suspected,
+        ...s,
         screened_at: s.screened_at ? new Date(s.screened_at).toISOString() : new Date().toISOString(),
-        geolocation: s.geolocation,
-        image_urls: s.image_urls, image_blobs: s.image_blobs,
-        lab_urls: s.lab_urls, lab_blobs: s.lab_blobs,
-        notes: s.notes,
       };
-      if (has('leprosy')) {
-        const lep = s.leprosy;
-        payload.leprosy = {
-          ...lep,
-          duration_weeks: lep.duration_months > 0 ? Math.max(lep.duration_weeks, lep.duration_months * 4) : lep.duration_weeks,
-        };
-      }
-      for (const d of ['lymphatic_filariasis', 'tuberculosis', 'scabies', 'japanese_encephalitis', 'malaria', 'sickle_cell']) {
-        if (has(d)) payload[d] = s[d];
-      }
       onDone(payload, s);
     } catch (err) {
       setError(err.message);
@@ -264,7 +235,9 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
     <form onSubmit={submit} className="card-elev">
       <header className="mb-5">
         <h2 className="text-lg font-semibold t-ink">{t('screen.title')}</h2>
-        <p className="text-sm t-muted mt-1">{t('screen.subtitle')}</p>
+        <p className="text-sm t-muted mt-1">
+          Answer the symptom questions. Follow-up questions appear based on the answers, and the likely condition is suggested automatically.
+        </p>
       </header>
 
       {/* Screening context */}
@@ -273,177 +246,67 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium t-soft mb-1.5">Date of screening</label>
-            <input type="datetime-local" className="neu-input" value={s.screened_at} onChange={(e) => setShared('screened_at', e.target.value)} />
+            <input type="datetime-local" className="neu-input" value={s.screened_at} onChange={(e) => set('screened_at', e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium t-soft mb-1.5">Location (GPS)</label>
-            <GeoCaptureButton value={s.geolocation} onCapture={(g) => setShared('geolocation', g)} />
+            <GeoCaptureButton value={s.geolocation} onCapture={(g) => set('geolocation', g)} />
           </div>
         </div>
       </section>
 
-      {/* Suspected disease selection */}
+      {/* Symptom questionnaire */}
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-        <div className="section-title mb-1">Suspected disease(s) <span className="text-red-600">*</span></div>
-        <p className="text-xs t-muted mb-3">Tick every condition you suspect. A symptomatic form appears below for each.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {DISEASES.map((d) => {
-            const on = has(d.key);
-            return (
-              <button key={d.key} type="button" onClick={() => toggleDisease(d.key)}
-                className={on
-                  ? 'text-left px-3 py-2.5 rounded-md border text-sm font-medium bg-brand-50 text-brand-700 border-brand-300'
-                  : 'text-left px-3 py-2.5 rounded-md border text-sm bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'}>
-                <span className="flex items-center gap-2"><span>{on ? '☑' : '☐'}</span><span>{d.label}</span></span>
-              </button>
-            );
-          })}
+        <div className="section-title mb-3">Symptom screening</div>
+        <div className="divide-y divide-[color:var(--border)] border border-[color:var(--border)] rounded-md overflow-hidden">
+          {QUESTIONS.map((q) => (
+            <div key={q.key}>
+              <Row label={q.q}>
+                <YesNo value={s[q.key]} onChange={(v) => set(q.key, v)} />
+              </Row>
+              {s[q.key] === true && q.followups.map((f) => (
+                <Row key={f.key} label={f.q} hint={f.hint} indent>
+                  {f.type === 'number'
+                    ? <NumberInput value={s[f.key]} onChange={(v) => set(f.key, v)} max={50} suffix={f.suffix} />
+                    : <YesNo value={s[f.key]} onChange={(v) => set(f.key, v)} />}
+                </Row>
+              ))}
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Per-disease symptomatic forms */}
-      {has('leprosy') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-3">Leprosy — clinical screening</div>
-          <SubForm title="Cardinal signs (Y/N)">
-            <QuestionRow label={t('screen.has_patches')} required>
-              <YesNo value={s.leprosy.has_skin_patches} onChange={(v) => setField('leprosy', 'has_skin_patches', v)} />
-            </QuestionRow>
-            {s.leprosy.has_skin_patches && (
-              <>
-                <QuestionRow label={t('screen.patch_count')} required>
-                  <NumberInput value={s.leprosy.patch_count} onChange={(v) => setField('leprosy', 'patch_count', v)} max={50} />
-                </QuestionRow>
-                <QuestionRow label={t('screen.patch_los')} hint={t('screen.patch_los_hint')} required>
-                  <YesNo value={s.leprosy.patch_loss_of_sensation} onChange={(v) => setField('leprosy', 'patch_loss_of_sensation', v)} />
-                </QuestionRow>
-              </>
-            )}
-            <QuestionRow label={t('screen.nerves')} required>
-              <YesNo value={s.leprosy.enlarged_nerves} onChange={(v) => setField('leprosy', 'enlarged_nerves', v)} />
-            </QuestionRow>
-            <QuestionRow label={t('screen.weakness')} required>
-              <YesNo value={s.leprosy.weakness_in_hands_or_feet} onChange={(v) => setField('leprosy', 'weakness_in_hands_or_feet', v)} />
-            </QuestionRow>
-            <QuestionRow label={t('screen.glove')} required>
-              <YesNo value={s.leprosy.glove_stocking_anesthesia} onChange={(v) => setField('leprosy', 'glove_stocking_anesthesia', v)} />
-            </QuestionRow>
-            <QuestionRow label={t('screen.family')}>
-              <YesNo value={s.leprosy.family_history} onChange={(v) => setField('leprosy', 'family_history', v)} />
-            </QuestionRow>
-            <QuestionRow label="Duration of symptoms">
-              <NumberInput value={s.leprosy.duration_months} onChange={(v) => setField('leprosy', 'duration_months', v)} max={120} suffix="months" />
-            </QuestionRow>
-          </SubForm>
+      {/* General */}
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">General</div>
+        <div className="divide-y divide-[color:var(--border)] border border-[color:var(--border)] rounded-md">
+          {GENERAL.map((g) => (
+            <Row key={g.key} label={g.q}>
+              {g.type === 'number'
+                ? <NumberInput value={s[g.key]} onChange={(v) => set(g.key, v)} max={120} suffix={g.suffix} />
+                : <YesNo value={s[g.key]} onChange={(v) => set(g.key, v)} />}
+            </Row>
+          ))}
+        </div>
+      </section>
 
-          <div className="mt-4">
-            <div className="text-xs font-semibold uppercase tracking-wider t-muted mb-2">Symptoms checklist</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {LEPROSY_CHECKLIST.map((sym) => {
-                const sel = s.leprosy.symptoms_checklist.includes(sym.key);
-                return (
-                  <button key={sym.key} type="button" onClick={() => toggleSymptom(sym.key)}
-                    className={sel
-                      ? 'text-left px-3 py-2.5 rounded-md border text-sm font-medium bg-brand-50 text-brand-700 border-brand-300'
-                      : 'text-left px-3 py-2.5 rounded-md border text-sm bg-[color:var(--surface)] t-soft border-[color:var(--border)] hover:border-[color:var(--border-strong)]'}>
-                    <span className="flex items-start gap-2"><span className={sel ? 'text-brand-700 mt-0.5' : 't-muted mt-0.5'}>{sel ? '☑' : '☐'}</span><span className="flex-1">{sym.label}</span></span>
-                  </button>
-                );
-              })}
+      {/* Live inferred-condition preview */}
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-2">Likely condition (auto-detected)</div>
+        {topInferred.length === 0 ? (
+          <p className="text-sm t-muted">No condition flagged yet — answer the questions above. Final triage runs after you submit.</p>
+        ) : (
+          <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-3">
+            <p className="text-sm t-soft mb-2">Based on the answers so far, this may be:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {topInferred.map((i) => (
+                <span key={i.cond} className={RISK_PILL[i.risk]}>{DISEASE_LABELS[i.cond]} · {i.risk}</span>
+              ))}
             </div>
+            <p className="text-[11px] t-muted mt-2">Add a clear photo of the affected area below to help the Medical Officer confirm.</p>
           </div>
-        </section>
-      )}
-
-      {has('lymphatic_filariasis') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Lymphatic Filariasis</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Swelling of limb or genitals?"><YesNo value={s.lymphatic_filariasis.swelling_limb_or_genitals} onChange={(v) => setField('lymphatic_filariasis', 'swelling_limb_or_genitals', v)} /></QuestionRow>
-            <QuestionRow label="Recurrent acute attacks?"><YesNo value={s.lymphatic_filariasis.acute_attacks} onChange={(v) => setField('lymphatic_filariasis', 'acute_attacks', v)} /></QuestionRow>
-            <QuestionRow label="Entry lesions present?"><YesNo value={s.lymphatic_filariasis.entry_lesions} onChange={(v) => setField('lymphatic_filariasis', 'entry_lesions', v)} /></QuestionRow>
-            <QuestionRow label="Lymphedema grade"><NumberInput value={s.lymphatic_filariasis.lymphedema_grade || 0} min={0} max={4} onChange={(v) => setField('lymphatic_filariasis', 'lymphedema_grade', v || null)} /></QuestionRow>
-            <QuestionRow label="History of Mass Drug Administration?"><YesNo value={s.lymphatic_filariasis.history_of_mda} onChange={(v) => setField('lymphatic_filariasis', 'history_of_mda', v)} /></QuestionRow>
-            <QuestionRow label="Affected body part(s)"><Chips value={s.lymphatic_filariasis.affected_body_parts} onToggle={(k) => toggleArr('lymphatic_filariasis', 'affected_body_parts', k)} options={FILARIASIS_PARTS} /></QuestionRow>
-            <QuestionRow label="EVA footwear available?"><YesNo value={s.lymphatic_filariasis.eva_footwear} onChange={(v) => setField('lymphatic_filariasis', 'eva_footwear', v)} /></QuestionRow>
-            <QuestionRow label="Self-care kit available?"><YesNo value={s.lymphatic_filariasis.self_care_kit} onChange={(v) => setField('lymphatic_filariasis', 'self_care_kit', v)} /></QuestionRow>
-          </SubForm>
-        </section>
-      )}
-
-      {has('tuberculosis') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Tuberculosis</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Cough for 2 weeks or more?"><YesNo value={s.tuberculosis.cough_2_weeks_or_more} onChange={(v) => setField('tuberculosis', 'cough_2_weeks_or_more', v)} /></QuestionRow>
-            <QuestionRow label="Blood in sputum?"><YesNo value={s.tuberculosis.blood_in_sputum} onChange={(v) => setField('tuberculosis', 'blood_in_sputum', v)} /></QuestionRow>
-            <QuestionRow label="Evening-rise fever?"><YesNo value={s.tuberculosis.fever_evening_rise} onChange={(v) => setField('tuberculosis', 'fever_evening_rise', v)} /></QuestionRow>
-            <QuestionRow label="Significant weight loss?"><YesNo value={s.tuberculosis.weight_loss} onChange={(v) => setField('tuberculosis', 'weight_loss', v)} /></QuestionRow>
-            <QuestionRow label="Night sweats?"><YesNo value={s.tuberculosis.night_sweats} onChange={(v) => setField('tuberculosis', 'night_sweats', v)} /></QuestionRow>
-            <QuestionRow label="Status of case"><Select value={s.tuberculosis.status_of_case} onChange={(v) => setField('tuberculosis', 'status_of_case', v)} options={TB_STATUS} /></QuestionRow>
-            <QuestionRow label="Type of TB"><Select value={s.tuberculosis.type_of_tb} onChange={(v) => setField('tuberculosis', 'type_of_tb', v)} options={[['pulmonary', 'Pulmonary'], ['extra_pulmonary', 'Extra-pulmonary']]} /></QuestionRow>
-            <QuestionRow label="Nikshay ID">
-              <input className="neu-input !py-1.5 text-sm max-w-[14rem]" value={s.tuberculosis.nikshay_id} onChange={(e) => setField('tuberculosis', 'nikshay_id', e.target.value)} placeholder="Optional" />
-            </QuestionRow>
-          </SubForm>
-        </section>
-      )}
-
-      {has('scabies') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Scabies</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Itching worse at night?"><YesNo value={s.scabies.itching_worse_at_night} onChange={(v) => setField('scabies', 'itching_worse_at_night', v)} /></QuestionRow>
-            <QuestionRow label="Other household members affected?"><YesNo value={s.scabies.household_members_affected} onChange={(v) => setField('scabies', 'household_members_affected', v)} /></QuestionRow>
-            <QuestionRow label="Skin burrows seen?"><YesNo value={s.scabies.skin_burrows} onChange={(v) => setField('scabies', 'skin_burrows', v)} /></QuestionRow>
-            <QuestionRow label="Affected body part(s)"><Chips value={s.scabies.affected_body_parts} onToggle={(k) => toggleArr('scabies', 'affected_body_parts', k)} options={SCABIES_PARTS} /></QuestionRow>
-            <QuestionRow label="Status of case"><Select value={s.scabies.status_of_case} onChange={(v) => setField('scabies', 'status_of_case', v)} options={[['new_untreated', 'New Untreated'], ['under_treatment', 'Under treatment'], ['already_treated', 'Already treated']]} /></QuestionRow>
-          </SubForm>
-        </section>
-      )}
-
-      {has('japanese_encephalitis') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Japanese Encephalitis</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Fever with altered consciousness?" hint="Acute emergency — escalate."><YesNo value={s.japanese_encephalitis.fever_with_altered_consciousness} onChange={(v) => setField('japanese_encephalitis', 'fever_with_altered_consciousness', v)} /></QuestionRow>
-            <QuestionRow label="Seizures?"><YesNo value={s.japanese_encephalitis.seizures} onChange={(v) => setField('japanese_encephalitis', 'seizures', v)} /></QuestionRow>
-            <QuestionRow label="Neck stiffness / severe headache?"><YesNo value={s.japanese_encephalitis.neck_stiffness_or_headache} onChange={(v) => setField('japanese_encephalitis', 'neck_stiffness_or_headache', v)} /></QuestionRow>
-            <QuestionRow label="History of vaccination?"><YesNo value={s.japanese_encephalitis.history_of_vaccination} onChange={(v) => setField('japanese_encephalitis', 'history_of_vaccination', v)} /></QuestionRow>
-            <QuestionRow label="Status of case"><Select value={s.japanese_encephalitis.status_of_case} onChange={(v) => setField('japanese_encephalitis', 'status_of_case', v)} options={[['new_untreated', 'New Untreated'], ['under_treatment', 'Under Treatment']]} /></QuestionRow>
-          </SubForm>
-        </section>
-      )}
-
-      {has('malaria') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Malaria</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Fever with chills / rigor?"><YesNo value={s.malaria.fever_with_chills_rigor} onChange={(v) => setField('malaria', 'fever_with_chills_rigor', v)} /></QuestionRow>
-            <QuestionRow label="Periodic fever pattern?"><YesNo value={s.malaria.fever_periodic} onChange={(v) => setField('malaria', 'fever_periodic', v)} /></QuestionRow>
-            <QuestionRow label="Pathogen type"><Select value={s.malaria.pathogen_type} onChange={(v) => setField('malaria', 'pathogen_type', v)} options={[['falciparum', 'Falciparum'], ['vivax', 'Vivax'], ['mixed', 'Mixed']]} /></QuestionRow>
-            <QuestionRow label="Insecticidal net available?"><YesNo value={s.malaria.insecticidal_net} onChange={(v) => setField('malaria', 'insecticidal_net', v)} /></QuestionRow>
-            <QuestionRow label="Indoor residual spray done?"><Select value={s.malaria.indoor_residual_spray} onChange={(v) => setField('malaria', 'indoor_residual_spray', v)} options={[['yes', 'Yes'], ['no', 'No'], ['dont_know', "Don't know"]]} /></QuestionRow>
-            <QuestionRow label="Status of case"><Select value={s.malaria.status_of_case} onChange={(v) => setField('malaria', 'status_of_case', v)} options={[['new_untreated', 'New Untreated'], ['under_treatment', 'Under treatment'], ['already_treated', 'Already treated']]} /></QuestionRow>
-          </SubForm>
-        </section>
-      )}
-
-      {has('sickle_cell') && (
-        <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-          <div className="section-title mb-1">Sickle Cell Disease</div>
-          <SubForm title="Symptomatic form">
-            <QuestionRow label="Recurrent pain episodes?"><YesNo value={s.sickle_cell.recurrent_pain_episodes} onChange={(v) => setField('sickle_cell', 'recurrent_pain_episodes', v)} /></QuestionRow>
-            <QuestionRow label="Anaemia / chronic fatigue?"><YesNo value={s.sickle_cell.anaemia_or_fatigue} onChange={(v) => setField('sickle_cell', 'anaemia_or_fatigue', v)} /></QuestionRow>
-            <QuestionRow label="Jaundice?"><YesNo value={s.sickle_cell.jaundice} onChange={(v) => setField('sickle_cell', 'jaundice', v)} /></QuestionRow>
-            <QuestionRow label="Sickle cell type"><Select value={s.sickle_cell.sickle_cell_type} onChange={(v) => setField('sickle_cell', 'sickle_cell_type', v)} options={[['trait', 'Trait / Carrier'], ['disease', 'Disease / Sufferer']]} /></QuestionRow>
-            <QuestionRow label="Status of case"><Select value={s.sickle_cell.status_of_case} onChange={(v) => setField('sickle_cell', 'status_of_case', v)} options={[['new_untreated', 'New Untreated'], ['under_treatment', 'Under treatment']]} /></QuestionRow>
-            <QuestionRow label="Sickle cell card number">
-              <input className="neu-input !py-1.5 text-sm max-w-[14rem]" value={s.sickle_cell.card_number} onChange={(e) => setField('sickle_cell', 'card_number', e.target.value)} placeholder="Optional" />
-            </QuestionRow>
-          </SubForm>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* Images */}
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
@@ -469,7 +332,7 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       {/* Notes */}
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">{t('screen.notes')}</div>
-        <textarea className="neu-input" rows={3} value={s.notes} onChange={(e) => setShared('notes', e.target.value)} placeholder={t('screen.notes_ph')} />
+        <textarea className="neu-input" rows={3} value={s.notes} onChange={(e) => set('notes', e.target.value)} placeholder={t('screen.notes_ph')} />
       </section>
 
       {error && <div className="text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2 mt-4">{error}</div>}
