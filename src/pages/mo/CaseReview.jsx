@@ -112,6 +112,10 @@ export default function CaseReview() {
   const conf = t ? Math.round((t.confidence || 0) * 100) : null;
   const reasons = t?.reasons || [];
   const screen = c.screening || {};
+  // Leprosy sub-form, tolerating the legacy flat screening shape.
+  const lep = screen.leprosy || (('has_skin_patches' in screen) ? screen : {});
+  const suspected = screen.suspected_diseases || (lep && 'has_skin_patches' in lep ? ['leprosy'] : []);
+  const findings = t?.condition_findings || [];
   const hist = c.history || {};
 
   return (
@@ -264,42 +268,69 @@ export default function CaseReview() {
             </>
           )}
 
-          {/* Symptoms & screening */}
-          <Divider />
-          <SectionLabel>Symptoms & screening</SectionLabel>
-          <DataGrid>
-            <YesNoRow label="Skin patches present" value={screen.has_skin_patches} />
-            <DataRow label="Patch count" value={screen.patch_count > 0 ? screen.patch_count : null} />
-            <YesNoRow label="Loss of sensation in patches" value={screen.patch_loss_of_sensation} />
-            <YesNoRow label="Enlarged nerves" value={screen.enlarged_nerves} />
-            <YesNoRow label="Weakness in hands or feet" value={screen.weakness_in_hands_or_feet} />
-            <YesNoRow label="Glove / stocking anaesthesia" value={screen.glove_stocking_anesthesia} />
-            <YesNoRow label="Symmetric lesions" value={screen.symmetric_lesions} />
-            <YesNoRow label="Household contact with leprosy" value={screen.family_history} />
-            <DataRow
-              label="Duration"
-              value={
-                screen.duration_months > 0
-                  ? `${screen.duration_months} months`
-                  : screen.duration_weeks > 0
-                    ? `${screen.duration_weeks} weeks`
-                    : null
-              }
-            />
-          </DataGrid>
-
-          {/* PDF1 symptom checklist (multi-select) */}
-          {Array.isArray(screen.symptoms_checklist) && screen.symptoms_checklist.length > 0 && (
+          {/* Suspected diseases */}
+          {suspected.length > 0 && (
             <>
               <Divider />
-              <SectionLabel>Symptoms checklist (PDF1)</SectionLabel>
+              <SectionLabel>Suspected disease(s)</SectionLabel>
               <div className="flex flex-wrap gap-1.5">
-                {screen.symptoms_checklist.map((k) => (
-                  <span key={k} className="pill-amber">{prettySymptom(k)}</span>
+                {suspected.map((d) => (
+                  <span key={d} className="pill-brand">{DISEASE_LABELS[d] || d}</span>
                 ))}
               </div>
             </>
           )}
+
+          {/* Leprosy — symptoms & screening */}
+          {('has_skin_patches' in lep) && (
+            <>
+              <Divider />
+              <SectionLabel>Leprosy — symptoms & screening</SectionLabel>
+              <DataGrid>
+                <YesNoRow label="Skin patches present" value={lep.has_skin_patches} />
+                <DataRow label="Patch count" value={lep.patch_count > 0 ? lep.patch_count : null} />
+                <YesNoRow label="Loss of sensation in patches" value={lep.patch_loss_of_sensation} />
+                <YesNoRow label="Enlarged nerves" value={lep.enlarged_nerves} />
+                <YesNoRow label="Weakness in hands or feet" value={lep.weakness_in_hands_or_feet} />
+                <YesNoRow label="Glove / stocking anaesthesia" value={lep.glove_stocking_anesthesia} />
+                <YesNoRow label="Household contact with leprosy" value={lep.family_history} />
+                <DataRow
+                  label="Duration"
+                  value={
+                    lep.duration_months > 0
+                      ? `${lep.duration_months} months`
+                      : lep.duration_weeks > 0
+                        ? `${lep.duration_weeks} weeks`
+                        : null
+                  }
+                />
+              </DataGrid>
+
+              {Array.isArray(lep.symptoms_checklist) && lep.symptoms_checklist.length > 0 && (
+                <div className="mt-4">
+                  <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-2">Symptoms checklist</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {lep.symptoms_checklist.map((k) => (
+                      <span key={k} className="pill-amber">{prettySymptom(k)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Other suspected conditions — symptomatic summary */}
+          {suspected.filter((d) => d !== 'leprosy' && screen[d]).map((d) => (
+            <div key={d}>
+              <Divider />
+              <SectionLabel>{DISEASE_LABELS[d] || d} — symptomatic</SectionLabel>
+              <DataGrid>
+                {Object.entries(screen[d]).map(([k, v]) => (
+                  <DataRow key={k} label={prettyKey(k)} value={fmtVal(v)} />
+                ))}
+              </DataGrid>
+            </div>
+          ))}
           {screen.notes && (
             <div className="mt-4">
               <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Agent notes</div>
@@ -368,11 +399,21 @@ export default function CaseReview() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <FindingRow label="Lesion detected" value={screen.has_skin_patches ? 'Yes' : 'No'} tone={screen.has_skin_patches ? 'good' : 'muted'} />
-                <FindingRow label="Nerve involvement" value={yn(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) || 'No'} tone={(screen.enlarged_nerves || screen.weakness_in_hands_or_feet) ? 'warn' : 'muted'} />
-                <FindingRow label="Symmetry" value={yn(screen.symmetric_lesions) || 'No'} tone="muted" />
+                <FindingRow label="Lesion detected" value={lep.has_skin_patches ? 'Yes' : 'No'} tone={lep.has_skin_patches ? 'good' : 'muted'} />
+                <FindingRow label="Nerve involvement" value={yn(lep.enlarged_nerves || lep.weakness_in_hands_or_feet) || 'No'} tone={(lep.enlarged_nerves || lep.weakness_in_hands_or_feet) ? 'warn' : 'muted'} />
+                <FindingRow label="Disposition" value={t.allow_close === false ? 'Forced to MO' : 'Agent choice'} tone={t.allow_close === false ? 'bad' : 'muted'} />
                 <FindingRow label="Risk score" value={risk.label} tone={t.outcome === 'escalate' ? 'bad' : t.outcome === 'alternative_dx' ? 'warn' : 'good'} />
               </div>
+
+              {findings.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {findings.map((f) => (
+                    <FindingRow key={f.condition} label={DISEASE_LABELS[f.condition] || f.condition}
+                      value={`${f.risk} risk`}
+                      tone={f.risk === 'high' ? 'bad' : f.risk === 'moderate' ? 'warn' : 'good'} />
+                  ))}
+                </div>
+              )}
 
               {reasons.length > 0 && (
                 <div className="neu-inset px-4 py-3">
@@ -586,6 +627,26 @@ function DecisionRadio({ checked, onChange, title, subtitle, tone }) {
 
 const yn = (b) => (b ? 'Yes' : null);
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+const DISEASE_LABELS = {
+  leprosy: 'Leprosy',
+  lymphatic_filariasis: 'Lymphatic Filariasis',
+  tuberculosis: 'Tuberculosis',
+  scabies: 'Scabies',
+  japanese_encephalitis: 'Japanese Encephalitis',
+  malaria: 'Malaria',
+  sickle_cell: 'Sickle Cell Disease',
+};
+
+// Render a raw sub-form key/value for the "other conditions" summary grid.
+const prettyKey = (k) => k.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+const fmtVal = (v) => {
+  if (v === true) return 'Yes';
+  if (v === false) return 'No';
+  if (v == null || v === '') return null;
+  if (Array.isArray(v)) return v.length ? v.map((x) => String(x).replace(/_/g, ' ')).join(', ') : null;
+  return String(v).replace(/_/g, ' ');
+};
 
 const SYMPTOM_LABELS = {
   skin_patches: 'Light/reddish skin patches',

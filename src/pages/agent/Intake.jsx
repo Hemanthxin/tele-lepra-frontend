@@ -7,6 +7,7 @@ import { useTranslation } from '../../i18n/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { getIntakeBundle, saveIntakeBundle } from '../../lib/offlineDB';
 import { drainQueue } from '../../lib/syncEngine';
+import { api } from '../../lib/api';
 
 export default function Intake() {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export default function Intake() {
   const [patient, setPatient] = useState(null);
   const [history, setHistory] = useState(null);
   const [triage, setTriage] = useState(null);
+  const [caseId, setCaseId] = useState(null);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState(null);
   // Cached form drafts so going back preserves what was typed
@@ -39,6 +41,7 @@ export default function Intake() {
     setPatient(null);
     setHistory(null);
     setTriage(null);
+    setCaseId(null);
     setDraftEnroll(null);
     setDraftHistory(null);
     setDraftScreen(null);
@@ -90,6 +93,7 @@ export default function Intake() {
       const updated = await getIntakeBundle(bundle.id);
       if (updated?.status === 'synced' && updated.result?.triage) {
         setTriage(updated.result.triage);
+        setCaseId(updated.result.case_id || null);
       } else {
         setTriage({
           outcome: 'queued',
@@ -102,6 +106,7 @@ export default function Intake() {
           suggested_action:
             'The intake is safely stored on this device. It will sync automatically when you have an internet connection.',
         });
+        setCaseId(null);
       }
       setStep('triage');
     } catch (err) {
@@ -203,11 +208,18 @@ export default function Intake() {
         {step === 'triage' && (
           <TriageResultStep
             triage={triage}
-            onNext={() => {
+            caseId={caseId}
+            onDecide={async (action, chosenCondition, note) => {
+              await api(`/cases/${caseId}/agent-decision`, {
+                method: 'POST',
+                body: JSON.stringify({ action, chosen_condition: chosenCondition, note }),
+              });
+              if (action === 'send_mo') alert('Sent to the Medical Officer for review.');
+              else alert('Closed at community level. The patient will be notified.');
+              reset();
+            }}
+            onDone={() => {
               if (triage?.outcome === 'queued') alert('Saved offline — will upload when you reconnect.');
-              else if (triage?.outcome === 'escalate') alert(t('intake.escalate_alert'));
-              else if (triage?.outcome === 'alternative_dx') alert(t('intake.altdx_alert'));
-              else alert(t('intake.ruleout_alert'));
               reset();
             }}
           />
