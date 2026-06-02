@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { formatId } from '../../lib/ids';
 
 export default function Audit() {
   const [sample, setSample] = useState([]);
@@ -71,7 +72,7 @@ export default function Audit() {
                     <td className="px-4 py-3 font-mono text-xs t-muted whitespace-nowrap">
                       {new Date(c.created_at).toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs t-soft">#{c.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 font-mono text-xs t-soft">{formatId(c.id)}</td>
                     <td className="px-4 py-3 t-ink">{c.patient_name}</td>
                     <td className="px-4 py-3"><span className="pill-green">rule out</span></td>
                     <td className="px-4 py-3 t-soft">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { formatId } from '../../lib/ids';
 import { useTranslation } from '../../i18n/I18nContext';
 
 const PILL = {
@@ -61,7 +62,7 @@ export default function Queue() {
                 <div className="min-w-0">
                   <div className="font-semibold t-ink truncate">{c.patient_name}</div>
                   <div className="text-xs t-muted mt-0.5">
-                    {c.condition} · #{c.id.slice(0, 8)}
+                    {c.condition} · {formatId(c.id)}
                   </div>
                 </div>
                 <span className={PILL[c.triage_outcome] || 'pill-amber'}>

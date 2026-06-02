@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { formatId } from '../../lib/ids';
 import { useTranslation } from '../../i18n/I18nContext';
 
 const svg = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' };
@@ -122,7 +123,7 @@ export default function Patients() {
                     >
                       <td className="px-4 py-3">
                         <div className="font-medium t-ink">{p.name}</div>
-                        <div className="text-[11px] t-muted">ID #{(p.id || '').slice(0, 8)}</div>
+                        <div className="text-[11px] t-muted">ID {formatId(p.id)}</div>
                       </td>
                       <td className="px-4 py-3 t-soft">{p.age ?? '—'}</td>
                       <td className="px-4 py-3 t-soft">{p.phone || <span className="t-muted">—</span>}</td>

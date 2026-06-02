@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { formatId } from '../../lib/ids';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Metrics() {
@@ -174,7 +175,7 @@ export default function Metrics() {
                       key={c.id}
                       className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--surface-2)]"
                     >
-                      <td className="px-4 py-3 font-mono text-xs t-soft">#{c.id.slice(0, 8)}</td>
+                      <td className="px-4 py-3 font-mono text-xs t-soft">{formatId(c.id)}</td>
                       <td className="px-4 py-3 t-ink font-medium">{c.patient_name}</td>
                       <td className="px-4 py-3"><span className="pill-red">High</span></td>
                       <td className="px-4 py-3 t-soft truncate max-w-[320px]">

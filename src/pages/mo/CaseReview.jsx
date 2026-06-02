@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import MeetingDetails from '../../components/MeetingDetails';
 import MOClinicalAssessment from './MOClinicalAssessment';
 import { meetingPhase } from '../../lib/meetingPhase';
+import { formatId, idForFilename } from '../../lib/ids';
 
 const RISK_PILL = {
   rule_out: { cls: 'pill-green', label: 'Low Risk' },
@@ -127,7 +128,7 @@ export default function CaseReview() {
             <div className="section-title">MO · Case Review</div>
             <h1 className="text-2xl font-semibold tracking-tight t-ink">{c.patient_name}</h1>
             <p className="text-sm t-muted mt-1">
-              <span className="font-mono">#{c.id.slice(0, 8)}</span> · Submitted {fmtDateTime(c.created_at)}
+              <span className="font-mono">{formatId(c.id)}</span> · Submitted {fmtDateTime(c.created_at)}
             </p>
           </div>
         </div>
@@ -462,7 +463,7 @@ export default function CaseReview() {
               <button
                 type="button"
                 className="btn-ghost w-full sm:w-auto"
-                onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `intake-${c.id.slice(0, 8)}.pdf`)}
+                onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `intake-${idForFilename(c.id)}.pdf`)}
                 title="Download patient intake PDF"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
@@ -471,7 +472,7 @@ export default function CaseReview() {
               <button
                 type="button"
                 className="btn-ghost w-full sm:w-auto"
-                onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `decision-${c.id.slice(0, 8)}.pdf`)}
+                onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `decision-${idForFilename(c.id)}.pdf`)}
                 disabled={!assessmentSaved}
                 title={assessmentSaved ? 'Download MO decision PDF' : 'Save the clinical assessment first'}
               >
