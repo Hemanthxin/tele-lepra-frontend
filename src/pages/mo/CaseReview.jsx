@@ -30,6 +30,8 @@ export default function CaseReview() {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [assessmentSaved, setAssessmentSaved] = useState(false);
+  const [decisionSaved, setDecisionSaved] = useState(false);
+  const [decisionError, setDecisionError] = useState(null);
   const [appointmentId, setAppointmentId] = useState(null);
   const [appointment, setAppointment] = useState(null);
   const [when, setWhen] = useState(defaultWhen());
@@ -90,17 +92,26 @@ export default function CaseReview() {
 
   const submit = async () => {
     setBusy(true);
+    setDecisionError(null);
     try {
       await api(`/cases/${id}/decision`, {
         method: 'POST',
         body: JSON.stringify({
           decision,
-          prescription: decision === 'close_remote' ? rx : null,
+          // close_remote uses the prescription box; alt_dx uses the treatment-notes
+          // box — both bind to `rx`. refer uses the referral box.
+          prescription: decision === 'refer' ? null : rx,
           referral_note: decision === 'refer' ? referral : null,
           notes,
         }),
       });
-      nav('/mo');
+      // Decision is now saved server-side (and its PDF generated) independently
+      // of WhatsApp. Stay on the page and refresh so the MO can download the
+      // finalised decision PDF.
+      setDecisionSaved(true);
+      refresh();
+    } catch (err) {
+      setDecisionError(err.message || 'Could not save the decision. Try again.');
     } finally {
       setBusy(false);
     }
@@ -460,11 +471,22 @@ export default function CaseReview() {
 
         {/* Action bar */}
         <section className="card-elev">
+          {decisionSaved && (
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-800">
+              <span className="font-semibold">Decision saved.</span> The decision PDF has been generated and stored.
+              The patient is notified via WhatsApp automatically — delivery does not affect the saved record. You can download the PDF below.
+            </div>
+          )}
+          {decisionError && (
+            <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">{decisionError}</div>
+          )}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
-              {assessmentSaved
-                ? 'Decision will be sent to the patient via WhatsApp with the decision PDF attached.'
-                : 'Save the clinical assessment above before sending the decision.'}
+              {!assessmentSaved
+                ? 'Save the clinical assessment above before saving the decision.'
+                : decisionSaved
+                  ? 'Decision is saved independently of WhatsApp. Download it any time below.'
+                  : 'Saving records the decision and generates its PDF, then notifies the patient via WhatsApp.'}
             </div>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:justify-end">
               <button
@@ -486,15 +508,21 @@ export default function CaseReview() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 Decision PDF
               </button>
-              <button
-                type="button"
-                className="btn-primary w-full sm:w-auto"
-                disabled={busy || !assessmentSaved}
-                onClick={submit}
-                title={!assessmentSaved ? 'Save the clinical assessment first' : undefined}
-              >
-                {busy ? 'Submitting…' : 'Send via WhatsApp'}
-              </button>
+              {decisionSaved ? (
+                <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => nav('/mo')}>
+                  Back to queue
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary w-full sm:w-auto"
+                  disabled={busy || !assessmentSaved}
+                  onClick={submit}
+                  title={!assessmentSaved ? 'Save the clinical assessment first' : undefined}
+                >
+                  {busy ? 'Saving…' : 'Save decision & notify'}
+                </button>
+              )}
             </div>
           </div>
         </section>
