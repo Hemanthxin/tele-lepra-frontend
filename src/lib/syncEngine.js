@@ -15,6 +15,7 @@
 import { auth } from './firebase';
 import {
   deleteBundle,
+  ensurePersistentStorage,
   listPendingBundles,
   logSyncEvent,
   updateBundleStatus,
@@ -44,6 +45,12 @@ async function authHeaders() {
   return { Authorization: `Bearer ${token}` };
 }
 
+function httpError(status, text) {
+  const err = new Error(`${status} ${text}`);
+  err.status = status;
+  return err;
+}
+
 async function postJson(path, body) {
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
@@ -52,7 +59,7 @@ async function postJson(path, body) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`${res.status} ${text}`);
+    throw httpError(res.status, text);
   }
   return res.json();
 }
@@ -65,9 +72,28 @@ async function uploadBlobAsImage(blob, filename) {
     headers: await authHeaders(),
     body: fd,
   });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  if (!res.ok) throw httpError(res.status, `Upload failed`);
   const json = await res.json();
   return json.url;
+}
+
+/**
+ * Is this failure specific to one bundle (so we should skip it and keep
+ * draining the rest), or systemic (so we should stop and retry everything
+ * later)?
+ *
+ *   - Network errors / fetch rejections (no .status) → systemic, stop.
+ *   - 401 / 403 (auth) → systemic; the token affects every bundle, stop.
+ *   - 408 / 429 (timeout / rate-limit) → systemic, back off and stop.
+ *   - 5xx (server)  → systemic, stop.
+ *   - Other 4xx (400/409/422 …) → the server rejected THIS bundle's data;
+ *     retrying won't help and it must not block the queue, so skip + continue.
+ */
+function isBundleSpecificError(err) {
+  const status = err && err.status;
+  if (typeof status !== 'number') return false;
+  if (status === 401 || status === 403 || status === 408 || status === 429) return false;
+  return status >= 400 && status < 500;
 }
 
 /** Process a single bundle. Throws on failure; caller updates queue state. */
@@ -132,7 +158,10 @@ export async function drainQueue() {
   try {
     const pending = await listPendingBundles();
     for (const bundle of pending) {
-      if (bundle.status === 'syncing') continue;
+      // A bundle left in 'syncing' is a leftover from a drain that was
+      // interrupted (page closed / connection dropped mid-upload). The
+      // _syncing guard guarantees no other drain is touching it in this tab,
+      // so it's safe to retry rather than skip it forever.
       await updateBundleStatus(bundle.id, { status: 'syncing', last_error: null });
       emit();
       try {
@@ -147,15 +176,21 @@ export async function drainQueue() {
         // can flash "uploaded" briefly. Done in the background.
         setTimeout(() => deleteBundle(bundle.id).then(emit).catch(() => {}), 4000);
       } catch (err) {
+        const message = String(err.message || err);
+        const bundleSpecific = isBundleSpecificError(err);
         await updateBundleStatus(bundle.id, {
           status: 'error',
-          last_error: String(err.message || err),
+          last_error: message,
           last_attempt: Date.now(),
         });
-        await logSyncEvent({ kind: 'error', bundle_id: bundle.id, error: String(err.message || err) });
-        // Don't keep looping if one bundle fails — likely a token/server issue
-        // that will affect the rest. Stop here and let the next online event retry.
-        break;
+        await logSyncEvent({ kind: 'error', bundle_id: bundle.id, error: message });
+        emit();
+        // A bundle-specific error (server rejected THIS data) must not block
+        // the rest of the queue — skip it and keep draining. A systemic error
+        // (network / auth / server) will hit every bundle, so stop and let the
+        // next online event or periodic drain retry the whole queue.
+        if (!bundleSpecific) break;
+        continue;
       }
       emit();
     }
@@ -174,6 +209,10 @@ let _initialised = false;
 export function initSyncEngine() {
   if (_initialised) return;
   _initialised = true;
+
+  // Ask the browser to keep our IndexedDB queue from being evicted under disk
+  // pressure, so queued intakes survive until they sync.
+  ensurePersistentStorage();
 
   // Drain on every online transition.
   window.addEventListener('online', () => {

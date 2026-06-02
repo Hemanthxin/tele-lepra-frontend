@@ -259,9 +259,9 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       </section>
 
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-        <div className="section-title mb-3">Symptoms Checklist (PDF1)</div>
+        <div className="section-title mb-3">Symptoms Checklist</div>
         <p className="text-xs t-muted mb-3">
-          Tap every symptom the patient reports — this is the canonical clinical checklist alongside the Y/N rows above.
+          Tap every symptom the patient reports — this is the clinical checklist alongside the Y/N rows above.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {SYMPTOM_CHECKLIST.map((sym) => {
