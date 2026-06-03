@@ -40,10 +40,10 @@ export default function Layout({ children }) {
                 to={i.to}
                 end
                 className={({ isActive }) =>
-                  `px-3.5 py-1.5 rounded-md text-sm font-medium transition ${
+                  `px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
                     isActive
-                      ? 'text-[color:var(--brand)] bg-[color:var(--brand-soft)]'
-                      : 't-soft hover:t-ink hover:bg-[color:var(--surface-2)]'
+                      ? 'text-white bg-[color:var(--brand)] shadow-[0_4px_12px_-4px_var(--brand-ring)] -translate-y-px'
+                      : 't-soft hover:text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] hover:-translate-y-px'
                   }`
                 }
               >
@@ -57,7 +57,7 @@ export default function Layout({ children }) {
               type="button"
               onClick={() => setTheme(nextTheme)}
               title={t('settings.theme')}
-              className="w-8 h-8 rounded-md grid place-items-center border t-soft hover:t-ink transition shrink-0"
+              className="w-9 h-9 rounded-lg grid place-items-center border t-soft hover:text-[color:var(--brand)] hover:border-[color:var(--brand)] hover:-translate-y-px hover:shadow-card active:translate-y-0 transition-all shrink-0"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
             >
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}

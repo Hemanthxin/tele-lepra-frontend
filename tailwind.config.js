@@ -18,20 +18,20 @@ export default {
         ],
       },
       colors: {
-        // Primary brand — premium hospital-grade teal blue (calm, decent, not bright)
+        // Primary brand — vivid, professional medical blue
         brand: {
-          50: '#f1f7f8',
-          100: '#dceaed',
-          200: '#b8d5da',
-          300: '#8bb8c0',
-          400: '#5e98a4',
-          500: '#3b7d8a',
-          600: '#2d6571',
-          700: '#245360',
-          800: '#1e4450',
-          900: '#173640',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
         },
-        // Secondary accent — clinical medical blue (sparingly)
+        // Secondary accent — bright sky blue for highlights / info
         accent: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -64,11 +64,16 @@ export default {
         },
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)',
-        elev: '0 8px 24px -8px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.06)',
+        card: '0 1px 2px 0 rgb(30 58 138 / 0.06), 0 4px 12px -2px rgb(30 58 138 / 0.08)',
+        elev: '0 12px 32px -10px rgb(30 58 138 / 0.28), 0 4px 12px -4px rgb(15 23 42 / 0.10)',
+        hover: '0 18px 44px -12px rgb(30 58 138 / 0.34), 0 8px 18px -6px rgb(15 23 42 / 0.12)',
+        glow: '0 0 0 4px rgb(37 99 235 / 0.14)',
       },
       borderRadius: {
         xl2: '1rem',
+      },
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },
   },
