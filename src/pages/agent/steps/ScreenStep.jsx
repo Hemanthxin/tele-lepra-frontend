@@ -246,7 +246,7 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium t-soft mb-1.5">Date of screening</label>
-            <input type="datetime-local" className="neu-input" value={s.screened_at} onChange={(e) => set('screened_at', e.target.value)} />
+            <input type="date" className="neu-input" value={s.screened_at} onChange={(e) => set('screened_at', e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-medium t-soft mb-1.5">Location (GPS)</label>

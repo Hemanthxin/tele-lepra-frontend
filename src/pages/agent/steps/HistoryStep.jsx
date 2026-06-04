@@ -6,6 +6,9 @@ const CHRONIC = ['Diabetes', 'Hypertension', 'TB', 'HIV', 'Pregnancy', 'None'];
 
 export default function HistoryStep({ patient, onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
+  // Pregnancy is not applicable to male patients.
+  const isMale = patient?.sex === 'male';
+  const conditions = CHRONIC.filter((c) => !(isMale && c === 'Pregnancy'));
   const [chronic, setChronic] = useState(initial?.chronic_conditions || []);
   const [notes, setNotes] = useState(initial?.past_visits_notes || '');
   const [rxUrls, setRxUrls] = useState(initial?.prior_prescriptions_urls || []);
@@ -39,7 +42,7 @@ export default function HistoryStep({ patient, onDone, initial, busy: parentBusy
     setError(null);
     try {
       const draft = {
-        chronic_conditions: chronic,
+        chronic_conditions: isMale ? chronic.filter((c) => c !== 'Pregnancy') : chronic,
         prior_prescriptions_urls: rxUrls,
         prior_labs_urls: labUrls,
         past_visits_notes: notes,
@@ -64,7 +67,7 @@ export default function HistoryStep({ patient, onDone, initial, busy: parentBusy
       <section>
         <div className="section-title mb-3">{t('history.chronic')}</div>
         <div className="flex flex-wrap gap-2">
-          {CHRONIC.map((c) => {
+          {conditions.map((c) => {
             const selected = chronic.includes(c);
             return (
               <button

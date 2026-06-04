@@ -6,6 +6,22 @@ import { getPhcMeta } from '../../../lib/phcMeta';
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '');
 
+// PHC / CHC -> administrative location. The whole SHAKTHI programme sits in
+// Bastar district, Chhattisgarh, so selecting any PHC auto-fills state +
+// district. Values must match the options in data/districts.js exactly.
+const PHC_LOCATION = {
+  Bakawand: { state: 'Chhattisgarh', district: 'Bastar' },
+  Karpawand: { state: 'Chhattisgarh', district: 'Bastar' },
+  Kolawal: { state: 'Chhattisgarh', district: 'Bastar' },
+  Mangnaar: { state: 'Chhattisgarh', district: 'Bastar' },
+  Kachnaar: { state: 'Chhattisgarh', district: 'Bastar' },
+  Maalgaon: { state: 'Chhattisgarh', district: 'Bastar' },
+  Jebel: { state: 'Chhattisgarh', district: 'Bastar' },
+};
+// Unknown PHCs still default to the programme district.
+const DEFAULT_PHC_LOCATION = { state: 'Chhattisgarh', district: 'Bastar' };
+const locationForPhc = (phc) => (phc ? PHC_LOCATION[phc] || DEFAULT_PHC_LOCATION : null);
+
 const RELATION_OPTIONS = [
   { value: 'self', label: 'Self' },
   { value: 'father_mother', label: 'Father / Mother' },
@@ -120,6 +136,16 @@ export default function EnrollStep({ onDone, initial }) {
   const f = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const onStateChange = (v) => setForm((s) => ({ ...s, state: v, district: '' }));
 
+  // Selecting a PHC auto-fills its state + district.
+  const onPhcChange = (v) => {
+    const loc = locationForPhc(v);
+    setForm((s) => ({
+      ...s,
+      phc: v,
+      ...(loc ? { state: loc.state, district: loc.district } : {}),
+    }));
+  };
+
   return (
     <form onSubmit={submit} className="card-elev">
       <header className="mb-5">
@@ -134,7 +160,7 @@ export default function EnrollStep({ onDone, initial }) {
             <select
               className="neu-input"
               value={form.phc}
-              onChange={(e) => f('phc', e.target.value)}
+              onChange={(e) => onPhcChange(e.target.value)}
               required
             >
               <option value="">{phcMeta.length === 0 ? 'Loading…' : 'Select PHC'}</option>
@@ -194,7 +220,7 @@ export default function EnrollStep({ onDone, initial }) {
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">Contact &amp; Location</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label={t('enroll.state')} required>
+          <Field label={t('enroll.state')} required hint={form.phc ? 'Auto-filled from PHC' : undefined}>
             <select
               className="neu-input"
               required
@@ -207,7 +233,7 @@ export default function EnrollStep({ onDone, initial }) {
               ))}
             </select>
           </Field>
-          <Field label={t('enroll.district')} required>
+          <Field label={t('enroll.district')} required hint={form.phc ? 'Auto-filled from PHC' : undefined}>
             <select
               className="neu-input"
               required
