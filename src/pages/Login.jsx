@@ -62,11 +62,11 @@ export default function Login() {
         </ul>
       </header>
 
-      {/* ===== Two auth cards ===== */}
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-10 sm:mt-12">
+      {/* ===== Role auth cards ===== */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mt-10 sm:mt-12">
         <AuthCard
           role="agent"
-          tone="brand"
+          color="var(--brand)"
           title="Field Agent"
           desc="Screen patients and capture intake in the field."
           icon={<AgentIcon />}
@@ -75,10 +75,20 @@ export default function Login() {
         />
         <AuthCard
           role="mo"
-          tone="accent"
+          color="var(--accent)"
           title="Medical Officer"
           desc="Review cases and make tele-consult decisions."
           icon={<MOIcon />}
+          t={t}
+          nav={nav}
+        />
+        <AuthCard
+          role="admin"
+          color="#4f46e5"
+          title="Administrator"
+          desc="Manage users, metrics, and the audit log."
+          icon={<AdminIcon />}
+          loginOnly
           t={t}
           nav={nav}
         />
@@ -103,7 +113,7 @@ export default function Login() {
 }
 
 /* ===================== Auth card (per role) ===================== */
-function AuthCard({ role, tone, title, desc, icon, t, nav }) {
+function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -113,8 +123,6 @@ function AuthCard({ role, tone, title, desc, icon, t, nav }) {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
-
-  const toneVar = tone === 'accent' ? 'var(--accent)' : 'var(--brand)';
 
   const emailError =
     touched.email && !email ? t('validation.required') :
@@ -181,7 +189,7 @@ function AuthCard({ role, tone, title, desc, icon, t, nav }) {
         <div className="flex items-start gap-3">
           <span
             className="w-12 h-12 rounded-2xl grid place-items-center text-white shrink-0 shadow-card"
-            style={{ background: toneVar }}
+            style={{ background: color }}
           >
             {icon}
           </span>
@@ -191,30 +199,32 @@ function AuthCard({ role, tone, title, desc, icon, t, nav }) {
           </div>
         </div>
 
-        {/* Sign in / Register toggle */}
-        <div role="tablist" className="flex p-1 rounded-xl mt-4 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
-          {[
-            { k: 'signin', label: t('login.signin') },
-            { k: 'signup', label: t('login.register') },
-          ].map((opt) => {
-            const active = mode === opt.k;
-            return (
-              <button
-                key={opt.k}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => active || switchMode()}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  active ? 'text-white shadow-card -translate-y-px' : 't-soft hover:t-ink'
-                }`}
-                style={active ? { background: toneVar } : undefined}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Sign in / Register toggle (admins are provisioned — login only) */}
+        {!loginOnly && (
+          <div role="tablist" className="flex p-1 rounded-xl mt-4 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
+            {[
+              { k: 'signin', label: t('login.signin') },
+              { k: 'signup', label: t('login.register') },
+            ].map((opt) => {
+              const active = mode === opt.k;
+              return (
+                <button
+                  key={opt.k}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => active || switchMode()}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    active ? 'text-white shadow-card -translate-y-px' : 't-soft hover:t-ink'
+                  }`}
+                  style={active ? { background: color } : undefined}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Form */}
@@ -288,7 +298,7 @@ function AuthCard({ role, tone, title, desc, icon, t, nav }) {
         <button
           className="neu-btn-primary"
           disabled={busy}
-          style={tone === 'accent' ? { background: 'var(--accent)' } : undefined}
+          style={{ background: color }}
         >
           {busy ? (
             <><Spinner /> {t('common.please_wait')}</>
@@ -299,12 +309,17 @@ function AuthCard({ role, tone, title, desc, icon, t, nav }) {
           )}
         </button>
 
-        {mode === 'signin' && (
+        {!loginOnly && mode === 'signin' && (
           <p className="text-center text-xs t-muted">
             New here?{' '}
             <button type="button" onClick={switchMode} className="link font-semibold">
               Create a {title} account
             </button>
+          </p>
+        )}
+        {loginOnly && (
+          <p className="text-center text-xs t-muted">
+            Admin accounts are provisioned by the system administrator.
           </p>
         )}
       </form>
@@ -379,6 +394,15 @@ function MOIcon() {
       <path d="M4.8 2.3A.3.3 0 1 0 5 2.3a.3.3 0 0 0-.2 0" /><path d="M8 2v3a4 4 0 0 0 8 0V2" />
       <path d="M6 5a6 6 0 0 0 6 6 6 6 0 0 0 6-6" /><path d="M12 11v4a4 4 0 0 0 8 0v-1" />
       <circle cx="20" cy="14" r="2" />
+    </svg>
+  );
+}
+
+function AdminIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" /><circle cx="12" cy="11" r="2.5" />
+      <path d="M12 13.5V16" />
     </svg>
   );
 }
