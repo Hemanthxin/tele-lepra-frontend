@@ -61,16 +61,8 @@ export default function Queue() {
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="min-w-0">
                   <div className="font-semibold t-ink truncate">{c.patient_name}</div>
-                  <div className="text-xs t-muted mt-0.5">
-                    {c.condition} · {formatId(c.id)}
-                  </div>
+                  <div className="text-xs t-muted mt-0.5">{formatId(c.id)}</div>
                 </div>
-                <span className={PILL[c.triage_outcome] || 'pill-amber'}>
-                  {(c.triage_outcome || 'pending').replace('_', ' ')}
-                </span>
-              </div>
-
-              <div className="text-xs mb-2">
                 <span className="pill-ink">{statusLabel(c.status)}</span>
               </div>
 
@@ -78,12 +70,6 @@ export default function Queue() {
                 <div className="text-xs t-muted mb-2">
                   {t('queue.scheduled')} · {new Date(c.scheduled_at).toLocaleString()}
                 </div>
-              )}
-
-              {c.triage?.reasons && (
-                <p className="text-xs t-soft line-clamp-2 mt-2 border-t border-[color:var(--border)] pt-2">
-                  {c.triage.reasons.join(' · ')}
-                </p>
               )}
             </Link>
           ))}

@@ -68,6 +68,19 @@ export async function downloadAuthFile(path, filename) {
   return blob;
 }
 
+/** Multipart upload of an arbitrary file/blob to an authenticated endpoint. */
+export async function uploadFile(path, file, filename) {
+  const fd = new FormData();
+  fd.append('file', file, filename || file.name || 'upload');
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: fd,
+  });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 export async function uploadImage(file) {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     throw new OfflineError('Offline — image upload deferred');

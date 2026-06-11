@@ -1,17 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, downloadAuthFile } from '../../lib/api';
+import { api, downloadAuthFile, uploadFile } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import MeetingDetails from '../../components/MeetingDetails';
 import MOClinicalAssessment from './MOClinicalAssessment';
 import { meetingPhase } from '../../lib/meetingPhase';
 import { formatId, idForFilename } from '../../lib/ids';
-
-const RISK_PILL = {
-  rule_out: { cls: 'pill-green', label: 'Low Risk' },
-  alternative_dx: { cls: 'pill-amber', label: 'Possible' },
-  escalate: { cls: 'pill-red', label: 'High Risk' },
-};
 
 const defaultWhen = () => {
   const d = new Date(Date.now() + 60 * 60 * 1000);
@@ -117,15 +111,29 @@ export default function CaseReview() {
     }
   };
 
+  const [docBusy, setDocBusy] = useState(false);
+  const [docError, setDocError] = useState(null);
+  const uploadDoc = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setDocBusy(true);
+    setDocError(null);
+    try {
+      await uploadFile(`/cases/${id}/documents`, file);
+      refresh();
+    } catch (err) {
+      setDocError(err.message || 'Upload failed.');
+    } finally {
+      setDocBusy(false);
+    }
+  };
+
   if (!c) return <p className="t-muted">Loading…</p>;
-  const t = c.triage;
-  const risk = RISK_PILL[t?.outcome] || { cls: 'pill-amber', label: 'Pending' };
-  const conf = t ? Math.round((t.confidence || 0) * 100) : null;
-  const reasons = t?.reasons || [];
   const screen = c.screening || {};
-  const suspected = screen.suspected_diseases || [];
-  const findings = t?.condition_findings || [];
   const hist = c.history || {};
+  const postConsultDocs = c.post_consult_docs || [];
+  const recordings = c.recordings || [];
 
   return (
     <div>
@@ -145,18 +153,13 @@ export default function CaseReview() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={risk.cls}>{risk.label}</span>
-          {t?.suspected_condition && (
-            <span className="pill-amber">{t.suspected_condition}</span>
-          )}
-          {c.condition && <span className="pill-brand">{c.condition}</span>}
-        </div>
       </div>
 
       <div className="space-y-5">
         {/* TELE-CONSULT — at the top, core feature */}
         <TeleConsultBlock
+          caseId={c.id}
+          onRecorded={refresh}
           appointment={appointment}
           when={when}
           setWhen={setWhen}
@@ -277,19 +280,6 @@ export default function CaseReview() {
             </>
           )}
 
-          {/* Auto-detected conditions */}
-          {suspected.length > 0 && (
-            <>
-              <Divider />
-              <SectionLabel>Auto-detected condition(s)</SectionLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {suspected.map((d) => (
-                  <span key={d} className="pill-brand">{DISEASE_LABELS[d] || d}</span>
-                ))}
-              </div>
-            </>
-          )}
-
           {/* Symptom screening — the 11-question leprosy checklist */}
           {screen.symptoms && Object.keys(screen.symptoms).length > 0 && (
             <>
@@ -407,6 +397,40 @@ export default function CaseReview() {
           </div>
         </section>
 
+        {/* Post-consultation documents + recordings */}
+        <section className="card-elev">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="section-title !mb-1">Post-consultation</div>
+              <p className="text-xs t-muted">Upload reports/prescriptions after the consult — stored in the patient folder.</p>
+            </div>
+            <label className={`btn-ghost cursor-pointer ${docBusy ? 'opacity-60 pointer-events-none' : ''}`}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+              {docBusy ? 'Uploading…' : 'Upload document'}
+              <input type="file" accept="application/pdf,image/*" className="hidden" onChange={uploadDoc} />
+            </label>
+          </div>
+          {docError && <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-700">{docError}</div>}
+          {(postConsultDocs.length > 0 || recordings.length > 0) ? (
+            <ul className="space-y-1.5">
+              {postConsultDocs.map((d, i) => (
+                <li key={`doc-${i}`} className="flex items-center gap-2 text-sm">
+                  <span className="t-muted">📄</span>
+                  <a href={d.url} target="_blank" rel="noreferrer" className="link truncate">{d.name || `Document ${i + 1}`}</a>
+                </li>
+              ))}
+              {recordings.map((r, i) => (
+                <li key={`rec-${i}`} className="flex items-center gap-2 text-sm">
+                  <span className="t-muted">🎥</span>
+                  <a href={r.url} target="_blank" rel="noreferrer" className="link truncate">{r.filename || `Recording ${i + 1}`}</a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs t-muted">No documents or recordings yet.</p>
+          )}
+        </section>
+
         {/* Action bar */}
         <section className="card-elev">
           {decisionSaved && (
@@ -430,21 +454,21 @@ export default function CaseReview() {
               <button
                 type="button"
                 className="btn-ghost w-full sm:w-auto"
-                onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `intake-${idForFilename(c.id)}.pdf`)}
-                title="Download patient intake PDF"
+                onClick={() => downloadAuthFile(`/cases/${c.id}/intake.pdf`, `agent-report-${idForFilename(c.id)}.pdf`)}
+                title="Download the agent report"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                Intake PDF
+                Agent Report
               </button>
               <button
                 type="button"
                 className="btn-ghost w-full sm:w-auto"
-                onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `decision-${idForFilename(c.id)}.pdf`)}
+                onClick={() => downloadAuthFile(`/cases/${c.id}/decision.pdf`, `mo-report-${idForFilename(c.id)}.pdf`)}
                 disabled={!assessmentSaved}
-                title={assessmentSaved ? 'Download MO decision PDF' : 'Save the clinical assessment first'}
+                title={assessmentSaved ? 'Download the MO report' : 'Save the clinical assessment first'}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                Decision PDF
+                MO Report
               </button>
               {decisionSaved ? (
                 <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => nav('/mo')}>
@@ -615,8 +639,88 @@ const fmtDateTime = (iso) => {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 };
 
+// Screen-records the consultation (the Zoom window opens externally) and
+// uploads the recording to the patient's Storage folder.
+function ConsultRecorder({ caseId, onRecorded }) {
+  const [recording, setRecording] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+
+  const start = async () => {
+    setMsg(null);
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setMsg('Screen recording is not supported in this browser.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      chunksRef.current = [];
+      const mr = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      mr.ondataavailable = (e) => { if (e.data?.size) chunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        setRecording(false);
+        setBusy(true);
+        try {
+          await uploadFile(`/cases/${caseId}/recording`, blob, 'recording.webm');
+          setMsg('Recording saved to the patient folder.');
+          onRecorded?.();
+        } catch (e) {
+          setMsg(`Upload failed: ${e.message}`);
+        } finally {
+          setBusy(false);
+        }
+      };
+      // If the user ends sharing via the browser bar, stop + upload.
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (mr.state !== 'inactive') mr.stop();
+      });
+      mr.start();
+      recorderRef.current = mr;
+      setRecording(true);
+    } catch (e) {
+      setMsg(e.name === 'NotAllowedError' ? 'Screen share was cancelled.' : `Could not start recording: ${e.message}`);
+    }
+  };
+
+  const stop = () => {
+    if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop();
+  };
+
+  return (
+    <div className="border-t border-[color:var(--border-cool)] pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="section-title !mb-1">Screen recording</div>
+          <p className="text-[11px] t-muted">Records the consultation and stores it in the patient folder.</p>
+        </div>
+        {!recording ? (
+          <button type="button" className="btn-ghost" onClick={start} disabled={busy}>
+            {busy ? 'Uploading…' : (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Start recording
+              </span>
+            )}
+          </button>
+        ) : (
+          <button type="button" className="btn-danger" onClick={stop}>
+            <span className="inline-flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-sm bg-white animate-pulse" /> Stop &amp; save
+            </span>
+          </button>
+        )}
+      </div>
+      {recording && <p className="text-xs text-red-600 font-medium mt-2">● Recording in progress…</p>}
+      {msg && <p className="text-xs t-soft mt-2">{msg}</p>}
+    </div>
+  );
+}
+
 function TeleConsultBlock({
-  appointment, when, setWhen, duration, setDuration, schedule, schedBusy, schedError,
+  caseId, onRecorded, appointment, when, setWhen, duration, setDuration, schedule, schedBusy, schedError,
 }) {
   const phaseInfo = appointment
     ? meetingPhase(appointment.scheduled_at, appointment.duration_minutes || 30)
@@ -710,6 +814,8 @@ function TeleConsultBlock({
           </p>
         </div>
       )}
+
+      {!isExpired && <ConsultRecorder caseId={caseId} onRecorded={onRecorded} />}
 
       {isExpired && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-3">
