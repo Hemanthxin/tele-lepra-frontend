@@ -44,7 +44,7 @@ export default function Login() {
     <div className="min-h-screen flex flex-col">
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-[color:var(--border-cool)] bg-[color:var(--surface)]/85 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
@@ -57,7 +57,7 @@ export default function Login() {
       </header>
 
       {/* ===== Main ===== */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
         {/* Hero */}
         <div className="text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.12] tracking-tight t-ink">
@@ -78,7 +78,7 @@ export default function Login() {
         </div>
 
         {/* Desktop: all three cards in a row, equal height */}
-        <div className="hidden md:grid grid-cols-3 gap-6 mt-10 items-stretch">
+        <div className="hidden md:grid grid-cols-3 gap-6 lg:gap-8 xl:gap-10 mt-10 items-stretch">
           {CARDS.map(renderCard)}
         </div>
 
@@ -117,7 +117,7 @@ export default function Login() {
 
       {/* ===== Footer bar ===== */}
       <footer className="border-t border-[color:var(--border-cool)] bg-[color:var(--surface)]/70">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
             <div>
