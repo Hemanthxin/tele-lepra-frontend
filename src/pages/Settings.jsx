@@ -27,10 +27,16 @@ export default function Settings() {
     setBusy(true);
     setError(null);
     setNotice(null);
+    const phoneDigits = (phone || '').replace(/\D/g, '');
+    if (phoneDigits && phoneDigits.length !== 10) {
+      setError('Phone must be exactly 10 digits.');
+      setBusy(false);
+      return;
+    }
     try {
       await api('/auth/me', {
         method: 'PATCH',
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify({ name, phone: phoneDigits }),
       });
       setNotice(t('settings.profile_saved'));
     } catch (err) {
@@ -72,9 +78,11 @@ export default function Settings() {
               <Field label={t('common.phone')}>
                 <input
                   className="input"
+                  inputMode="numeric"
+                  maxLength={10}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 ……"
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile number"
                 />
               </Field>
               <Field label={t('common.email')}>

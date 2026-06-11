@@ -24,91 +24,111 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Human label per role — used to enforce that a card only logs in its own role.
 const ROLE_LABEL = { agent: 'Field Agent', mo: 'Medical Officer', admin: 'Administrator' };
 
+const CARDS = [
+  { role: 'agent', color: 'var(--brand)', title: 'Field Agent', desc: 'Screen patients and capture intake in the field.', icon: <AgentIcon /> },
+  { role: 'mo', color: 'var(--accent)', title: 'Medical Officer', desc: 'Review cases and make tele-consult decisions.', icon: <MOIcon /> },
+  { role: 'admin', color: '#4f46e5', title: 'Administrator', desc: 'Manage users, metrics, and the audit log.', icon: <AdminIcon />, loginOnly: true },
+];
+
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
+  const [mobileRole, setMobileRole] = useState(null); // small screens: which card is open
+
+  const renderCard = (c) => (
+    <AuthCard key={c.role} role={c.role} color={c.color} title={c.title} desc={c.desc} icon={c.icon} loginOnly={c.loginOnly} t={t} nav={nav} />
+  );
+  const selectedCard = CARDS.find((c) => c.role === mobileRole);
 
   return (
-    <div className="min-h-screen relative px-4 py-8 sm:py-10 md:py-12 flex flex-col items-center">
-      <div className="absolute top-3 right-3 sm:top-5 sm:right-5 z-30">
-        <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
-      </div>
-
-      {/* ===== Header ===== */}
-      <header className="w-full max-w-5xl text-center mt-6 sm:mt-4">
-        <div className="inline-flex items-center gap-3">
-          <span className="brand-mark !w-12 !h-12 !rounded-2xl"><Logo /></span>
-          <div className="text-left leading-tight">
-            <div className="font-bold tracking-wide text-lg t-ink">TELE-LEPROSY</div>
-            <div className="text-[11px] uppercase tracking-[0.18em] t-muted">{t('brand.subtitle')}</div>
+    <div className="min-h-screen flex flex-col">
+      {/* ===== Header bar ===== */}
+      <header className="sticky top-0 z-30 border-b border-[color:var(--border-cool)] bg-[color:var(--surface)]/85 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="brand-mark"><Logo /></span>
+            <div className="leading-tight">
+              <div className="font-bold tracking-wide text-sm t-ink">TELE-LEPROSY</div>
+              <div className="text-[10px] uppercase tracking-[0.16em] t-muted">{t('brand.subtitle')}</div>
+            </div>
           </div>
+          <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
         </div>
-
-        <h1 className="mt-8 text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.12] tracking-tight t-ink">
-          AI-assisted triage for<br className="hidden sm:block" /> community health workers.
-        </h1>
-        <p className="mt-4 text-base t-soft max-w-2xl mx-auto leading-relaxed">
-          Standardised screening, decision support, and a complete audit trail —
-          from first contact in the field to specialist review.
-        </p>
-
-        <ul className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
-          {FEATURES.map((f) => (
-            <li
-              key={f.key}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-[color:var(--surface)] border border-[color:var(--border-cool)] shadow-card"
-            >
-              <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
-              {t(f.key)}
-            </li>
-          ))}
-        </ul>
       </header>
 
-      {/* ===== Role auth cards ===== */}
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mt-10 sm:mt-12">
-        <AuthCard
-          role="agent"
-          color="var(--brand)"
-          title="Field Agent"
-          desc="Screen patients and capture intake in the field."
-          icon={<AgentIcon />}
-          t={t}
-          nav={nav}
-        />
-        <AuthCard
-          role="mo"
-          color="var(--accent)"
-          title="Medical Officer"
-          desc="Review cases and make tele-consult decisions."
-          icon={<MOIcon />}
-          t={t}
-          nav={nav}
-        />
-        <AuthCard
-          role="admin"
-          color="#4f46e5"
-          title="Administrator"
-          desc="Manage users, metrics, and the audit log."
-          icon={<AdminIcon />}
-          loginOnly
-          t={t}
-          nav={nav}
-        />
-      </div>
-
-      {/* ===== Footer ===== */}
-      <footer className="w-full max-w-4xl mt-10 flex flex-col items-center gap-5">
-        <div className="w-full rounded-2xl border border-[color:var(--border-cool)] bg-[color:var(--surface)] shadow-card px-4 py-3 flex items-start gap-3">
-          <ShieldIcon />
-          <div>
-            <div className="text-xs font-semibold t-ink">Secure &amp; compliant platform</div>
-            <p className="text-[11px] t-muted leading-relaxed mt-0.5">{t('login.note')}</p>
-          </div>
+      {/* ===== Main ===== */}
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/* Hero */}
+        <div className="text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.12] tracking-tight t-ink">
+            AI-assisted triage for<br className="hidden sm:block" /> community health workers.
+          </h1>
+          <p className="mt-4 text-base t-soft max-w-2xl mx-auto leading-relaxed">
+            Standardised screening, decision support, and a complete audit trail —
+            from first contact in the field to specialist review.
+          </p>
+          <ul className="mt-7 hidden sm:flex flex-wrap items-center justify-center gap-2.5">
+            {FEATURES.map((f) => (
+              <li key={f.key} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-[color:var(--surface)] border border-[color:var(--border-cool)] shadow-card">
+                <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
+                {t(f.key)}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="flex items-center gap-2 text-[11px] t-muted">
-          <span className="uppercase tracking-[0.16em] font-semibold">In partnership with</span>
-          <PartnerLogos size="sm" />
+
+        {/* Desktop: all three cards in a row, equal height */}
+        <div className="hidden md:grid grid-cols-3 gap-6 mt-10 items-stretch">
+          {CARDS.map(renderCard)}
+        </div>
+
+        {/* Mobile: pick a role, then show that card */}
+        <div className="md:hidden mt-8">
+          {!selectedCard ? (
+            <div className="grid gap-3">
+              <p className="text-sm t-muted text-center mb-1">Choose how you want to sign in</p>
+              {CARDS.map((c) => (
+                <button
+                  key={c.role}
+                  type="button"
+                  onClick={() => setMobileRole(c.role)}
+                  className="card-elev flex items-center gap-3 text-left !py-4 hover-lift"
+                >
+                  <span className="w-11 h-11 rounded-2xl grid place-items-center text-white shrink-0 shadow-card" style={{ background: c.color }}>{c.icon}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-bold t-ink">{c.title} login</span>
+                    <span className="block text-xs t-muted truncate">{c.desc}</span>
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="t-muted shrink-0"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div>
+              <button type="button" onClick={() => setMobileRole(null)} className="btn-ghost inline-flex items-center gap-1.5 mb-3 text-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+                All sign-in options
+              </button>
+              {renderCard(selectedCard)}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ===== Footer bar ===== */}
+      <footer className="border-t border-[color:var(--border-cool)] bg-[color:var(--surface)]/70">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <ShieldIcon />
+            <div>
+              <div className="text-xs font-semibold t-ink">Secure &amp; compliant platform</div>
+              <p className="text-[11px] t-muted leading-relaxed mt-0.5 max-w-xl">{t('login.note')}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] t-muted shrink-0">
+            <span className="uppercase tracking-[0.16em] font-semibold hidden sm:inline">In partnership with</span>
+            <PartnerLogos size="sm" />
+          </div>
         </div>
       </footer>
     </div>
@@ -121,12 +141,14 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [touched, setTouched] = useState({});
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
 
+  const phoneDigits = phone.replace(/\D/g, '');
   const emailError =
     touched.email && !email ? t('validation.required') :
     touched.email && !EMAIL_RE.test(email) ? t('validation.invalid_email') : null;
@@ -135,6 +157,8 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
     touched.password && mode === 'signup' && !PASSWORD_RE.test(password) ? t('validation.password_rule') :
     touched.password && mode === 'signin' && password.length < 6 ? t('validation.password_short') : null;
   const nameError = touched.name && mode === 'signup' && !name ? t('validation.required') : null;
+  const phoneError = touched.phone && mode === 'signup' && phoneDigits.length !== 10
+    ? 'Phone must be exactly 10 digits' : null;
 
   const passwordRules = mode === 'signup' && password
     ? [
@@ -155,23 +179,25 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    setTouched({ email: true, password: true, name: true });
+    setTouched({ email: true, password: true, name: true, phone: true });
     setError(null);
     setNotice(null);
     if (!EMAIL_RE.test(email)) return;
     if (mode === 'signup' && !PASSWORD_RE.test(password)) return;
     if (mode === 'signin' && password.length < 6) return;
     if (mode === 'signup' && !name) return;
+    if (mode === 'signup' && phoneDigits.length !== 10) return;
 
     setBusy(true);
     try {
       if (mode === 'signup') {
         await createUserWithEmailAndPassword(auth, email, password);
-        await api('/auth/bootstrap', { method: 'POST', body: JSON.stringify({ name, role }) });
+        await api('/auth/bootstrap', { method: 'POST', body: JSON.stringify({ name, role, phone: phoneDigits }) });
         await signOut(auth);
         setMode('signin');
         setPassword('');
         setName('');
+        setPhone('');
         setTouched({});
         setNotice(t('login.account_created'));
       } else {
@@ -200,7 +226,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col overflow-hidden !p-0">
+    <div className="card-elev flex flex-col overflow-hidden !p-0 h-full">
       {/* Coloured header strip */}
       <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-3">
@@ -212,12 +238,15 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           </span>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-bold t-ink leading-tight">{title}</h2>
-            <p className="text-[13px] t-muted mt-0.5 leading-snug">{desc}</p>
+            <p className="text-[13px] t-muted mt-0.5 leading-snug min-h-[2.5rem]">{desc}</p>
           </div>
         </div>
 
-        {/* Sign in / Register toggle (admins are provisioned — login only) */}
-        {!loginOnly && (
+        {/* Sign in / Register toggle. Admin is login-only — render a matching
+            spacer so all three cards' fields (and Sign-in buttons) line up. */}
+        {loginOnly ? (
+          <div className="mt-4 h-[46px]" aria-hidden />
+        ) : (
           <div role="tablist" className="flex p-1 rounded-xl mt-4 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
             {[
               { k: 'signin', label: t('login.signin') },
@@ -255,6 +284,21 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
               onBlur={() => setTouched((s) => ({ ...s, name: true }))}
               placeholder="Jane Doe"
             />
+          </Field>
+        )}
+
+        {mode === 'signup' && (
+          <Field label="Phone number" required error={phoneError}>
+            <input
+              className={inputCls(phoneError)}
+              inputMode="numeric"
+              maxLength={10}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
+              placeholder="10-digit mobile number"
+            />
+            <p className="text-[11px] t-muted mt-1.5">You can change this later in your profile.</p>
           </Field>
         )}
 

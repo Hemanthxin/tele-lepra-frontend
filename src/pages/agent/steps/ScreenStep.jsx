@@ -1,7 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { uploadImage } from '../../../lib/api';
 import { useTranslation } from '../../../i18n/I18nContext';
 import GeoCaptureButton from '../../../components/GeoCaptureButton';
+
+// Today's date as YYYY-MM-DD in the device's local timezone (for the date input).
+const todayLocal = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
 
 // The canonical 11-symptom leprosy screening checklist (PDF order). The agent
 // answers Yes/No for each; the data is sent to the Medical Officer for review.
@@ -40,17 +46,40 @@ function YesNo({ value, onChange }) {
 export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
-  const [s, setS] = useState({
-    symptoms: {},
-    image_urls: [], image_blobs: [], lab_urls: [], lab_blobs: [],
-    notes: '', screened_at: '', geolocation: null,
-    ...(initial || {}),
+  const [s, setS] = useState(() => {
+    const init = initial || {};
+    return {
+      symptoms: {},
+      image_urls: [], image_blobs: [], lab_urls: [], lab_blobs: [],
+      notes: '', geolocation: null,
+      ...init,
+      // Default the screening date to today (the day the patient is screened).
+      screened_at: init.screened_at || todayLocal(),
+    };
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const submitBusy = busy || parentBusy;
 
   const set = (k, v) => setS((cur) => ({ ...cur, [k]: v }));
+
+  // Auto-capture the device location once on entry (the agent screens the
+  // patient on-site), unless it was already captured for this draft.
+  useEffect(() => {
+    if (s.geolocation || typeof navigator === 'undefined' || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => set('geolocation', {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        altitude: pos.coords.altitude,
+        captured_at: new Date(pos.timestamp).toISOString(),
+      }),
+      () => { /* user denied / unavailable — they can capture manually */ },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const setSymptom = (key, v) =>
     setS((cur) => ({ ...cur, symptoms: { ...cur.symptoms, [key]: v } }));
 

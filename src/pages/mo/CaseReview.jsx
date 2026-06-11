@@ -134,6 +134,11 @@ export default function CaseReview() {
   const hist = c.history || {};
   const postConsultDocs = c.post_consult_docs || [];
   const recordings = c.recordings || [];
+  // Once the consult slot has passed, the case is read-only — the MO can view
+  // everything but cannot update the assessment or send a new decision.
+  const sessionExpired = appointment
+    ? meetingPhase(appointment.scheduled_at, appointment.duration_minutes || 30).phase === 'expired'
+    : false;
 
   return (
     <div>
@@ -154,6 +159,18 @@ export default function CaseReview() {
           </div>
         </div>
       </div>
+
+      {sessionExpired && (
+        <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+          <div>
+            <div className="text-sm font-semibold text-amber-800">Session expired — read only</div>
+            <p className="text-xs text-amber-700 mt-0.5">
+              The consultation slot has passed. You can view this case but cannot update the assessment or send a decision.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-5">
         {/* TELE-CONSULT — at the top, core feature */}
@@ -333,6 +350,7 @@ export default function CaseReview() {
           caseId={c.id}
           initial={c.clinical_assessment || null}
           onSaved={() => setAssessmentSaved(true)}
+          readOnly={sessionExpired}
         />
 
         {/* MO Decision */}
@@ -435,11 +453,13 @@ export default function CaseReview() {
           )}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
-              {!assessmentSaved
-                ? 'Save the clinical assessment above before saving the decision.'
-                : decisionSaved
-                  ? 'Decision is saved independently of WhatsApp. Download it any time below.'
-                  : 'Saving records the decision and generates its PDF, then notifies the patient via WhatsApp.'}
+              {sessionExpired
+                ? 'This session has expired — the decision can no longer be changed.'
+                : !assessmentSaved
+                  ? 'Save the clinical assessment above before saving the decision.'
+                  : decisionSaved
+                    ? 'Decision is saved independently of WhatsApp. Download it any time below.'
+                    : 'Saving records the decision and generates its PDF, then notifies the patient via WhatsApp.'}
             </div>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:justify-end">
               <button
@@ -469,9 +489,9 @@ export default function CaseReview() {
                 <button
                   type="button"
                   className="btn-primary w-full sm:w-auto"
-                  disabled={busy || !assessmentSaved}
+                  disabled={busy || !assessmentSaved || sessionExpired}
                   onClick={submit}
-                  title={!assessmentSaved ? 'Save the clinical assessment first' : undefined}
+                  title={sessionExpired ? 'Session expired — read only' : !assessmentSaved ? 'Save the clinical assessment first' : undefined}
                 >
                   {busy ? 'Saving…' : 'Save decision & notify'}
                 </button>
