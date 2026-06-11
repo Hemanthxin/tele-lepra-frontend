@@ -96,6 +96,7 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(Boolean(initial));
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     if (initial) {
@@ -158,29 +159,38 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
 
   return (
     <section className="card-elev">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex flex-wrap items-baseline justify-between gap-2 mb-4 text-left"
+        aria-expanded={open}
+      >
         <div>
           <div className="section-title">Post-consultation</div>
           <h3 className="text-lg font-semibold t-ink">MO clinical assessment</h3>
           <p className="text-xs t-muted mt-1">Save this before sending the decision.</p>
         </div>
-        {saved && <span className="pill-green">Saved</span>}
-      </div>
+        <span className="flex items-center gap-2 shrink-0">
+          {saved && <span className="pill-green">Saved</span>}
+          <svg className={`transition-transform duration-200 t-muted ${open ? 'rotate-180' : ''}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+        </span>
+      </button>
 
+      {open && (
       <div className="space-y-5">
         {/* Confirmed Y/N */}
-        <Row label="Confirmed case of leprosy" required>
+        <Row num={1} label="Confirmed case of leprosy" required>
           <YesNo value={confirmed} onChange={setConfirmed} />
         </Row>
 
         {/* Lesion count */}
-        <Row label="No. of skin lesions">
+        <Row num={2} label="No. of skin lesions">
           <RadioRow value={lesion} onChange={setLesion} options={LESION_OPTIONS} />
         </Row>
 
         {/* Nerve involvement grid */}
         <div>
-          <div className="text-sm font-medium t-ink mb-2">Nerve involvement</div>
+          <div className="mb-2"><QHeading num={3} label="Nerve involvement" /></div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs min-w-[560px]">
               <thead className="text-[10px] uppercase tracking-wider t-muted">
@@ -221,20 +231,20 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
 
         {/* Status + WHO classification */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Row label="Status of case" stacked>
+          <Row num={4} label="Status of case" stacked>
             <RadioStack value={status} onChange={setStatus} options={STATUS_OPTIONS} />
           </Row>
-          <Row label="WHO classification" stacked>
+          <Row num={5} label="WHO classification" stacked>
             <RadioStack value={who} onChange={setWho} options={WHO_OPTIONS} />
           </Row>
         </div>
 
         {/* Sensory loss + Disability grade */}
-        <Row label="Sensory loss">
+        <Row num={6} label="Sensory loss">
           <ChipMulti values={sensory} options={SENSORY_OPTIONS} onToggle={(v) => toggle(sensory, setSensory, v, 'none')} />
         </Row>
 
-        <Row label="Disability grade">
+        <Row num={7} label="Disability grade">
           <div className="inline-flex rounded-md border border-[color:var(--border)] overflow-hidden">
             {[0, 1, 2].map((g, i) => {
               const selected = grade === g;
@@ -259,13 +269,13 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
         </Row>
 
         {/* Complications */}
-        <Row label="Complications">
+        <Row num={8} label="Complications">
           <ChipMulti values={comps} options={COMPLICATION_OPTIONS} onToggle={(v) => toggle(comps, setComps, v, 'none')} />
         </Row>
 
         {/* Treatment plan */}
         <div>
-          <label className="block text-sm font-medium t-ink mb-1.5">Treatment plan</label>
+          <div className="mb-1.5"><QHeading num={9} label="Treatment plan" /></div>
           <textarea
             className="neu-input"
             rows={3}
@@ -285,18 +295,34 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
           </button>
         </div>
       </div>
+      )}
     </section>
   );
 }
 
-function Row({ label, required, stacked, children }) {
+function NumBadge({ n }) {
+  return (
+    <span className="w-5 h-5 shrink-0 grid place-items-center rounded-md bg-brand-50 text-brand-700 text-[11px] font-bold">
+      {n}
+    </span>
+  );
+}
+
+// Prominent, numbered question heading used across the assessment.
+function QHeading({ num, label, required }) {
+  return (
+    <div className="flex items-center gap-2 text-sm font-bold text-brand-700">
+      {num != null && <NumBadge n={num} />}
+      <span>{label}{required && <span className="text-red-600 ml-0.5">*</span>}</span>
+    </div>
+  );
+}
+
+function Row({ label, required, stacked, num, children }) {
   return (
     <div className={stacked ? '' : 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'}>
       <div className={stacked ? 'mb-2' : 'flex-1 min-w-0'}>
-        <div className="text-sm font-medium t-ink">
-          {label}
-          {required && <span className="text-red-600 ml-0.5">*</span>}
-        </div>
+        <QHeading num={num} label={label} required={required} />
       </div>
       <div className={stacked ? '' : 'shrink-0'}>{children}</div>
     </div>

@@ -79,9 +79,15 @@ export default function EnrollStep({ onDone, initial }) {
   const phoneError =
     touched.phone && !form.phone.trim()
       ? 'Phone number is required'
-      : touched.phone && phoneDigits.length < 10
-        ? 'Phone must be at least 10 digits'
+      : touched.phone && phoneDigits.length !== 10
+        ? 'Phone must be exactly 10 digits'
         : null;
+
+  const hofPhoneDigits = onlyDigits(form.head_of_family_phone);
+  const hofPhoneError =
+    touched.head_of_family_phone && hofPhoneDigits.length > 0 && hofPhoneDigits.length !== 10
+      ? 'Phone must be exactly 10 digits'
+      : null;
 
   const aadhaarError =
     touched.aadhaar_id && aadhaarDigits.length > 0 && aadhaarDigits.length !== 12
@@ -95,8 +101,9 @@ export default function EnrollStep({ onDone, initial }) {
 
   const submit = (e) => {
     e.preventDefault();
-    setTouched({ phone: true, aadhaar_id: true, abha_id: true });
-    if (!form.phone.trim() || phoneDigits.length < 10) return;
+    setTouched({ phone: true, aadhaar_id: true, abha_id: true, head_of_family_phone: true });
+    if (!form.phone.trim() || phoneDigits.length !== 10) return;
+    if (hofPhoneDigits.length > 0 && hofPhoneDigits.length !== 10) return;
     if (aadhaarDigits.length > 0 && aadhaarDigits.length !== 12) return;
     if (abhaDigits.length > 0 && abhaDigits.length !== 14) return;
 
@@ -207,9 +214,10 @@ export default function EnrollStep({ onDone, initial }) {
             <input
               className="neu-input"
               required
-              inputMode="tel"
+              inputMode="numeric"
+              maxLength={10}
               value={form.phone}
-              onChange={(e) => f('phone', e.target.value)}
+              onChange={(e) => f('phone', onlyDigits(e.target.value).slice(0, 10))}
               onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
               placeholder="10-digit mobile number"
             />
@@ -307,12 +315,14 @@ export default function EnrollStep({ onDone, initial }) {
               placeholder="Full name"
             />
           </Field>
-          <Field label="Head-of-family phone">
+          <Field label="Head-of-family phone" error={hofPhoneError}>
             <input
               className="neu-input"
-              inputMode="tel"
+              inputMode="numeric"
+              maxLength={10}
               value={form.head_of_family_phone}
-              onChange={(e) => f('head_of_family_phone', e.target.value)}
+              onChange={(e) => f('head_of_family_phone', onlyDigits(e.target.value).slice(0, 10))}
+              onBlur={() => setTouched((s) => ({ ...s, head_of_family_phone: true }))}
               placeholder="10-digit mobile number"
             />
           </Field>

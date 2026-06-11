@@ -26,7 +26,7 @@ const en = {
   'nav.patients': 'Patients',
   'nav.queue': 'Queue',
   'nav.appointments': 'Appointments',
-  'nav.metrics': 'Metrics',
+  'nav.metrics': 'Dashboard',
   'nav.users': 'Users',
   'nav.audit': 'Audit',
   'nav.settings': 'Settings',

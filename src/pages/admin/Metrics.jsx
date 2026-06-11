@@ -68,7 +68,7 @@ export default function Metrics() {
           <h1 className="text-2xl font-semibold tracking-tight t-ink">
             {greeting}, {displayName}
           </h1>
-          <p className="text-sm t-muted mt-1">Operational metrics across the triage system.</p>
+          <p className="text-sm t-muted mt-1">Operational dashboard across the triage system.</p>
         </div>
       </div>
 
@@ -153,7 +153,7 @@ export default function Metrics() {
         <section className="card-elev p-0 overflow-hidden">
           <div className="flex items-baseline justify-between px-5 py-4 border-b border-[color:var(--border)]">
             <h2 className="text-base font-semibold t-ink">Recent escalations</h2>
-            <Link to="/admin/users" className="text-xs link">View all</Link>
+            <Link to="/agent/patients" className="text-xs link">View all patients</Link>
           </div>
           {recentEscalations.length === 0 ? (
             <div className="text-sm t-muted py-8 text-center">No active escalations.</div>
