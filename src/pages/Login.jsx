@@ -21,6 +21,9 @@ const FEATURES = [
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-\[\];/\\`~+=]).{6,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Human label per role — used to enforce that a card only logs in its own role.
+const ROLE_LABEL = { agent: 'Field Agent', mo: 'Medical Officer', admin: 'Administrator' };
+
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
@@ -173,6 +176,20 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
         setNotice(t('login.account_created'));
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+        // Enforce that this account's role matches the card it was used on.
+        let me = null;
+        try { me = await api('/auth/me'); } catch { /* handled below */ }
+        if (!me?.role) {
+          await signOut(auth);
+          setError('Could not verify your account role. Please try again.');
+          return;
+        }
+        if (me.role !== role) {
+          await signOut(auth);
+          const real = ROLE_LABEL[me.role] || me.role;
+          setError(`This account can only sign in from the ${real} card.`);
+          return;
+        }
         nav('/');
       }
     } catch (err) {
