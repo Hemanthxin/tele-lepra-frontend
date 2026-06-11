@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api';
 
-const ROLES = ['patient', 'agent', 'mo', 'admin'];
+const ROLES = ['agent', 'mo', 'admin'];
 
 const ROLE_PILL = {
   patient: 'pill-ink',

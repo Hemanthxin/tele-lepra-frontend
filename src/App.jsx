@@ -14,9 +14,6 @@ import Queue from './pages/mo/Queue';
 import CaseReview from './pages/mo/CaseReview';
 import MOAppointments from './pages/mo/Appointments';
 
-import PatientAppointments from './pages/patient/Appointments';
-import PatientCases from './pages/patient/Cases';
-
 import Metrics from './pages/admin/Metrics';
 import Users from './pages/admin/Users';
 import Audit from './pages/admin/Audit';
@@ -48,9 +45,6 @@ export default function App() {
           <Route path="/mo" element={wrapRole(['mo', 'admin'], <Queue />)} />
           <Route path="/mo/appointments" element={wrapRole(['mo', 'admin'], <MOAppointments />)} />
           <Route path="/mo/case/:id" element={wrapRole(['mo', 'admin'], <CaseReview />)} />
-
-          <Route path="/patient" element={wrapRole(['patient'], <PatientAppointments />)} />
-          <Route path="/patient/cases" element={wrapRole(['patient'], <PatientCases />)} />
 
           <Route path="/admin" element={wrapRole(['admin'], <Metrics />)} />
           <Route path="/admin/users" element={wrapRole(['admin'], <Users />)} />

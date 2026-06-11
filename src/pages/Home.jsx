@@ -33,7 +33,6 @@ export default function Home() {
   }
 
   const dest = {
-    patient: '/patient',
     agent: '/agent',
     mo: '/mo',
     admin: '/admin',
