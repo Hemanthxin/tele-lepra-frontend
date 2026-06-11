@@ -2,12 +2,10 @@ import { useState } from 'react';
 import EnrollStep from './steps/EnrollStep';
 import HistoryStep from './steps/HistoryStep';
 import ScreenStep from './steps/ScreenStep';
-import TriageResultStep from './steps/TriageResultStep';
 import { useTranslation } from '../../i18n/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { getIntakeBundle, saveIntakeBundle } from '../../lib/offlineDB';
 import { drainQueue } from '../../lib/syncEngine';
-import { api } from '../../lib/api';
 
 export default function Intake() {
   const { t } = useTranslation();
@@ -16,7 +14,6 @@ export default function Intake() {
     { key: 'enroll', short: t('intake.step.enroll.short'), desc: t('intake.step.enroll.desc') },
     { key: 'history', short: t('intake.step.history.short'), desc: t('intake.step.history.desc') },
     { key: 'screen', short: t('intake.step.screen.short'), desc: t('intake.step.screen.desc') },
-    { key: 'triage', short: t('intake.step.triage.short'), desc: t('intake.step.triage.desc') },
   ];
 
   const [step, setStep] = useState('enroll');
@@ -24,8 +21,6 @@ export default function Intake() {
   // anymore — the wizard batches all writes for offline safety).
   const [patient, setPatient] = useState(null);
   const [history, setHistory] = useState(null);
-  const [triage, setTriage] = useState(null);
-  const [caseId, setCaseId] = useState(null);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState(null);
   // Cached form drafts so going back preserves what was typed
@@ -40,8 +35,6 @@ export default function Intake() {
     setStep('enroll');
     setPatient(null);
     setHistory(null);
-    setTriage(null);
-    setCaseId(null);
     setDraftEnroll(null);
     setDraftHistory(null);
     setDraftScreen(null);
@@ -53,14 +46,14 @@ export default function Intake() {
     if (idx <= currentIdx) return true;
     if (key === 'history') return Boolean(patient);
     if (key === 'screen') return Boolean(history);
-    if (key === 'triage') return Boolean(triage);
     return false;
   };
 
   // ----- Final submit: queue the full intake as a bundle, then trigger drain. -----
-  // If online, drainQueue() runs the 4 backend POSTs immediately and we get a
-  // real triage result back. If offline, the bundle stays in IndexedDB and the
-  // sync engine drains it when network returns.
+  // The agent only collects data and sends it to the Medical Officer — there is
+  // no agent-side decision. If online the bundle uploads immediately and the
+  // case lands in the MO queue; if offline it stays in IndexedDB and the sync
+  // engine drains it when network returns.
   const onScreenSubmitted = async (screenPayload, draft) => {
     setDraftScreen(draft || null);
     setAdvanceError(null);
@@ -88,27 +81,13 @@ export default function Intake() {
       await saveIntakeBundle(bundle);
       await drainQueue();
 
-      // Re-read the bundle to see whether the drain succeeded (synced) or it
-      // stayed in queue (pending / error / offline).
       const updated = await getIntakeBundle(bundle.id);
-      if (updated?.status === 'synced' && updated.result?.triage) {
-        setTriage(updated.result.triage);
-        setCaseId(updated.result.case_id || null);
+      if (updated?.status === 'synced') {
+        alert('Submitted to the Medical Officer for review.');
       } else {
-        setTriage({
-          outcome: 'queued',
-          confidence: 0,
-          suspected_condition: 'Pending sync',
-          reasons: [
-            'Saved offline — will upload when network returns.',
-            updated?.last_error ? `Last sync error: ${updated.last_error}` : null,
-          ].filter(Boolean),
-          suggested_action:
-            'The intake is safely stored on this device. It will sync automatically when you have an internet connection.',
-        });
-        setCaseId(null);
+        alert('Saved on this device — it will upload to the Medical Officer automatically when you reconnect.');
       }
-      setStep('triage');
+      reset();
     } catch (err) {
       setAdvanceError(err.message || 'Failed to save the intake. Try again.');
     } finally {
@@ -204,25 +183,6 @@ export default function Intake() {
           <div className="mt-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">
             {advanceError}
           </div>
-        )}
-        {step === 'triage' && (
-          <TriageResultStep
-            triage={triage}
-            caseId={caseId}
-            onDecide={async (action, chosenCondition, note) => {
-              await api(`/cases/${caseId}/agent-decision`, {
-                method: 'POST',
-                body: JSON.stringify({ action, chosen_condition: chosenCondition, note }),
-              });
-              if (action === 'send_mo') alert('Sent to the Medical Officer for review.');
-              else alert('Closed at community level. The patient will be notified.');
-              reset();
-            }}
-            onDone={() => {
-              if (triage?.outcome === 'queued') alert('Saved offline — will upload when you reconnect.');
-              reset();
-            }}
-          />
         )}
       </div>
     </div>

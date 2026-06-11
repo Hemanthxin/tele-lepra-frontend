@@ -290,24 +290,18 @@ export default function CaseReview() {
             </>
           )}
 
-          {/* Reported symptoms — grouped */}
-          {SYMPTOM_GROUPS.map(([title, items]) => {
-            const answered = items.filter(([, key]) => screen[key] !== undefined && screen[key] !== null && screen[key] !== '');
-            if (answered.length === 0) return null;
-            return (
-              <div key={title}>
-                <Divider />
-                <SectionLabel>{title}</SectionLabel>
-                <DataGrid>
-                  {answered.map(([label, key]) => (
-                    NUMERIC_SYMPTOMS.has(key)
-                      ? <DataRow key={key} label={label} value={screen[key] > 0 ? screen[key] : null} />
-                      : <YesNoRow key={key} label={label} value={screen[key]} />
-                  ))}
-                </DataGrid>
-              </div>
-            );
-          })}
+          {/* Symptom screening — the 11-question leprosy checklist */}
+          {screen.symptoms && Object.keys(screen.symptoms).length > 0 && (
+            <>
+              <Divider />
+              <SectionLabel>Symptom screening</SectionLabel>
+              <DataGrid>
+                {LEPROSY_SYMPTOMS.map(([label, key], i) => (
+                  <YesNoRow key={key} label={`${i + 1}. ${label}`} value={screen.symptoms[key]} />
+                ))}
+              </DataGrid>
+            </>
+          )}
           {screen.notes && (
             <div className="mt-4">
               <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Agent notes</div>
@@ -352,62 +346,6 @@ export default function CaseReview() {
             );
           })()}
         </section>
-
-        {/* AI / Triage findings */}
-        {t && (
-          <section className="card-elev">
-            <div className="flex items-baseline justify-between mb-4">
-              <div>
-                <div className="section-title">Automated triage</div>
-                <h3 className="text-lg font-semibold t-ink">AI findings</h3>
-              </div>
-              <span className="pill-brand">AI</span>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="text-sm t-soft">Leprosy confidence</span>
-                  <span className="text-sm font-semibold t-ink">{conf}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-[color:var(--surface-2)] overflow-hidden border border-[color:var(--border-cool)]">
-                  <div className="h-full" style={{ width: `${conf}%`, background: 'var(--brand)' }} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <FindingRow label="Skin lesion" value={screen.skin_changes ? 'Yes' : 'No'} tone={screen.skin_changes ? 'good' : 'muted'} />
-                <FindingRow label="Nerve involvement" value={yn(screen.enlarged_nerves || screen.numbness_or_weakness) || 'No'} tone={(screen.enlarged_nerves || screen.numbness_or_weakness) ? 'warn' : 'muted'} />
-                <FindingRow label="Disposition" value={t.allow_close === false ? 'Forced to MO' : 'Agent choice'} tone={t.allow_close === false ? 'bad' : 'muted'} />
-                <FindingRow label="Risk score" value={risk.label} tone={t.outcome === 'escalate' ? 'bad' : t.outcome === 'alternative_dx' ? 'warn' : 'good'} />
-              </div>
-
-              {findings.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {findings.map((f) => (
-                    <FindingRow key={f.condition} label={DISEASE_LABELS[f.condition] || f.condition}
-                      value={`${f.risk} risk`}
-                      tone={f.risk === 'high' ? 'bad' : f.risk === 'moderate' ? 'warn' : 'good'} />
-                  ))}
-                </div>
-              )}
-
-              {reasons.length > 0 && (
-                <div className="neu-inset px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1.5">Reasons</div>
-                  <ul className="text-sm t-soft space-y-0.5">
-                    {reasons.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="t-ink mt-0.5">•</span>
-                        <span>{r}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
 
         {/* MO Clinical Assessment — required before decision */}
         <MOClinicalAssessment
@@ -632,56 +570,20 @@ const DISEASE_LABELS = {
   sickle_cell: 'Sickle Cell Disease',
 };
 
-// Symptom groups for the MO review (mirrors the agent questionnaire / PDF).
-const SYMPTOM_GROUPS = [
-  ['Skin', [
-    ['Skin patch / rash / discolouration', 'skin_changes'],
-    ['Pale / reddish patch', 'skin_pale_or_reddish_patch'],
-    ['Loss of sensation over patch', 'skin_loss_of_sensation'],
-    ['Patch count', 'skin_patch_count'],
-    ['Itchy, worse at night', 'skin_itchy_worse_at_night'],
-    ['Others at home affected', 'skin_household_others_affected'],
-    ['Nodules / ear-lobe swelling', 'skin_nodules_or_earlobe'],
-  ]],
-  ['Nerve / weakness', [
-    ['Numbness / tingling / weakness', 'numbness_or_weakness'],
-    ['Glove-and-stocking anaesthesia', 'glove_stocking_anesthesia'],
-    ['Thickened / enlarged nerves', 'enlarged_nerves'],
-    ['Eye-closure difficulty / foot drop', 'eye_closure_or_foot_drop'],
-    ['Painless wounds / ulcers', 'painless_wounds'],
-  ]],
-  ['Fever', [
-    ['Fever (last 2 weeks)', 'fever'],
-    ['With chills / rigor', 'fever_chills_rigor'],
-    ['Periodic pattern', 'fever_periodic'],
-    ['With altered consciousness / fits', 'fever_altered_consciousness'],
-    ['With neck stiffness / headache', 'fever_neck_stiff_or_headache'],
-    ['With night sweats', 'fever_night_sweats'],
-  ]],
-  ['Cough', [
-    ['Cough', 'cough'],
-    ['Lasting 2 weeks or more', 'cough_2_weeks_or_more'],
-    ['Blood in sputum', 'cough_blood_in_sputum'],
-    ['With weight loss', 'cough_weight_loss'],
-  ]],
-  ['Swelling', [
-    ['Swelling (limb / breast / genitals)', 'swelling'],
-    ['Persistent limb / genital swelling', 'swelling_limb_or_genitals'],
-    ['Recurrent acute attacks', 'swelling_acute_attacks'],
-  ]],
-  ['Pain / fatigue', [
-    ['Recurrent pain / fatigue / jaundice', 'pain_or_fatigue'],
-    ['Recurrent severe pain episodes', 'recurrent_pain_episodes'],
-    ['Anaemia / fatigue', 'anaemia_or_fatigue'],
-    ['Jaundice', 'jaundice'],
-    ['Family history of sickle cell', 'family_history_sickle_cell'],
-  ]],
-  ['General', [
-    ['Family history of leprosy', 'family_history_leprosy'],
-    ['Duration (months)', 'duration_months'],
-  ]],
+// The 11-question leprosy symptom checklist (matches the agent screening form).
+const LEPROSY_SYMPTOMS = [
+  ['Light-coloured or reddish skin patch(es)', 'skin_patches'],
+  ['Reduced or loss of sensation over skin patch(es)', 'patch_loss_of_sensation'],
+  ['Tingling, numbness, or burning sensation in hands/feet', 'numb_tingling_burning'],
+  ['Weakness in hands or feet', 'weakness_in_hands_or_feet'],
+  ['Weak grip or objects slipping from hands', 'weak_grip'],
+  ['Painless wounds, burns, or ulcers on hands/feet', 'painless_wounds'],
+  ['Pain or tenderness near elbow, wrist, knee, or ankle', 'nerve_tenderness'],
+  ['Foot slipping out of slippers/chappals or dragging while walking', 'foot_drop'],
+  ['Difficulty closing eyes completely or reduced blinking', 'eye_closure_difficulty'],
+  ['Loss of eyebrows, collapsed nose', 'eyebrow_loss_nasal_collapse'],
+  ['Lumps/nodules on skin or swelling of earlobes', 'nodules_or_earlobe_swelling'],
 ];
-const NUMERIC_SYMPTOMS = new Set(['skin_patch_count', 'duration_months']);
 
 const SYMPTOM_LABELS = {
   skin_patches: 'Light/reddish skin patches',

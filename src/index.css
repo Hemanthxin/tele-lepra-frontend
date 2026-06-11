@@ -301,8 +301,13 @@ body {
 .card-brand:hover { box-shadow: var(--shadow-elev); transform: translateY(-2px); }
 
 .section-title {
-  @apply text-[12px] font-bold tracking-[0.12em] uppercase mb-3;
-  color: var(--text-ink-muted);
+  @apply text-[12px] font-bold tracking-[0.12em] uppercase mb-3 inline-flex items-center gap-2;
+  color: var(--brand);
+}
+.section-title::before {
+  content: '';
+  @apply inline-block w-1 h-3.5 rounded-full;
+  background: var(--brand);
 }
 
 /* Text helpers */
