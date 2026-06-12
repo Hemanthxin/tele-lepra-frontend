@@ -32,6 +32,16 @@ const RELATION_OPTIONS = [
   { value: 'others', label: 'Others' },
 ];
 
+const TALUK_OPTIONS = [
+  'Bakawand',
+  'Bastanar',
+  'Bastar',
+  'Darbha',
+  'Jagdalpur',
+  'Lohandiguda',
+  'Tokapal',
+];
+
 export default function EnrollStep({ onDone, initial }) {
   const { t } = useTranslation();
   const [form, setForm] = useState(() => ({
@@ -41,6 +51,7 @@ export default function EnrollStep({ onDone, initial }) {
     phone: '',
     state: '',
     district: '',
+    taluk: '',
     village: '',
     aadhaar_id: '',
     abha_id: '',
@@ -110,7 +121,7 @@ export default function EnrollStep({ onDone, initial }) {
     setBusy(true);
     setError(null);
     try {
-      const location = [form.village, form.district, form.state]
+      const location = [form.village, form.taluk, form.district, form.state]
         .map((s) => (s || '').trim())
         .filter(Boolean)
         .join(', ');
@@ -123,6 +134,7 @@ export default function EnrollStep({ onDone, initial }) {
         // Normalise empty strings → null for optional fields the backend treats as Optional
         phc: form.phc || null,
         house_no: form.house_no || null,
+        taluk: form.taluk || null,
         gram_panchayat: form.gram_panchayat || null,
         household_number: form.household_number || null,
         head_of_family_name: form.head_of_family_name || null,
@@ -222,6 +234,36 @@ export default function EnrollStep({ onDone, initial }) {
               placeholder="10-digit mobile number"
             />
           </Field>
+          <Field
+            label="Aadhaar number (12 digits)"
+            hint={aadhaarDigits ? `${aadhaarDigits.length}/12` : '12 digits'}
+            error={aadhaarError}
+          >
+            <input
+              className="neu-input"
+              inputMode="numeric"
+              value={form.aadhaar_id}
+              onChange={(e) => f('aadhaar_id', e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, aadhaar_id: true }))}
+              placeholder="XXXX XXXX XXXX"
+              maxLength={14}
+            />
+          </Field>
+          <Field
+            label="ABHA ID (14 digits)"
+            hint={abhaDigits ? `${abhaDigits.length}/14` : '14 digits'}
+            error={abhaError}
+          >
+            <input
+              className="neu-input"
+              inputMode="numeric"
+              value={form.abha_id}
+              onChange={(e) => f('abha_id', e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, abha_id: true }))}
+              placeholder="XX-XXXX-XXXX-XXXX"
+              maxLength={17}
+            />
+          </Field>
         </div>
       </section>
 
@@ -257,17 +299,32 @@ export default function EnrollStep({ onDone, initial }) {
               ))}
             </select>
           </Field>
-          <Field label={t('enroll.village')}>
+          <Field label="Taluk" required>
+            <select
+              className="neu-input"
+              required
+              value={form.taluk}
+              onChange={(e) => f('taluk', e.target.value)}
+            >
+              <option value="">Select taluk</option>
+              {TALUK_OPTIONS.map((taluk) => (
+                <option key={taluk} value={taluk}>{taluk}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Village" required>
             <input
               className="neu-input"
+              required
               value={form.village}
               onChange={(e) => f('village', e.target.value)}
               placeholder="Enter village or area"
             />
           </Field>
-          <Field label="Gram Panchayat">
+          <Field label="Gram Panchayat" required>
             <input
               className="neu-input"
+              required
               value={form.gram_panchayat}
               onChange={(e) => f('gram_panchayat', e.target.value)}
               placeholder="Enter Gram Panchayat"
@@ -279,6 +336,15 @@ export default function EnrollStep({ onDone, initial }) {
               value={form.house_no}
               onChange={(e) => f('house_no', e.target.value)}
               placeholder="House / door number"
+            />
+          </Field>
+          <Field label="Referred by" required wide>
+            <input
+              className="neu-input"
+              required
+              value={form.referred_by}
+              onChange={(e) => f('referred_by', e.target.value)}
+              placeholder="ASHA / PHC name"
             />
           </Field>
         </div>
@@ -324,50 +390,6 @@ export default function EnrollStep({ onDone, initial }) {
               onChange={(e) => f('head_of_family_phone', onlyDigits(e.target.value).slice(0, 10))}
               onBlur={() => setTouched((s) => ({ ...s, head_of_family_phone: true }))}
               placeholder="10-digit mobile number"
-            />
-          </Field>
-        </div>
-      </section>
-
-      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
-        <div className="section-title mb-3">Health Identifiers</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            label="Aadhaar number (12 digits)"
-            hint={aadhaarDigits ? `${aadhaarDigits.length}/12` : '12 digits'}
-            error={aadhaarError}
-          >
-            <input
-              className="neu-input"
-              inputMode="numeric"
-              value={form.aadhaar_id}
-              onChange={(e) => f('aadhaar_id', e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, aadhaar_id: true }))}
-              placeholder="XXXX XXXX XXXX"
-              maxLength={14}
-            />
-          </Field>
-          <Field
-            label="ABHA ID (14 digits)"
-            hint={abhaDigits ? `${abhaDigits.length}/14` : '14 digits'}
-            error={abhaError}
-          >
-            <input
-              className="neu-input"
-              inputMode="numeric"
-              value={form.abha_id}
-              onChange={(e) => f('abha_id', e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, abha_id: true }))}
-              placeholder="XX-XXXX-XXXX-XXXX"
-              maxLength={17}
-            />
-          </Field>
-          <Field label="Referred by (optional)" wide>
-            <input
-              className="neu-input"
-              value={form.referred_by}
-              onChange={(e) => f('referred_by', e.target.value)}
-              placeholder="ASHA / PHC name"
             />
           </Field>
         </div>

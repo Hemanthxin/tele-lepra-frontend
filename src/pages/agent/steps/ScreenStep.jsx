@@ -50,6 +50,8 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
     const init = initial || {};
     return {
       symptoms: {},
+      duration_months: init.duration_months ?? '',
+      family_history_leprosy: typeof init.family_history_leprosy === 'boolean' ? init.family_history_leprosy : null,
       image_urls: [], image_blobs: [], lab_urls: [], lab_blobs: [],
       notes: '', geolocation: null,
       ...init,
@@ -110,7 +112,15 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
     e.preventDefault();
     setError(null);
     if (answered < SYMPTOMS.length) {
-      setError('Please answer all symptom questions (Yes/No) before submitting.');
+      setError('Please answer all symptom questions (Yes/No) before continuing.');
+      return;
+    }
+    if (s.duration_months === '' || Number(s.duration_months) < 0) {
+      setError('Please enter the duration of symptoms in months.');
+      return;
+    }
+    if (typeof s.family_history_leprosy !== 'boolean') {
+      setError('Please select whether there is household contact with leprosy.');
       return;
     }
     setBusy(true);
@@ -118,6 +128,8 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       const payload = {
         symptoms: s.symptoms,
         symptoms_checklist: SYMPTOMS.filter((q) => s.symptoms[q.key] === true).map((q) => q.key),
+        duration_months: Number(s.duration_months),
+        family_history_leprosy: s.family_history_leprosy,
         screened_at: s.screened_at ? new Date(s.screened_at).toISOString() : new Date().toISOString(),
         geolocation: s.geolocation,
         image_urls: s.image_urls, image_blobs: s.image_blobs,
@@ -135,8 +147,8 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   return (
     <form onSubmit={submit} className="card-elev">
       <header className="mb-5">
-        <h2 className="text-lg font-semibold t-ink">{t('screen.title')}</h2>
-        <p className="text-sm t-muted mt-1">{t('screen.subtitle')}</p>
+        <h2 className="text-lg font-semibold t-ink">Step 2 · Symptoms</h2>
+        <p className="text-sm t-muted mt-1">Complete the screening questions, then continue to other investigations.</p>
       </header>
 
       {/* Screening context */}
@@ -184,6 +196,34 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
         </div>
       </section>
 
+      <section className="border-t border-[color:var(--border)] pt-5 mt-5">
+        <div className="section-title mb-3">Symptom Details</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">
+              Duration of symptoms (in months)
+              <span className="text-red-600 ml-0.5" aria-hidden>*</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              className="neu-input"
+              required
+              value={s.duration_months}
+              onChange={(e) => set('duration_months', e.target.value)}
+              placeholder="Enter number of months"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">
+              Household contact with leprosy
+              <span className="text-red-600 ml-0.5" aria-hidden>*</span>
+            </label>
+            <YesNo value={s.family_history_leprosy} onChange={(v) => set('family_history_leprosy', v)} />
+          </div>
+        </div>
+      </section>
+
       {/* Images */}
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">{t('screen.images')}</div>
@@ -217,7 +257,7 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
         <button className="btn-primary inline-flex items-center gap-1.5" disabled={submitBusy}>
           {submitBusy ? '…' : (
             <>
-              Submit to Medical Officer
+              Continue to Other Investigations
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" /><path d="M12 5l7 7-7 7" />
               </svg>

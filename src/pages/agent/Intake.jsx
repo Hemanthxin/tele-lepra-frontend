@@ -11,16 +11,17 @@ export default function Intake() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const STEPS = [
-    { key: 'enroll', short: t('intake.step.enroll.short'), desc: t('intake.step.enroll.desc') },
-    { key: 'history', short: t('intake.step.history.short'), desc: t('intake.step.history.desc') },
-    { key: 'screen', short: t('intake.step.screen.short'), desc: t('intake.step.screen.desc') },
+    { key: 'enroll', short: 'Enrollment', desc: 'Patient identity and location' },
+    { key: 'screen', short: 'Symptoms', desc: 'Screening questions' },
+    { key: 'history', short: 'Other Investigations', desc: 'Medical history and uploads' },
   ];
 
   const [step, setStep] = useState('enroll');
   // `patient` holds the EnrollStep form payload (NOT a server-created patient
   // anymore — the wizard batches all writes for offline safety).
   const [patient, setPatient] = useState(null);
-  const [history, setHistory] = useState(null);
+  const [screening, setScreening] = useState(null);
+  const [, setHistory] = useState(null);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState(null);
   // Cached form drafts so going back preserves what was typed
@@ -34,6 +35,7 @@ export default function Intake() {
   const reset = () => {
     setStep('enroll');
     setPatient(null);
+    setScreening(null);
     setHistory(null);
     setDraftEnroll(null);
     setDraftHistory(null);
@@ -44,8 +46,8 @@ export default function Intake() {
   const canVisit = (key) => {
     const idx = STEPS.findIndex((s) => s.key === key);
     if (idx <= currentIdx) return true;
-    if (key === 'history') return Boolean(patient);
-    if (key === 'screen') return Boolean(history);
+    if (key === 'screen') return Boolean(patient);
+    if (key === 'history') return Boolean(screening);
     return false;
   };
 
@@ -54,21 +56,25 @@ export default function Intake() {
   // no agent-side decision. If online the bundle uploads immediately and the
   // case lands in the MO queue; if offline it stays in IndexedDB and the sync
   // engine drains it when network returns.
-  const onScreenSubmitted = async (screenPayload, draft) => {
-    setDraftScreen(draft || null);
+  const onHistorySubmitted = async (historyPayload, draft) => {
+    setHistory(historyPayload);
+    setDraftHistory(draft || null);
     setAdvanceError(null);
     setAdvancing(true);
     try {
+      if (!screening) {
+        throw new Error('Screening details are missing. Please complete the symptoms step again.');
+      }
       // Strip blob entries from the screen payload before persisting — they
       // go in their own fields on the bundle so sync can multipart-upload them.
-      const { image_blobs = [], lab_blobs = [], ...screenJson } = screenPayload;
+      const { image_blobs = [], lab_blobs = [], ...screenJson } = screening;
       const bundle = {
         id: crypto.randomUUID(),
         status: 'pending',
         created_at: Date.now(),
         agent_uid: profile?.uid || null,
         patient,
-        history: history || {
+        history: historyPayload || {
           chronic_conditions: [],
           prior_prescriptions_urls: [],
           prior_labs_urls: [],
@@ -162,24 +168,28 @@ export default function Intake() {
         {step === 'enroll' && (
           <EnrollStep
             initial={draftEnroll}
-            onDone={(p, draft) => { setPatient(p); setDraftEnroll(draft || null); setStep('history'); }}
+            onDone={(p, draft) => { setPatient(p); setDraftEnroll(draft || null); setStep('screen'); }}
+          />
+        )}
+        {step === 'screen' && (
+          <ScreenStep
+            initial={draftScreen}
+            onDone={(screenPayload, draft) => {
+              setScreening(screenPayload);
+              setDraftScreen(draft || null);
+              setStep('history');
+            }}
           />
         )}
         {step === 'history' && (
           <HistoryStep
             patient={patient}
             initial={draftHistory}
-            onDone={(h, draft) => { setHistory(h); setDraftHistory(draft || null); setStep('screen'); }}
-          />
-        )}
-        {step === 'screen' && (
-          <ScreenStep
-            initial={draftScreen}
             busy={advancing}
-            onDone={onScreenSubmitted}
+            onDone={onHistorySubmitted}
           />
         )}
-        {advanceError && step === 'screen' && (
+        {advanceError && step === 'history' && (
           <div className="mt-3 text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">
             {advanceError}
           </div>

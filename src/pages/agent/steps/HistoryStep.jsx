@@ -58,7 +58,7 @@ export default function HistoryStep({ patient, onDone, initial, busy: parentBusy
   return (
     <form onSubmit={submit} className="card-elev">
       <header className="mb-5">
-        <h2 className="text-lg font-semibold t-ink">{t('history.title')}</h2>
+        <h2 className="text-lg font-semibold t-ink">Step 3 · Other Investigations</h2>
         <p className="text-sm t-muted mt-1">
           {patient?.name} · {patient?.age}y · {patient?.sex}
         </p>
@@ -124,7 +124,7 @@ export default function HistoryStep({ patient, onDone, initial, busy: parentBusy
 
       <div className="flex justify-end mt-6">
         <button className="btn-primary" disabled={submitBusy}>
-          {submitBusy ? '…' : t('history.submit')}
+          {submitBusy ? '…' : 'Submit to Medical Officer'}
         </button>
       </div>
     </form>
