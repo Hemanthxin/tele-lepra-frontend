@@ -70,7 +70,7 @@ export default function Audit() {
                     className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--surface-2)] align-top"
                   >
                     <td className="px-4 py-3 font-mono text-xs t-muted whitespace-nowrap">
-                      {new Date(c.created_at).toLocaleString()}
+                      {new Date(c.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs t-soft">{formatId(c.id)}</td>
                     <td className="px-4 py-3 t-ink">{c.patient_name}</td>

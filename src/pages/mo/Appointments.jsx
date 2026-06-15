@@ -110,8 +110,8 @@ export default function MOAppointments() {
                   <tr key={a.id} className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--surface-2)]">
                     <td className="px-4 py-3 t-ink font-medium">{a.patient_name}</td>
                     <td className="px-4 py-3 t-soft">
-                      <div>{when.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                      <div className="text-xs t-muted">{when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</div>
+                      <div>{when.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                      <div className="text-xs t-muted">{when.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' })}</div>
                     </td>
                     <td className="px-4 py-3 t-soft">{a.duration_minutes}m</td>
                     <td className="px-4 py-3">

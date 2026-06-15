@@ -68,7 +68,7 @@ export default function Queue() {
 
               {c.scheduled_at && (
                 <div className="text-xs t-muted mb-2">
-                  {t('queue.scheduled')} · {new Date(c.scheduled_at).toLocaleString()}
+                  {t('queue.scheduled')} · {new Date(c.scheduled_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
               )}
             </Link>

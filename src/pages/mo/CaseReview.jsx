@@ -689,7 +689,15 @@ const RELATION_LABELS = {
 const prettyRelation = (k) => (k ? RELATION_LABELS[k] || k : null);
 const fmtDateTime = (iso) => {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  try {
+    return new Date(iso).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return String(iso);
+  }
 };
 
 // Screen-records the consultation (the Zoom window opens externally) and
