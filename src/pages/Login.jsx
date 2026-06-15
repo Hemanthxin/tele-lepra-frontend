@@ -41,15 +41,15 @@ export default function Login() {
   const selectedCard = CARDS.find((c) => c.role === mobileRole);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-[color:var(--border-cool)] bg-[color:var(--surface)]/85 backdrop-blur">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
               <div className="font-bold tracking-wide text-sm t-ink">TELE-LEPROSY</div>
-              <div className="text-[10px] uppercase tracking-[0.16em] t-muted">{t('brand.subtitle')}</div>
+              <div className="text-[9px] uppercase tracking-[0.16em] t-muted">{t('brand.subtitle')}</div>
             </div>
           </div>
           <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
@@ -57,17 +57,19 @@ export default function Login() {
       </header>
 
       {/* ===== Main ===== */}
-      <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+      <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10">
         {/* Hero */}
-        <div className="text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.12] tracking-tight t-ink">
-            AI-assisted triage for<br className="hidden sm:block" /> community health workers.
+        <div className="text-center px-1">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.15] tracking-tight t-ink">
+            AI-assisted triage<br />
+            for community<br />
+            health workers.
           </h1>
-          <p className="mt-4 text-base t-soft max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 text-sm sm:text-base t-soft max-w-2xl mx-auto leading-relaxed">
             Standardised screening, decision support, and a complete audit trail —
             from first contact in the field to specialist review.
           </p>
-          <ul className="mt-7 hidden sm:flex flex-wrap items-center justify-center gap-2.5">
+          <ul className="mt-5 hidden sm:flex flex-wrap items-center justify-center gap-2.5">
             {FEATURES.map((f) => (
               <li key={f.key} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-[color:var(--surface)] border border-[color:var(--border-cool)] shadow-card">
                 <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
@@ -83,29 +85,29 @@ export default function Login() {
         </div>
 
         {/* Mobile: pick a role, then show that card */}
-        <div className="md:hidden mt-8">
+        <div className="md:hidden mt-6">
           {!selectedCard ? (
-            <div className="grid gap-3">
-              <p className="text-sm t-muted text-center mb-1">Choose how you want to sign in</p>
+            <div className="flex flex-col gap-3">
+              <p className="text-xs t-muted text-center font-medium uppercase tracking-wider mb-1">Choose how you want to sign in</p>
               {CARDS.map((c) => (
                 <button
                   key={c.role}
                   type="button"
                   onClick={() => setMobileRole(c.role)}
-                  className="card-elev flex items-center gap-3 text-left !py-4 hover-lift"
+                  className="w-full flex items-center gap-3 text-left bg-[color:var(--surface)] border border-[color:var(--border-cool)] rounded-2xl px-4 py-3.5 shadow-card active:scale-[0.99] transition-transform"
                 >
-                  <span className="w-11 h-11 rounded-2xl grid place-items-center text-white shrink-0 shadow-card" style={{ background: c.color }}>{c.icon}</span>
+                  <span className="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style={{ background: c.color }}>{c.icon}</span>
                   <span className="flex-1 min-w-0">
-                    <span className="block font-bold t-ink">{c.title} login</span>
-                    <span className="block text-xs t-muted truncate">{c.desc}</span>
+                    <span className="block text-sm font-bold t-ink">{c.title} login</span>
+                    <span className="block text-xs t-muted leading-snug mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.desc}</span>
                   </span>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="t-muted shrink-0"><path d="M9 18l6-6-6-6" /></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="t-muted shrink-0"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
               ))}
             </div>
           ) : (
             <div>
-              <button type="button" onClick={() => setMobileRole(null)} className="btn-ghost inline-flex items-center gap-1.5 mb-3 text-sm">
+              <button type="button" onClick={() => setMobileRole(null)} className="inline-flex items-center gap-1.5 mb-4 text-sm t-muted active:opacity-70">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
                 All sign-in options
               </button>
@@ -116,17 +118,16 @@ export default function Login() {
       </main>
 
       {/* ===== Footer bar ===== */}
-      <footer className="border-t border-[color:var(--border-cool)] bg-[color:var(--surface)]/70">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="border-t border-[color:var(--border-cool)] bg-[color:var(--surface)]/70 mt-4">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
-            <div>
+            <div className="min-w-0">
               <div className="text-xs font-semibold t-ink">Secure &amp; compliant platform</div>
-              <p className="text-[11px] t-muted leading-relaxed mt-0.5 max-w-xl">{t('login.note')}</p>
+              <p className="text-[11px] t-muted leading-relaxed mt-0.5">{t('login.note')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[11px] t-muted shrink-0">
-            <span className="uppercase tracking-[0.16em] font-semibold hidden sm:inline">In partnership with</span>
+          <div className="flex items-center gap-3 shrink-0 self-center sm:self-auto">
             <PartnerLogos size="sm" />
           </div>
         </div>
