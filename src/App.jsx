@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 
 import Intake from './pages/agent/Intake';
 import Patients from './pages/agent/Patients';
+import PatientDetail from './pages/agent/PatientDetail';
 
 import Queue from './pages/mo/Queue';
 import CaseReview from './pages/mo/CaseReview';
@@ -41,6 +42,7 @@ export default function App() {
 
           <Route path="/agent" element={wrapRole(['agent', 'admin'], <Intake />)} />
           <Route path="/agent/patients" element={wrapRole(['agent', 'admin'], <Patients />)} />
+          <Route path="/patients/:id" element={wrapRole(['agent', 'admin', 'mo'], <PatientDetail />)} />
 
           <Route path="/mo" element={wrapRole(['mo', 'admin'], <Queue />)} />
           <Route path="/mo/appointments" element={wrapRole(['mo', 'admin'], <MOAppointments />)} />

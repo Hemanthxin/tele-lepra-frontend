@@ -188,6 +188,8 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved, readOnl
           <YesNo value={confirmed} onChange={setConfirmed} />
         </Row>
 
+        {confirmed === true && (
+        <>
         {/* Lesion count */}
         <Row num={2} label="No. of skin lesions">
           <RadioRow value={lesion} onChange={setLesion} options={LESION_OPTIONS} />
@@ -289,6 +291,8 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved, readOnl
             placeholder="MDT regimen, dose, duration, follow-up plan…"
           />
         </div>
+        </>
+        )}
 
         {error && (
           <div className="text-sm text-red-700 border border-red-200 bg-red-50 rounded-md px-3 py-2">{error}</div>

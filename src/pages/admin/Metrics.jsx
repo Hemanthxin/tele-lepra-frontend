@@ -343,27 +343,19 @@ function HealthRow({ label, value }) {
 }
 
 function PhcBarChart({ rows }) {
-  const max = rows[0]?.count || 1;
   const COLORS = ['#0f766e', '#0891b2', '#7c3aed', '#db2777', '#d97706', '#16a34a', '#dc2626'];
   return (
-    <div className="space-y-3">
-      {rows.map(({ name, count }, i) => {
-        const pct = Math.round((count / max) * 100);
-        return (
-          <div key={name} className="flex items-center gap-3">
-            <div className="w-28 shrink-0 text-sm t-ink font-medium truncate" title={name}>
-              {name}
-            </div>
-            <div className="flex-1 h-6 rounded-sm bg-[color:var(--surface-2)] overflow-hidden">
-              <div
-                className="h-full rounded-sm transition-all duration-500"
-                style={{ width: `${pct}%`, background: COLORS[i % COLORS.length] }}
-              />
-            </div>
-            <div className="w-8 shrink-0 text-right text-sm font-semibold t-ink">{count}</div>
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {rows.map(({ name, count }, i) => (
+        <div key={name} className="rounded-lg neu-inset px-4 py-3 flex flex-col gap-1">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: COLORS[i % COLORS.length] }}
+          />
+          <div className="text-2xl font-semibold t-ink mt-1">{count}</div>
+          <div className="text-xs t-muted font-medium truncate" title={name}>{name}</div>
+        </div>
+      ))}
     </div>
   );
 }
