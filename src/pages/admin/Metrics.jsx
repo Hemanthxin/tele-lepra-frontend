@@ -34,6 +34,13 @@ export default function Metrics() {
     [queue],
   );
 
+  const phcRows = useMemo(() => {
+    const raw = (m && m.by_phc) || {};
+    return Object.entries(raw)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [m]);
+
   if (error) {
     return (
       <div>
@@ -53,13 +60,6 @@ export default function Metrics() {
   const escalate = byOutcome.escalate || 0;
   const pending = byOutcome.pending || 0;
   const closedRemote = m.remote_closure_rate_pct || 0;
-
-  const phcRows = useMemo(() => {
-    const raw = m.by_phc || {};
-    return Object.entries(raw)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [m]);
 
   const moreImages = Math.max(
     0,
