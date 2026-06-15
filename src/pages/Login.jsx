@@ -41,9 +41,21 @@ export default function Login() {
   const selectedCard = CARDS.find((c) => c.role === mobileRole);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div
+      className="min-h-screen flex flex-col overflow-x-hidden relative"
+      style={{
+        backgroundImage: 'url(/login-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center right',
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Subtle white veil so text and cards stay crisp over the image */}
+      <div className="absolute inset-0 bg-white/55 pointer-events-none" aria-hidden />
+
       {/* ===== Header bar ===== */}
-      <header className="sticky top-0 z-30 border-b border-[color:var(--border-cool)] bg-[color:var(--surface)]/85 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="brand-mark"><Logo /></span>
@@ -57,7 +69,7 @@ export default function Login() {
       </header>
 
       {/* ===== Main ===== */}
-      <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10">
+      <main className="relative z-10 flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10">
         {/* Hero */}
         <div className="text-center px-1">
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.15] tracking-tight t-ink">
@@ -71,7 +83,7 @@ export default function Login() {
           </p>
           <ul className="mt-5 hidden sm:flex flex-wrap items-center justify-center gap-2.5">
             {FEATURES.map((f) => (
-              <li key={f.key} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-[color:var(--surface)] border border-[color:var(--border-cool)] shadow-card">
+              <li key={f.key} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
                 <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
                 {t(f.key)}
               </li>
@@ -94,7 +106,7 @@ export default function Login() {
                   key={c.role}
                   type="button"
                   onClick={() => setMobileRole(c.role)}
-                  className="w-full flex items-center gap-3 text-left bg-[color:var(--surface)] border border-[color:var(--border-cool)] rounded-2xl px-4 py-3.5 shadow-card active:scale-[0.99] transition-transform"
+                  className="w-full flex items-center gap-3 text-left bg-white/80 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-3.5 shadow-card active:scale-[0.99] transition-transform"
                 >
                   <span className="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style={{ background: c.color }}>{c.icon}</span>
                   <span className="flex-1 min-w-0">
@@ -118,7 +130,7 @@ export default function Login() {
       </main>
 
       {/* ===== Footer bar ===== */}
-      <footer className="border-t border-[color:var(--border-cool)] bg-[color:var(--surface)]/70 mt-4">
+      <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md mt-4">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
