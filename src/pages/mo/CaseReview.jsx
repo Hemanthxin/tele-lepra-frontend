@@ -93,7 +93,7 @@ export default function CaseReview() {
         body: JSON.stringify({
           decision,
           // close_remote uses the prescription box; alt_dx uses the treatment-notes
-          // box — both bind to `rx`. refer uses the referral box.
+          // box - both bind to `rx`. refer uses the referral box.
           prescription: decision === 'refer' ? null : rx,
           referral_note: decision === 'refer' ? referral : null,
           notes,
@@ -134,7 +134,7 @@ export default function CaseReview() {
   const hist = c.history || {};
   const postConsultDocs = c.post_consult_docs || [];
   const recordings = c.recordings || [];
-  // Once the consult slot has passed, the case is read-only — the MO can view
+  // Once the consult slot has passed, the case is read-only - the MO can view
   // everything but cannot update the assessment or send a new decision.
   const sessionExpired = appointment
     ? meetingPhase(appointment.scheduled_at, appointment.duration_minutes || 30).phase === 'expired'
@@ -164,7 +164,7 @@ export default function CaseReview() {
         <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
           <div>
-            <div className="text-sm font-semibold text-amber-800">Session expired — read only</div>
+            <div className="text-sm font-semibold text-amber-800">Session expired - read only</div>
             <p className="text-xs text-amber-700 mt-0.5">
               The consultation slot has passed. You can view this case but cannot update the assessment or send a decision.
             </p>
@@ -173,21 +173,7 @@ export default function CaseReview() {
       )}
 
       <div className="space-y-5">
-        {/* TELE-CONSULT — at the top, core feature */}
-        <TeleConsultBlock
-          caseId={c.id}
-          onRecorded={refresh}
-          appointment={appointment}
-          when={when}
-          setWhen={setWhen}
-          duration={duration}
-          setDuration={setDuration}
-          schedule={schedule}
-          schedBusy={schedBusy}
-          schedError={schedError}
-        />
-
-        {/* AGENT-COLLECTED INTAKE — collapsible to reduce scroll */}
+        {/* AGENT-COLLECTED INTAKE - collapsible to reduce scroll */}
         <Collapsible title="Intake by field agent" subtitle="Patient record" meta={c.agent_name ? `Submitted by ${c.agent_name}` : null}>
 
           {/* Demographics */}
@@ -288,7 +274,7 @@ export default function CaseReview() {
             </>
           )}
 
-          {/* Symptom screening — the 11-question leprosy checklist */}
+          {/* Symptom screening - the 11-question leprosy checklist */}
           {screen.symptoms && Object.keys(screen.symptoms).length > 0 && (
             <>
               <Divider />
@@ -345,7 +331,21 @@ export default function CaseReview() {
           })()}
         </Collapsible>
 
-        {/* MO Clinical Assessment — required before decision */}
+        {/* TELE-CONSULT - moved after intake as requested */}
+        <TeleConsultBlock
+          caseId={c.id}
+          onRecorded={refresh}
+          appointment={appointment}
+          when={when}
+          setWhen={setWhen}
+          duration={duration}
+          setDuration={setDuration}
+          schedule={schedule}
+          schedBusy={schedBusy}
+          schedError={schedError}
+        />
+
+        {/* MO Clinical Assessment - required before decision */}
         <MOClinicalAssessment
           caseId={c.id}
           initial={c.clinical_assessment || null}
@@ -411,7 +411,7 @@ export default function CaseReview() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
               <div className="section-title !mb-1">Post-consultation</div>
-              <p className="text-xs t-muted">Upload reports/prescriptions after the consult — stored in the patient folder.</p>
+              <p className="text-xs t-muted">Upload reports/prescriptions after the consult - stored in the patient folder.</p>
             </div>
             <label className={`btn-ghost cursor-pointer ${docBusy ? 'opacity-60 pointer-events-none' : ''}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
@@ -445,7 +445,7 @@ export default function CaseReview() {
           {decisionSaved && (
             <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-800">
               <span className="font-semibold">Decision saved.</span> The decision PDF has been generated and stored.
-              The patient is notified via WhatsApp automatically — delivery does not affect the saved record. You can download the PDF below.
+              The patient is notified via WhatsApp automatically - delivery does not affect the saved record. You can download the PDF below.
             </div>
           )}
           {decisionError && (
@@ -454,7 +454,7 @@ export default function CaseReview() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="text-xs t-muted">
               {sessionExpired
-                ? 'This session has expired — the decision can no longer be changed.'
+                ? 'This session has expired - the decision can no longer be changed.'
                 : !assessmentSaved
                   ? 'Save the clinical assessment above before saving the decision.'
                   : decisionSaved
@@ -491,7 +491,7 @@ export default function CaseReview() {
                   className="btn-primary w-full sm:w-auto"
                   disabled={busy || !assessmentSaved || sessionExpired}
                   onClick={submit}
-                  title={sessionExpired ? 'Session expired — read only' : !assessmentSaved ? 'Save the clinical assessment first' : undefined}
+                  title={sessionExpired ? 'Session expired - read only' : !assessmentSaved ? 'Save the clinical assessment first' : undefined}
                 >
                   {busy ? 'Saving…' : 'Save decision & notify'}
                 </button>
@@ -519,7 +519,7 @@ function Divider() {
   return <div className="border-t border-[color:var(--border-cool)] my-5" />;
 }
 
-// Collapsible card — click the header to expand/collapse, to tame the long page.
+// Collapsible card - click the header to expand/collapse, to tame the long page.
 function Collapsible({ title, subtitle, meta, defaultOpen = true, children }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -791,7 +791,7 @@ function TeleConsultBlock({
     </div>
   );
 
-  // No appointment yet — show scheduler with a calm brand-bordered card so it draws the eye
+  // No appointment yet - show scheduler with a calm brand-bordered card so it draws the eye
   if (!appointment) {
     return (
       <section className="card-brand p-6">
