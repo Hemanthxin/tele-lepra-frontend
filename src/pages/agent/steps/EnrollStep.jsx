@@ -6,9 +6,6 @@ import { getPhcMeta } from '../../../lib/phcMeta';
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '');
 
-// PHC / CHC -> administrative location. The whole SHAKTHI programme sits in
-// Bastar district, Chhattisgarh, so selecting any PHC auto-fills state +
-// district. Values must match the options in data/districts.js exactly.
 const PHC_LOCATION = {
   Bakawand: { state: 'Chhattisgarh', district: 'Bastar' },
   Karpawand: { state: 'Chhattisgarh', district: 'Bastar' },
@@ -18,7 +15,6 @@ const PHC_LOCATION = {
   Maalgaon: { state: 'Chhattisgarh', district: 'Bastar' },
   Jebel: { state: 'Chhattisgarh', district: 'Bastar' },
 };
-// Unknown PHCs still default to the programme district.
 const DEFAULT_PHC_LOCATION = { state: 'Chhattisgarh', district: 'Bastar' };
 const locationForPhc = (phc) => (phc ? PHC_LOCATION[phc] || DEFAULT_PHC_LOCATION : null);
 
@@ -30,16 +26,6 @@ const RELATION_OPTIONS = [
   { value: 'son_daughter', label: 'Son / Daughter' },
   { value: 'grand_son_grand_daughter', label: 'Grand Son / Grand Daughter' },
   { value: 'others', label: 'Others' },
-];
-
-const TALUK_OPTIONS = [
-  'Bakawand',
-  'Bastanar',
-  'Bastar',
-  'Darbha',
-  'Jagdalpur',
-  'Lohandiguda',
-  'Tokapal',
 ];
 
 export default function EnrollStep({ onDone, initial }) {
@@ -57,12 +43,9 @@ export default function EnrollStep({ onDone, initial }) {
     abha_id: '',
     referred_by: '',
     consent_given: true,
-    // Programme context
     phc: '',
-    // Address detail
     house_no: '',
     gram_panchayat: '',
-    // Household
     household_number: '',
     head_of_family_name: '',
     head_of_family_phone: '',
@@ -101,7 +84,7 @@ export default function EnrollStep({ onDone, initial }) {
       : null;
 
   const aadhaarError =
-    touched.aadhaar_id && aadhaarDigits.length > 0 && aadhaarDigits.length !== 12
+    touched.aadhaar_id && aadhaarDigits.length !== 12
       ? 'Aadhaar must be exactly 12 digits'
       : null;
 
@@ -115,7 +98,7 @@ export default function EnrollStep({ onDone, initial }) {
     setTouched({ phone: true, aadhaar_id: true, abha_id: true, head_of_family_phone: true });
     if (!form.phone.trim() || phoneDigits.length !== 10) return;
     if (hofPhoneDigits.length > 0 && hofPhoneDigits.length !== 10) return;
-    if (aadhaarDigits.length > 0 && aadhaarDigits.length !== 12) return;
+    if (aadhaarDigits.length !== 12) return;
     if (abhaDigits.length > 0 && abhaDigits.length !== 14) return;
 
     setBusy(true);
@@ -131,7 +114,6 @@ export default function EnrollStep({ onDone, initial }) {
         aadhaar_id: aadhaarDigits || null,
         abha_id: abhaDigits || null,
         location,
-        // Normalise empty strings → null for optional fields the backend treats as Optional
         phc: form.phc || null,
         house_no: form.house_no || null,
         taluk: form.taluk || null,
@@ -141,9 +123,6 @@ export default function EnrollStep({ onDone, initial }) {
         head_of_family_phone: form.head_of_family_phone || null,
         relation_to_head: form.relation_to_head || null,
       };
-      // No backend POST here — the wizard accumulates state and the final
-      // /patients write happens at Screen submit, either online (immediate)
-      // or via the offline queue. This keeps the whole intake atomic.
       onDone(payload, form);
     } catch (err) {
       setError(err.message);
@@ -155,7 +134,6 @@ export default function EnrollStep({ onDone, initial }) {
   const f = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const onStateChange = (v) => setForm((s) => ({ ...s, state: v, district: '' }));
 
-  // Selecting a PHC auto-fills its state + district.
   const onPhcChange = (v) => {
     const loc = locationForPhc(v);
     setForm((s) => ({
@@ -236,11 +214,13 @@ export default function EnrollStep({ onDone, initial }) {
           </Field>
           <Field
             label="Aadhaar number (12 digits)"
+            required
             hint={aadhaarDigits ? `${aadhaarDigits.length}/12` : '12 digits'}
             error={aadhaarError}
           >
             <input
               className="neu-input"
+              required
               inputMode="numeric"
               value={form.aadhaar_id}
               onChange={(e) => f('aadhaar_id', e.target.value)}
@@ -300,17 +280,13 @@ export default function EnrollStep({ onDone, initial }) {
             </select>
           </Field>
           <Field label="Taluk" required>
-            <select
+            <input
               className="neu-input"
               required
               value={form.taluk}
               onChange={(e) => f('taluk', e.target.value)}
-            >
-              <option value="">Select taluk</option>
-              {TALUK_OPTIONS.map((taluk) => (
-                <option key={taluk} value={taluk}>{taluk}</option>
-              ))}
-            </select>
+              placeholder="Enter taluk"
+            />
           </Field>
           <Field label="Village" required>
             <input
