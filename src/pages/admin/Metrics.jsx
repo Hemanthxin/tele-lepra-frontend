@@ -54,6 +54,13 @@ export default function Metrics() {
   const pending = byOutcome.pending || 0;
   const closedRemote = m.remote_closure_rate_pct || 0;
 
+  const phcRows = useMemo(() => {
+    const raw = m.by_phc || {};
+    return Object.entries(raw)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [m]);
+
   const moreImages = Math.max(
     0,
     queue.reduce((n, c) => n + ((c.screening?.image_urls || []).length || 0), 0) -
@@ -147,6 +154,19 @@ export default function Metrics() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* PHC-wise patient registration */}
+        <section className="card-elev">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-base font-semibold t-ink">Patients by PHC</h2>
+            <span className="text-xs t-muted">{m.total_patients || 0} enrolled</span>
+          </div>
+          {phcRows.length === 0 ? (
+            <div className="text-sm t-muted py-6 text-center">No patient data yet.</div>
+          ) : (
+            <PhcBarChart rows={phcRows} />
+          )}
         </section>
 
         {/* Recent escalations */}
@@ -318,6 +338,32 @@ function HealthRow({ label, value }) {
     <div className="rounded-md neu-inset px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-wider t-muted font-semibold">{label}</div>
       <div className="text-xl font-semibold t-ink mt-0.5">{value}</div>
+    </div>
+  );
+}
+
+function PhcBarChart({ rows }) {
+  const max = rows[0]?.count || 1;
+  const COLORS = ['#0f766e', '#0891b2', '#7c3aed', '#db2777', '#d97706', '#16a34a', '#dc2626'];
+  return (
+    <div className="space-y-3">
+      {rows.map(({ name, count }, i) => {
+        const pct = Math.round((count / max) * 100);
+        return (
+          <div key={name} className="flex items-center gap-3">
+            <div className="w-28 shrink-0 text-sm t-ink font-medium truncate" title={name}>
+              {name}
+            </div>
+            <div className="flex-1 h-6 rounded-sm bg-[color:var(--surface-2)] overflow-hidden">
+              <div
+                className="h-full rounded-sm transition-all duration-500"
+                style={{ width: `${pct}%`, background: COLORS[i % COLORS.length] }}
+              />
+            </div>
+            <div className="w-8 shrink-0 text-right text-sm font-semibold t-ink">{count}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
