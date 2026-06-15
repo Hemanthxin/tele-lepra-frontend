@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
+import { Link } from 'react-router-dom';
+import { api, downloadAuthFile } from '../../lib/api';
 import { formatId } from '../../lib/ids';
 import { useTranslation } from '../../i18n/I18nContext';
 
@@ -25,162 +26,114 @@ function reasonFor(p) {
   const c = p.latest_case;
   if (!c) return null;
   if (Array.isArray(c.reason) && c.reason.length) return c.reason.join(' · ');
-  if (c.condition) return c.condition.replace(/_/g, ' ');
+  if (c.condition) return c.condition;
   return null;
 }
 
 export default function Patients() {
   const { t } = useTranslation();
-  const [list, setList] = useState([]);
-  const [q, setQ] = useState('');
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const load = (query) => {
-    setLoading(true);
-    return api(`/patients${query ? `?q=${encodeURIComponent(query)}` : ''}`)
-      .then(setList)
-      .finally(() => setLoading(false));
-  };
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
-    load('');
-  }, []);
+    const timer = setTimeout(() => {
+      setLoading(true);
+      api(query ? `/patients?q=${encodeURIComponent(query)}` : '/patients')
+        .then((res) => setPatients(res || []))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const handleBulkDownload = () => {
+    const url = query ? `/patients/export/excel?q=${encodeURIComponent(query)}` : `/patients/export/excel`;
+    downloadAuthFile(url, 'patients_export.csv');
+  };
+
+  const handleSingleDownload = (patientId) => {
+    downloadAuthFile(`/patients/export/excel?patient_id=${patientId}`, `patient_${patientId}.csv`);
+  };
 
   return (
     <div>
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <div className="section-title">{t('role.agent')}</div>
-          <h1 className="text-2xl font-semibold tracking-tight t-ink">{t('patients.title')}</h1>
-          <p className="text-sm t-muted mt-1">{t('patients.subtitle_inline')}</p>
+          <div className="section-title">Directory</div>
+          <h1 className="text-2xl font-semibold tracking-tight t-ink">{t('nav.patients')}</h1>
         </div>
-        <div>
-          <span className="pill-brand">
-            {list.length} {list.length === 1 ? t('patients.count_one') : t('patients.count_many')}
-          </span>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <svg {...svg} width="16" height="16" className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-muted)]">
+              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder={t('search_placeholder', 'Search patients...')}
+              className="neu-input w-full pl-9"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <button onClick={handleBulkDownload} className="btn-ghost shrink-0 !px-3" title="Download Excel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span className="ml-2 hidden sm:inline">Export</span>
+          </button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        <div className="relative flex-1 min-w-[240px] max-w-md">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 t-muted pointer-events-none">
-            <svg {...svg} width="14" height="14"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-          </span>
-          <input
-            className="neu-input pl-9 pr-9"
-            placeholder={t('patients.search_ph')}
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              load(e.target.value);
-            }}
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => { setQ(''); load(''); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded t-muted hover:t-ink grid place-items-center"
-              aria-label="Clear search"
-            >
-              <svg {...svg} width="12" height="12"><path d="M18 6L6 18M6 6l12 12" /></svg>
-            </button>
-          )}
-        </div>
-        <div className="text-xs t-muted">{t('common.updated_now')}</div>
-      </div>
-
-      {/* Content */}
-      {loading && list.length === 0 ? (
-        <div className="card-elev text-center text-sm t-muted">{t('common.loading')}</div>
-      ) : list.length === 0 ? (
-        <EmptyState query={q} t={t} />
+      {/* Main list */}
+      {loading ? (
+        <div className="text-sm t-muted">{t('loading', 'Loading...')}</div>
+      ) : patients.length === 0 ? (
+        <EmptyState query={query} t={t} />
       ) : (
         <>
-          {/* Desktop: table */}
-          <div className="card-elev !p-0 overflow-hidden hidden md:block">
-            <table className="w-full text-sm">
-              <thead className="text-[11px] uppercase tracking-wider t-muted">
-                <tr className="border-b border-[color:var(--border)] bg-[color:var(--surface-2)]">
-                  <th className="text-left font-semibold px-4 py-2.5">{t('patients.col.patient')}</th>
-                  <th className="text-left font-semibold px-4 py-2.5 w-16">{t('patients.col.age')}</th>
-                  <th className="text-left font-semibold px-4 py-2.5">{t('patients.col.phone')}</th>
-                  <th className="text-left font-semibold px-4 py-2.5">{t('patients.col.location')}</th>
-                  <th className="text-left font-semibold px-4 py-2.5 w-44">{t('patients.col.status')}</th>
-                  <th className="text-left font-semibold px-4 py-2.5">{t('patients.col.reason')}</th>
-                  <th className="px-4 py-2.5 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((p) => {
-                  const meta = statusFor(p);
-                  const reason = reasonFor(p);
-                  return (
-                    <tr
-                      key={p.id}
-                      className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--surface-2)] cursor-pointer"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-medium t-ink">{p.name}</div>
-                        <div className="text-[11px] t-muted">ID {formatId(p.id)}</div>
-                      </td>
-                      <td className="px-4 py-3 t-soft">{p.age ?? '—'}</td>
-                      <td className="px-4 py-3 t-soft">{p.phone || <span className="t-muted">—</span>}</td>
-                      <td className="px-4 py-3 t-soft">
-                        {p.location ? (
-                          <span className="block truncate max-w-[220px]">{p.location}</span>
-                        ) : (
-                          <span className="t-muted">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={meta.pillCls}>{t(meta.labelKey)}</span>
-                      </td>
-                      <td className="px-4 py-3 t-soft max-w-[280px]">
-                        {reason ? (
-                          <span className="block truncate" title={reason}>{reason}</span>
-                        ) : (
-                          <span className="t-muted">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <svg {...svg} width="14" height="14" className="t-muted inline-block">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="text-[11px] uppercase tracking-wider font-semibold t-muted mb-3 px-1">
+            {patients.length} {patients.length === 1 ? 'Patient' : 'Patients'}
           </div>
-
-          {/* Mobile: stacked rows */}
-          <div className="card-elev !p-0 overflow-hidden md:hidden">
-            <ul>
-              {list.map((p) => {
+          <div className="card-elev !p-0 overflow-hidden">
+            <ul className="divide-y divide-[color:var(--border-cool)]">
+              {patients.map((p) => {
                 const meta = statusFor(p);
                 const reason = reasonFor(p);
                 return (
-                  <li key={p.id} className="px-4 py-3 border-b border-[color:var(--border)] last:border-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium t-ink truncate">{p.name}</span>
-                          <span className={meta.pillCls}>{t(meta.labelKey)}</span>
+                  <li key={p.id} className="relative group hover:bg-[color:var(--surface-2)] transition-colors">
+                    <Link to={`/patients/${p.id}`} className="block p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                            <span className="text-base font-semibold t-ink truncate">{p.name}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border border-transparent ${meta.pillCls}`}>
+                              {t(meta.labelKey)}
+                            </span>
+                          </div>
+                          <div className="text-xs t-muted flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-[10px] tracking-wide">{formatId(p.id)}</span>
+                            <span>·</span>
+                            {p.age ?? '—'}
+                            {p.phone && <span> · {p.phone}</span>}
+                            {p.location && <span> · {p.location}</span>}
+                          </div>
+                          {reason && (
+                            <div className="text-[11px] t-soft truncate mt-0.5">{reason}</div>
+                          )}
                         </div>
-                        <div className="text-[11px] t-muted mt-0.5">
-                          {p.age ?? '—'}
-                          {p.phone && <span> · {p.phone}</span>}
-                          {p.location && <span> · {p.location}</span>}
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSingleDownload(p.id); }}
+                            className="opacity-0 group-hover:opacity-100 btn-ghost !p-1.5"
+                            title="Download Data"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                          <svg {...svg} width="14" height="14" className="t-muted shrink-0 mt-1"><path d="M9 18l6-6-6-6" /></svg>
                         </div>
-                        {reason && (
-                          <div className="text-[11px] t-soft truncate mt-0.5">{reason}</div>
-                        )}
                       </div>
-                      <svg {...svg} width="14" height="14" className="t-muted shrink-0 mt-1"><path d="M9 18l6-6-6-6" /></svg>
-                    </div>
+                    </Link>
                   </li>
                 );
               })}
@@ -204,12 +157,12 @@ function EmptyState({ query, t }) {
           )}
         </svg>
       </div>
-      <div className="t-ink font-medium text-sm">
-        {query ? `${t('patients.empty_query_title')} "${query}"` : t('patients.empty_title')}
-      </div>
-      <div className="t-muted text-xs mt-1">
-        {query ? t('patients.empty_query_hint') : t('patients.empty_hint')}
-      </div>
+      <h3 className="text-[15px] font-semibold t-ink">
+        {query ? t('no_results_found', 'No results found') : t('no_patients_yet', 'No patients yet')}
+      </h3>
+      <p className="text-sm t-muted mt-1 max-w-sm mx-auto">
+        {query ? 'Try adjusting your search terms.' : 'Records synced by field agents will appear here.'}
+      </p>
     </div>
   );
 }
