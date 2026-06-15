@@ -286,6 +286,23 @@ export default function CaseReview() {
               </DataGrid>
             </>
           )}
+
+          {/* Symptom details - Duration and Household Contact */}
+          {(screen.duration_months !== undefined || screen.family_history_leprosy !== undefined) && (
+            <>
+              <Divider />
+              <SectionLabel>Symptom Details</SectionLabel>
+              <DataGrid>
+                {screen.duration_months !== undefined && screen.duration_months !== null && (
+                  <DataRow label="Duration of symptoms" value={`${screen.duration_months} months`} />
+                )}
+                {screen.family_history_leprosy !== undefined && screen.family_history_leprosy !== null && (
+                  <DataRow label="Household contact with leprosy" value={screen.family_history_leprosy ? 'Yes' : 'No'} />
+                )}
+              </DataGrid>
+            </>
+          )}
+
           {screen.notes && (
             <div className="mt-4">
               <div className="text-[11px] uppercase tracking-wider t-muted font-semibold mb-1">Agent notes</div>
@@ -663,7 +680,7 @@ const prettySymptom = (k) => SYMPTOM_LABELS[k] || k.replace(/_/g, ' ');
 const RELATION_LABELS = {
   self: 'Self',
   father_mother: 'Father / Mother',
-  husband_wife: 'Husband / Wife',
+  husband_wife: 'Brother / Sister',
   brother_sister: 'Brother / Sister',
   son_daughter: 'Son / Daughter',
   grand_son_grand_daughter: 'Grand Son / Grand Daughter',
@@ -744,7 +761,7 @@ function ConsultRecorder({ caseId, onRecorded }) {
         ) : (
           <button type="button" className="btn-danger" onClick={stop}>
             <span className="inline-flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-white animate-pulse" /> Stop &amp; save
+              <span className="w-2.5 h-2.5 rounded-sm bg-white animate-pulse" /> Stop & save
             </span>
           </button>
         )}
