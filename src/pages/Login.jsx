@@ -93,7 +93,7 @@ export default function Login() {
           ))}
         </ul>
 
-        {/* Desktop / Tablet: responsive grid – each card keeps its own height */}
+        {/* Desktop / Tablet: responsive grid – each card keeps its own height, but has min-height to equalise */}
         <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto items-start">
           {CARDS.map((c) => (
             <div key={c.role} className="min-w-0">
@@ -244,7 +244,8 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col !p-0 h-full w-full">
+    /* Added min-h-[28rem] to make all cards equal height when in sign-in mode */
+    <div className="card-elev flex flex-col !p-0 h-full w-full min-h-[28rem]">
       {/* Coloured header strip */}
       <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-4">
