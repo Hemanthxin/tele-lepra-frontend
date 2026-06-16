@@ -21,18 +21,16 @@ const FEATURES = [
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-\[\];/\\`~+=]).{6,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const ROLE_LABEL = { agent: 'Field Agent', mo: 'Medical Officer', admin: 'Administrator' };
-
-const CARDS = [
-  { role: 'agent', color: 'var(--brand)', title: 'Field Agent', desc: 'Screen patients and capture intake in the field.', icon: <AgentIcon /> },
-  { role: 'mo', color: 'var(--accent)', title: 'Medical Officer', desc: 'Review cases and make tele-consult decisions.', icon: <MOIcon /> },
-  { role: 'admin', color: '#4f46e5', title: 'Administrator', desc: 'Manage users, metrics, and the audit log.', icon: <AdminIcon />, loginOnly: true },
-];
-
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
   const [mobileRole, setMobileRole] = useState(null);
+
+  const CARDS = [
+    { role: 'agent', color: 'var(--brand)', title: t('login.card.agent.title'), desc: t('login.card.agent.desc'), icon: <AgentIcon /> },
+    { role: 'mo', color: 'var(--accent)', title: t('login.card.mo.title'), desc: t('login.card.mo.desc'), icon: <MOIcon /> },
+    { role: 'admin', color: '#4f46e5', title: t('login.card.admin.title'), desc: t('login.card.admin.desc'), icon: <AdminIcon />, loginOnly: true },
+  ];
 
   const renderCard = (c) => (
     <AuthCard key={c.role} role={c.role} color={c.color} title={c.title} desc={c.desc} icon={c.icon} loginOnly={c.loginOnly} t={t} nav={nav} />
@@ -106,7 +104,7 @@ export default function Login() {
         <div className="md:hidden w-full max-w-sm mx-auto mt-4">
           {!selectedCard ? (
             <div className="flex flex-col gap-3">
-              <p className="text-xs t-muted text-center font-medium uppercase tracking-wider mb-1">Choose how you want to sign in</p>
+              <p className="text-xs t-muted text-center font-medium uppercase tracking-wider mb-1">{t('login.choose_role')}</p>
               {CARDS.map((c) => (
                 <button
                   key={c.role}
@@ -116,7 +114,7 @@ export default function Login() {
                 >
                   <span className="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style={{ background: c.color }}>{c.icon}</span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold t-ink">{c.title} login</span>
+                    <span className="block text-sm font-bold t-ink">{c.title} — {t('login.signin')}</span>
                     <span className="block text-xs t-muted leading-snug mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.desc}</span>
                   </span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="t-muted shrink-0"><path d="M9 18l6-6-6-6" /></svg>
@@ -127,7 +125,7 @@ export default function Login() {
             <div>
               <button type="button" onClick={() => setMobileRole(null)} className="inline-flex items-center gap-1.5 mb-4 text-sm t-muted active:opacity-70">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-                All sign-in options
+                {t('login.all_options')}
               </button>
               {renderCard(selectedCard)}
             </div>
@@ -141,7 +139,7 @@ export default function Login() {
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
             <div className="min-w-0">
-              <div className="text-xs font-semibold t-ink">Secure &amp; compliant platform</div>
+              <div className="text-xs font-semibold t-ink">{t('login.secure_platform')}</div>
               <p className="text-[11px] t-muted leading-relaxed mt-0.5">{t('login.note')}</p>
             </div>
           </div>
@@ -177,7 +175,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
     touched.password && mode === 'signin' && password.length < 6 ? t('validation.password_short') : null;
   const nameError = touched.name && mode === 'signup' && !name ? t('validation.required') : null;
   const phoneError = touched.phone && mode === 'signup' && phoneDigits.length !== 10
-    ? 'Phone must be exactly 10 digits' : null;
+    ? t('validation.phone_digits') : null;
 
   const passwordRules = mode === 'signup' && password
     ? [
@@ -225,13 +223,12 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
         try { me = await api('/auth/me'); } catch { /* handled below */ }
         if (!me?.role) {
           await signOut(auth);
-          setError('Could not verify your account role. Please try again.');
+          setError(t('login.role_verify_error'));
           return;
         }
         if (me.role !== role) {
           await signOut(auth);
-          const real = ROLE_LABEL[me.role] || me.role;
-          setError(`This account can only sign in from the ${real} card.`);
+          setError(t('login.role_mismatch'));
           return;
         }
         nav('/');
@@ -268,7 +265,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
               className="flex-1 px-3 py-2.5 rounded-lg text-base font-semibold text-white text-center shadow-card"
               style={{ background: color }}
             >
-              Sign In
+              {t('login.signin')}
             </div>
           </div>
         ) : (
@@ -314,7 +311,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           )}
 
           {mode === 'signup' && (
-            <Field label="Phone number" required error={phoneError}>
+            <Field label={t('login.phone_label')} required error={phoneError}>
               <input
                 className={inputCls(phoneError)}
                 inputMode="numeric"
@@ -322,13 +319,13 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
-                placeholder="10-digit mobile number"
+                placeholder={t('login.phone_placeholder')}
               />
-              <p className="text-[11px] t-muted mt-1.5">You can change this later in your profile.</p>
+              <p className="text-[11px] t-muted mt-1.5">{t('login.phone_hint')}</p>
             </Field>
           )}
 
-          <Field label="Email" required error={emailError}>
+          <Field label={t('common.email')} required error={emailError}>
             <input
               className={inputCls(emailError)}
               type="email"
@@ -340,7 +337,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
             />
           </Field>
 
-          <Field label="Password" required error={passwordError}>
+          <Field label={t('common.password')} required error={passwordError}>
             <div className="relative">
               <input
                 className={inputCls(passwordError) + ' pr-10'}
@@ -399,15 +396,15 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
 
         {!loginOnly && mode === 'signin' && (
           <p className="text-center text-xs t-muted mt-2">
-            New here?{' '}
+            {t('login.new_here')}{' '}
             <button type="button" onClick={switchMode} className="link font-semibold">
-              Create a {title} account
+              {role === 'mo' ? t('login.create_mo_link') : t('login.create_agent_link')}
             </button>
           </p>
         )}
         {loginOnly && (
           <p className="text-center text-xs t-muted mt-2">
-            Admin accounts are provisioned by the system administrator.
+            {t('login.admin_provisioned')}
           </p>
         )}
       </form>
