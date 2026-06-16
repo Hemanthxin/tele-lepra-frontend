@@ -56,7 +56,7 @@ export default function Login() {
 
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-5 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
@@ -129,7 +129,7 @@ export default function Login() {
 
       {/* ===== Footer bar ===== */}
       <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md mt-4">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="w-full px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
             <div className="min-w-0">
@@ -239,26 +239,26 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   return (
     <div className="card-elev flex flex-col overflow-hidden !p-0 md:overflow-y-auto">
       {/* Coloured header strip */}
-      <div className="px-5 sm:px-6 pt-5 pb-4 md:pt-3 md:pb-3 border-b border-[color:var(--border-cool)]">
-        <div className="flex items-start gap-3">
+      <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
+        <div className="flex items-start gap-4">
           <span
-            className="w-12 h-12 rounded-2xl grid place-items-center text-white shrink-0 shadow-card"
+            className="w-14 h-14 rounded-2xl grid place-items-center text-white shrink-0 shadow-card"
             style={{ background: color }}
           >
             {icon}
           </span>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold t-ink leading-tight">{title}</h2>
-            <p className="text-[13px] t-muted mt-0.5 leading-snug min-h-[2.5rem]">{desc}</p>
+            <h2 className="text-2xl font-bold t-ink leading-tight">{title}</h2>
+            <p className="text-sm t-muted mt-1 leading-snug">{desc}</p>
           </div>
         </div>
 
         {/* Sign in / Register toggle. Admin is login-only — render a matching
             spacer so all three cards' fields (and Sign-in buttons) line up. */}
         {loginOnly ? (
-          <div className="mt-4 h-[46px]" aria-hidden />
+          <div className="mt-5 h-[52px]" aria-hidden />
         ) : (
-          <div role="tablist" className="flex p-1 rounded-xl mt-4 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
+          <div role="tablist" className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
             {[
               { k: 'signin', label: t('login.signin') },
               { k: 'signup', label: t('login.register') },
@@ -271,7 +271,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
                   role="tab"
                   aria-selected={active}
                   onClick={() => active || switchMode()}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  className={`flex-1 px-3 py-2.5 rounded-lg text-base font-semibold transition-all ${
                     active ? 'text-white shadow-card -translate-y-px' : 't-soft hover:t-ink'
                   }`}
                   style={active ? { background: color } : undefined}
@@ -285,7 +285,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-5 sm:px-6 py-5 md:py-3 space-y-4 md:space-y-3">
+      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-6 space-y-5">
         {mode === 'signup' && (
           <Field label={t('common.name')} required error={nameError}>
             <input
@@ -453,7 +453,7 @@ function Logo() {
 
 function AgentIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
@@ -462,7 +462,7 @@ function AgentIcon() {
 
 function MOIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4.8 2.3A.3.3 0 1 0 5 2.3a.3.3 0 0 0-.2 0" /><path d="M8 2v3a4 4 0 0 0 8 0V2" />
       <path d="M6 5a6 6 0 0 0 6 6 6 6 0 0 0 6-6" /><path d="M12 11v4a4 4 0 0 0 8 0v-1" />
       <circle cx="20" cy="14" r="2" />
@@ -472,7 +472,7 @@ function MOIcon() {
 
 function AdminIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" /><circle cx="12" cy="11" r="2.5" />
       <path d="M12 13.5V16" />
     </svg>
