@@ -1,26 +1,33 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
 import OfflineBanner from './OfflineBanner';
 import PartnerLogos from './PartnerLogos';
 
 export default function Layout({ children }) {
   const { profile, role, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
 
   const items = navByRole(role, t);
   const displayName = profile?.profile?.name || profile?.email || 'User';
   const initials = (displayName || '?').slice(0, 1).toUpperCase();
-  const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
+    <div
+      className="min-h-screen flex flex-col relative overflow-x-hidden"
+      style={{
+        backgroundImage: 'url(/app-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Subtle veil to keep content readable over the background */}
+      <div className="absolute inset-0 bg-white/60 pointer-events-none" aria-hidden />
       <header
-        className="shrink-0 sticky top-0 z-40 border-b"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        className="relative z-40 shrink-0 sticky top-0 border-b border-white/40 bg-white/80 backdrop-blur-md"
       >
         <div className="px-3 sm:px-4 md:px-8 h-14 flex items-center justify-between gap-2 sm:gap-3 max-w-[1600px] mx-auto w-full">
           <Link to="/" className="shrink-0 flex items-center gap-2 sm:gap-2.5 min-w-0">
@@ -53,17 +60,7 @@ export default function Layout({ children }) {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setTheme(nextTheme)}
-              title={t('settings.theme')}
-              className="w-9 h-9 rounded-lg grid place-items-center border t-soft hover:text-[color:var(--brand)] hover:border-[color:var(--brand)] hover:-translate-y-px hover:shadow-card active:translate-y-0 transition-all shrink-0"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-            >
-              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-
-            <div className="relative shrink-0">
+<div className="relative shrink-0">
               <select
                 aria-label={t('settings.language')}
                 value={lang}
@@ -141,16 +138,13 @@ export default function Layout({ children }) {
 
       <OfflineBanner />
 
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8">
           {children}
         </div>
       </main>
 
-      <footer
-        className="shrink-0 border-t mt-auto"
-        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
-      >
+      <footer className="relative z-10 shrink-0 border-t border-white/40 bg-white/80 backdrop-blur-md mt-auto">
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <span className="t-muted">{t('footer.copy')}</span>
@@ -199,14 +193,6 @@ function Logo() {
   );
 }
 
-function MoonIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-    </svg>
-  );
-}
-
 function SignOutIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -217,11 +203,3 @@ function SignOutIcon() {
   );
 }
 
-function SunIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
-  );
-}

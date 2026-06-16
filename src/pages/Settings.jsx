@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
 
 export default function Settings() {
   const { profile } = useAuth();
-  const { theme, setTheme } = useTheme();
   const { t, lang, setLang, languages } = useTranslation();
 
   const initialName = profile?.profile?.name || '';
@@ -130,40 +128,6 @@ export default function Settings() {
               <dd className="t-ink mt-0.5 uppercase tracking-wider text-xs">{role}</dd>
             </div>
           </dl>
-        </section>
-
-        {/* Appearance */}
-        <section className="card-elev">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold t-ink">{t('settings.tab.appearance')}</h2>
-            <p className="text-xs t-muted mt-0.5">{t('settings.theme_desc')}</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { key: 'light', label: t('theme.light') },
-              { key: 'dark', label: t('theme.dark') },
-              { key: 'system', label: t('theme.system') },
-            ].map((opt) => {
-              const selected = theme === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setTheme(opt.key)}
-                  className={`rounded-md p-3 text-left border ${
-                    selected
-                      ? 'border-brand-700 bg-brand-50'
-                      : 'border-[color:var(--border)] hover:border-[color:var(--border-strong)]'
-                  }`}
-                >
-                  <div className={`text-sm font-medium ${selected ? 'text-brand-700' : 't-ink'}`}>{opt.label}</div>
-                  {selected && (
-                    <div className="text-[10px] mt-0.5 uppercase tracking-wider text-brand-700">{t('common.active')}</div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         </section>
 
         {/* Language */}
