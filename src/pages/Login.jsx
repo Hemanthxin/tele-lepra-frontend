@@ -42,7 +42,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex flex-col overflow-x-hidden relative"
+      className="min-h-screen md:h-screen md:overflow-hidden flex flex-col overflow-x-hidden relative"
       style={{
         backgroundImage: 'url(/login-bg.jpg)',
         backgroundSize: 'cover',
@@ -69,21 +69,19 @@ export default function Login() {
       </header>
 
       {/* ===== Main ===== */}
-      <main className="relative z-10 flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10">
+      <main className="relative z-10 flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 md:py-3 lg:py-4 md:flex md:flex-col md:min-h-0">
         {/* Hero */}
         <div className="text-center px-1">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.15] tracking-tight t-ink">
-            AI-assisted triage<br />
-            for community<br />
-            health workers.
+          <h1 className="text-2xl sm:text-3xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-tight tracking-tight t-ink md:whitespace-nowrap">
+            AI-assisted triage for community health workers.
           </h1>
-          <p className="mt-3 text-sm sm:text-base t-soft max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-2 sm:mt-3 text-sm sm:text-base t-soft max-w-2xl mx-auto leading-relaxed">
             Standardised screening, decision support, and a complete audit trail —
             from first contact in the field to specialist review.
           </p>
-          <ul className="mt-5 hidden sm:flex flex-wrap items-center justify-center gap-2.5">
+          <ul className="mt-3 sm:mt-4 md:mt-2 hidden sm:flex flex-wrap items-center justify-center gap-2">
             {FEATURES.map((f) => (
-              <li key={f.key} className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
+              <li key={f.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
                 <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
                 {t(f.key)}
               </li>
@@ -92,7 +90,7 @@ export default function Login() {
         </div>
 
         {/* Desktop: all three cards in a row, equal height */}
-        <div className="hidden md:grid grid-cols-3 gap-6 lg:gap-8 xl:gap-10 mt-10 items-stretch">
+        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-5 md:mt-4 lg:mt-5 items-stretch md:flex-1 md:min-h-0">
           {CARDS.map(renderCard)}
         </div>
 
@@ -239,9 +237,9 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col overflow-hidden !p-0 h-full">
+    <div className="card-elev flex flex-col overflow-hidden !p-0 h-full md:overflow-y-auto">
       {/* Coloured header strip */}
-      <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-[color:var(--border-cool)]">
+      <div className="px-5 sm:px-6 pt-5 pb-4 md:pt-3 md:pb-3 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-3">
           <span
             className="w-12 h-12 rounded-2xl grid place-items-center text-white shrink-0 shadow-card"
@@ -287,7 +285,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-5 sm:px-6 py-5 space-y-4 flex-1">
+      <form onSubmit={submit} noValidate className="px-5 sm:px-6 py-5 md:py-3 space-y-4 md:space-y-3 flex-1">
         {mode === 'signup' && (
           <Field label={t('common.name')} required error={nameError}>
             <input
