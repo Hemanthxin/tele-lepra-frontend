@@ -56,41 +56,49 @@ export default function Login() {
 
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="w-full px-4 sm:px-5 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="w-full px-4 sm:px-5 h-16 sm:h-[72px] flex items-center justify-between gap-4">
+          {/* Logo — left */}
+          <div className="flex items-center gap-2 shrink-0">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
               <div className="font-bold tracking-wide text-sm t-ink">TELE-LEPROSY</div>
               <div className="text-[9px] uppercase tracking-[0.16em] t-muted">{t('brand.subtitle')}</div>
             </div>
           </div>
-          <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
+
+          {/* Heading — center (hidden on mobile, shown md+) */}
+          <h1 className="hidden md:block flex-1 text-center text-base lg:text-lg xl:text-xl font-bold tracking-tight t-ink whitespace-nowrap">
+            AI-assisted triage for community health workers.
+          </h1>
+
+          {/* Language — right */}
+          <div className="shrink-0">
+            <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
+          </div>
         </div>
       </header>
 
       {/* ===== Main ===== */}
-      <main className="relative z-10 flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 md:py-3 lg:py-4 md:flex md:flex-col md:min-h-0">
-        {/* Hero */}
-        <div className="text-center px-1">
-          <h1 className="text-2xl sm:text-3xl md:text-2xl lg:text-3xl xl:text-4xl font-bold leading-tight tracking-tight t-ink md:whitespace-nowrap">
+      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 md:flex md:flex-col md:min-h-0">
+        {/* Mobile-only heading (header heading is hidden on small screens) */}
+        <div className="md:hidden text-center mb-3 px-1">
+          <h1 className="text-2xl font-bold leading-tight tracking-tight t-ink">
             AI-assisted triage for community health workers.
           </h1>
-          <p className="mt-2 sm:mt-3 text-sm sm:text-base t-soft max-w-2xl mx-auto leading-relaxed">
-            Standardised screening, decision support, and a complete audit trail —
-            from first contact in the field to specialist review.
-          </p>
-          <ul className="mt-3 sm:mt-4 md:mt-2 hidden sm:flex flex-wrap items-center justify-center gap-2">
-            {FEATURES.map((f) => (
-              <li key={f.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
-                <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
-                {t(f.key)}
-              </li>
-            ))}
-          </ul>
         </div>
 
-        {/* Desktop: all three cards in a row, equal height */}
-        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-5 md:mt-4 lg:mt-5 items-start">
+        {/* Feature pills — visible on sm+ */}
+        <ul className="hidden sm:flex flex-wrap items-center justify-center gap-2 mb-3">
+          {FEATURES.map((f) => (
+            <li key={f.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
+              <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
+              {t(f.key)}
+            </li>
+          ))}
+        </ul>
+
+        {/* Desktop: all three cards in a row */}
+        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-1 items-start">
           {CARDS.map(renderCard)}
         </div>
 
@@ -237,7 +245,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col !p-0 overflow-x-hidden md:overflow-y-auto md:max-h-[calc(100vh-260px)]">
+    <div className="card-elev flex flex-col !p-0 overflow-x-hidden md:overflow-y-auto md:max-h-[calc(100vh-160px)]">
       {/* Coloured header strip */}
       <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-4">
