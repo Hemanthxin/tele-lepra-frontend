@@ -56,7 +56,7 @@ export default function Login() {
 
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
@@ -90,7 +90,7 @@ export default function Login() {
         </div>
 
         {/* Desktop: all three cards in a row, equal height */}
-        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-5 md:mt-4 lg:mt-5 items-stretch md:flex-1 md:min-h-0">
+        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-5 md:mt-4 lg:mt-5 items-start">
           {CARDS.map(renderCard)}
         </div>
 
@@ -129,7 +129,7 @@ export default function Login() {
 
       {/* ===== Footer bar ===== */}
       <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md mt-4">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
             <div className="min-w-0">
@@ -237,7 +237,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col overflow-hidden !p-0 h-full md:overflow-y-auto">
+    <div className="card-elev flex flex-col overflow-hidden !p-0 md:overflow-y-auto">
       {/* Coloured header strip */}
       <div className="px-5 sm:px-6 pt-5 pb-4 md:pt-3 md:pb-3 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-3">
@@ -285,7 +285,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-5 sm:px-6 py-5 md:py-3 space-y-4 md:space-y-3 flex-1">
+      <form onSubmit={submit} noValidate className="px-5 sm:px-6 py-5 md:py-3 space-y-4 md:space-y-3">
         {mode === 'signup' && (
           <Field label={t('common.name')} required error={nameError}>
             <input
