@@ -33,7 +33,7 @@ const CARDS = [
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
-  const [mobileRole, setMobileRole] = useState(null); // small screens: which card is open
+  const [mobileRole, setMobileRole] = useState(null);
 
   const renderCard = (c) => (
     <AuthCard key={c.role} role={c.role} color={c.color} title={c.title} desc={c.desc} icon={c.icon} loginOnly={c.loginOnly} t={t} nav={nav} />
@@ -51,13 +51,12 @@ export default function Login() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Subtle white veil so text and cards stay crisp over the image */}
+      {/* Subtle white veil */}
       <div className="absolute inset-0 bg-white/55 pointer-events-none" aria-hidden />
 
       {/* ===== Header bar ===== */}
       <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
         <div className="w-full px-4 sm:px-5 h-16 sm:h-[72px] flex items-center justify-between gap-4">
-          {/* Logo — left */}
           <div className="flex items-center gap-2 shrink-0">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
@@ -66,12 +65,10 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Heading — center (hidden on mobile, shown md+) */}
           <h1 className="hidden md:block flex-1 text-center text-base lg:text-lg xl:text-xl font-bold tracking-tight t-ink whitespace-nowrap">
             AI-assisted triage for community health workers.
           </h1>
 
-          {/* Language — right */}
           <div className="shrink-0">
             <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
           </div>
@@ -79,16 +76,16 @@ export default function Login() {
       </header>
 
       {/* ===== Main ===== */}
-      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 md:flex md:flex-col md:min-h-0">
-        {/* Mobile-only heading (header heading is hidden on small screens) */}
+      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 flex flex-col items-center justify-center">
+        {/* Mobile-only heading */}
         <div className="md:hidden text-center mb-3 px-1">
           <h1 className="text-2xl font-bold leading-tight tracking-tight t-ink">
             AI-assisted triage for community health workers.
           </h1>
         </div>
 
-        {/* Feature pills — visible on sm+ */}
-        <ul className="hidden sm:flex flex-wrap items-center justify-center gap-2 mb-3">
+        {/* Feature pills */}
+        <ul className="hidden sm:flex flex-wrap items-center justify-center gap-2 mb-4">
           {FEATURES.map((f) => (
             <li key={f.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
               <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
@@ -97,13 +94,17 @@ export default function Login() {
           ))}
         </ul>
 
-        {/* Desktop: all three cards in a row */}
-        <div className="hidden md:grid grid-cols-3 gap-5 lg:gap-7 xl:gap-9 mt-1 items-start">
-          {CARDS.map(renderCard)}
+        {/* Desktop: three cards centered in a row */}
+        <div className="hidden md:flex flex-wrap items-stretch justify-center gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto">
+          {CARDS.map((c) => (
+            <div key={c.role} className="flex-1 min-w-[240px] max-w-sm">
+              {renderCard(c)}
+            </div>
+          ))}
         </div>
 
-        {/* Mobile: pick a role, then show that card */}
-        <div className="md:hidden mt-6">
+        {/* Mobile: role picker or single card */}
+        <div className="md:hidden w-full max-w-sm mx-auto mt-4">
           {!selectedCard ? (
             <div className="flex flex-col gap-3">
               <p className="text-xs t-muted text-center font-medium uppercase tracking-wider mb-1">Choose how you want to sign in</p>
@@ -221,7 +222,6 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
         setNotice(t('login.account_created'));
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        // Enforce that this account's role matches the card it was used on.
         let me = null;
         try { me = await api('/auth/me'); } catch { /* handled below */ }
         if (!me?.role) {
@@ -245,7 +245,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col !p-0 overflow-x-hidden md:overflow-y-auto md:max-h-[calc(100vh-160px)]">
+    <div className="card-elev flex flex-col !p-0 h-full w-full">
       {/* Coloured header strip */}
       <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-4">
@@ -261,8 +261,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           </div>
         </div>
 
-        {/* Sign in / Register toggle. Admin is login-only — show a single
-            active "Sign In" tab so the header height matches the other cards. */}
+        {/* Sign in / Register toggle */}
         {loginOnly ? (
           <div className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
             <div
@@ -300,90 +299,92 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-5 space-y-4">
-        {mode === 'signup' && (
-          <Field label={t('common.name')} required error={nameError}>
-            <input
-              className={inputCls(nameError)}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, name: true }))}
-              placeholder="Jane Doe"
-            />
-          </Field>
-        )}
-
-        {mode === 'signup' && (
-          <Field label="Phone number" required error={phoneError}>
-            <input
-              className={inputCls(phoneError)}
-              inputMode="numeric"
-              maxLength={10}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
-              placeholder="10-digit mobile number"
-            />
-            <p className="text-[11px] t-muted mt-1.5">You can change this later in your profile.</p>
-          </Field>
-        )}
-
-        <Field label="Email" required error={emailError}>
-          <input
-            className={inputCls(emailError)}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTouched((s) => ({ ...s, email: true }))}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-        </Field>
-
-        <Field label="Password" required error={passwordError}>
-          <div className="relative">
-            <input
-              className={inputCls(passwordError) + ' pr-10'}
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, password: true }))}
-              placeholder="••••••••"
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 t-muted hover:t-ink"
-              tabIndex={-1}
-              aria-label={showPw ? 'Hide password' : 'Show password'}
-            >
-              {showPw ? <EyeOff /> : <Eye />}
-            </button>
-          </div>
-          {mode === 'signup' && passwordRules.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {passwordRules.map((r, i) => (
-                <span
-                  key={i}
-                  className={`text-[10px] px-2 py-0.5 rounded font-semibold tracking-wide ${
-                    r.ok
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                      : 'bg-[color:var(--surface-2)] t-muted'
-                  }`}
-                >
-                  {r.ok ? '✓ ' : '· '}{r.label}
-                </span>
-              ))}
-            </div>
+      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-5 space-y-4 flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          {mode === 'signup' && (
+            <Field label={t('common.name')} required error={nameError}>
+              <input
+                className={inputCls(nameError)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => setTouched((s) => ({ ...s, name: true }))}
+                placeholder="Jane Doe"
+              />
+            </Field>
           )}
-        </Field>
 
-        {notice && <Banner kind="info">{notice}</Banner>}
-        {error && <Banner kind="error">{error}</Banner>}
+          {mode === 'signup' && (
+            <Field label="Phone number" required error={phoneError}>
+              <input
+                className={inputCls(phoneError)}
+                inputMode="numeric"
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
+                placeholder="10-digit mobile number"
+              />
+              <p className="text-[11px] t-muted mt-1.5">You can change this later in your profile.</p>
+            </Field>
+          )}
+
+          <Field label="Email" required error={emailError}>
+            <input
+              className={inputCls(emailError)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, email: true }))}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </Field>
+
+          <Field label="Password" required error={passwordError}>
+            <div className="relative">
+              <input
+                className={inputCls(passwordError) + ' pr-10'}
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => setTouched((s) => ({ ...s, password: true }))}
+                placeholder="••••••••"
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 t-muted hover:t-ink"
+                tabIndex={-1}
+                aria-label={showPw ? 'Hide password' : 'Show password'}
+              >
+                {showPw ? <EyeOff /> : <Eye />}
+              </button>
+            </div>
+            {mode === 'signup' && passwordRules.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {passwordRules.map((r, i) => (
+                  <span
+                    key={i}
+                    className={`text-[10px] px-2 py-0.5 rounded font-semibold tracking-wide ${
+                      r.ok
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : 'bg-[color:var(--surface-2)] t-muted'
+                    }`}
+                  >
+                    {r.ok ? '✓ ' : '· '}{r.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </Field>
+
+          {notice && <Banner kind="info">{notice}</Banner>}
+          {error && <Banner kind="error">{error}</Banner>}
+        </div>
 
         <button
-          className="neu-btn-primary"
+          className="neu-btn-primary w-full mt-4"
           disabled={busy}
           style={{ background: color }}
         >
@@ -397,7 +398,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
         </button>
 
         {!loginOnly && mode === 'signin' && (
-          <p className="text-center text-xs t-muted">
+          <p className="text-center text-xs t-muted mt-2">
             New here?{' '}
             <button type="button" onClick={switchMode} className="link font-semibold">
               Create a {title} account
@@ -405,7 +406,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           </p>
         )}
         {loginOnly && (
-          <p className="text-center text-xs t-muted">
+          <p className="text-center text-xs t-muted mt-2">
             Admin accounts are provisioned by the system administrator.
           </p>
         )}
