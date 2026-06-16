@@ -261,10 +261,17 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           </div>
         </div>
 
-        {/* Sign in / Register toggle. Admin is login-only — render a matching
-            spacer so all three cards' fields (and Sign-in buttons) line up. */}
+        {/* Sign in / Register toggle. Admin is login-only — show a single
+            active "Sign In" tab so the header height matches the other cards. */}
         {loginOnly ? (
-          <div className="mt-5 h-[52px]" aria-hidden />
+          <div className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
+            <div
+              className="flex-1 px-3 py-2.5 rounded-lg text-base font-semibold text-white text-center shadow-card"
+              style={{ background: color }}
+            >
+              Sign In
+            </div>
+          </div>
         ) : (
           <div role="tablist" className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
             {[
