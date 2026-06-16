@@ -41,7 +41,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen md:h-screen md:overflow-hidden flex flex-col overflow-x-hidden relative"
+      className="min-h-screen flex flex-col overflow-x-hidden relative"
       style={{
         backgroundImage: 'url(/login-bg.jpg)',
         backgroundSize: 'cover',
@@ -74,8 +74,8 @@ export default function Login() {
         </div>
       </header>
 
-      {/* ===== Main – scrollable when content overflows ===== */}
-      <main className="relative z-10 flex-1 min-h-0 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 flex flex-col items-center overflow-y-auto">
+      {/* ===== Main – grows with content, pushes footer down ===== */}
+      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 flex flex-col items-center justify-center">
         {/* Mobile-only heading */}
         <div className="md:hidden text-center mb-3 px-1">
           <h1 className="text-2xl font-bold leading-tight tracking-tight t-ink">
@@ -135,7 +135,7 @@ export default function Login() {
         </div>
       </main>
 
-      {/* ===== Footer – always at bottom ===== */}
+      {/* ===== Footer – pushed down by main content ===== */}
       <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md mt-4">
         <div className="w-full px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
