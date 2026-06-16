@@ -21,7 +21,6 @@ const FEATURES = [
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-\[\];/\\`~+=]).{6,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Human label per role — used to enforce that a card only logs in its own role.
 const ROLE_LABEL = { agent: 'Field Agent', mo: 'Medical Officer', admin: 'Administrator' };
 
 const CARDS = [
@@ -94,8 +93,8 @@ export default function Login() {
           ))}
         </ul>
 
-        {/* Desktop: three cards centered in a row */}
-        <div className="hidden md:flex flex-wrap items-stretch justify-center gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto">
+        {/* Desktop: three cards centered, each with its own height */}
+        <div className="hidden md:flex flex-wrap items-start justify-center gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto">
           {CARDS.map((c) => (
             <div key={c.role} className="flex-1 min-w-[240px] max-w-sm">
               {renderCard(c)}
