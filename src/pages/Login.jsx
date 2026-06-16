@@ -93,10 +93,10 @@ export default function Login() {
           ))}
         </ul>
 
-        {/* Desktop: three cards centered, each with its own height */}
-        <div className="hidden md:flex flex-wrap items-start justify-center gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto">
+        {/* Desktop / Tablet: responsive grid */}
+        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto items-start">
           {CARDS.map((c) => (
-            <div key={c.role} className="flex-1 min-w-[240px] max-w-sm">
+            <div key={c.role} className="min-w-0">
               {renderCard(c)}
             </div>
           ))}
