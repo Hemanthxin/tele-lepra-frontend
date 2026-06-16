@@ -237,7 +237,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    <div className="card-elev flex flex-col overflow-hidden !p-0 md:overflow-y-auto">
+    <div className="card-elev flex flex-col !p-0 overflow-x-hidden md:overflow-y-auto md:max-h-[calc(100vh-260px)]">
       {/* Coloured header strip */}
       <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
         <div className="flex items-start gap-4">
@@ -285,7 +285,7 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-6 space-y-5">
+      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-5 space-y-4">
         {mode === 'signup' && (
           <Field label={t('common.name')} required error={nameError}>
             <input
