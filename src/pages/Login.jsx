@@ -62,8 +62,8 @@ export default function Login() {
       </header>
 
       {/* Main */}
-      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-8 lg:py-12 flex items-center justify-center">
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-16 items-center">
+      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 pt-6 pb-8 lg:pt-10 lg:pb-12 flex items-start justify-center">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-16 items-start">
 
           {/* Left: Hero */}
           <div className="hidden lg:flex flex-col">
