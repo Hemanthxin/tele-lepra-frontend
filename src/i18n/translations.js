@@ -283,6 +283,14 @@ const en = {
   'settings.tab.language': 'Language',
   'settings.tab.language_desc': 'Preferred language',
   'settings.manage': 'Manage',
+  'login.card.agent.short': 'Screen & capture',
+  'login.card.mo.short': 'Review & decide',
+  'login.card.admin.short': 'Manage & monitor',
+  'login.welcome_back': 'Welcome back',
+  'login.welcome_subtitle': 'Sign in to continue to Tele-Leprosy Triage Console',
+  'login.create_account': 'Create an account',
+  'login.remember_me': 'Remember me',
+  'login.back_to_signin': 'Back to sign in',
 };
 
 const hi = {
@@ -523,6 +531,14 @@ const hi = {
   'settings.tab.language': 'भाषा',
   'settings.tab.language_desc': 'पसंदीदा भाषा',
   'settings.manage': 'प्रबंधन',
+  'login.card.agent.short': 'जांचें और कैप्चर करें',
+  'login.card.mo.short': 'समीक्षा और निर्णय',
+  'login.card.admin.short': 'प्रबंधन और निगरानी',
+  'login.welcome_back': 'वापस आने पर स्वागत है',
+  'login.welcome_subtitle': 'जारी रखने के लिए साइन इन करें',
+  'login.create_account': 'खाता बनाएँ',
+  'login.remember_me': 'मुझे याद रखें',
+  'login.back_to_signin': 'साइन इन पर वापस जाएँ',
 };
 
 const te = {
@@ -763,6 +779,14 @@ const te = {
   'settings.tab.language': 'భాష',
   'settings.tab.language_desc': 'ఇష్టమైన భాష',
   'settings.manage': 'నిర్వహణ',
+  'login.card.agent.short': 'స్క్రీన్ & క్యాప్చర్',
+  'login.card.mo.short': 'సమీక్ష & నిర్ణయం',
+  'login.card.admin.short': 'నిర్వహణ & పర్యవేక్షణ',
+  'login.welcome_back': 'తిరిగి స్వాగతం',
+  'login.welcome_subtitle': 'కొనసాగించడానికి సైన్ ఇన్ చేయండి',
+  'login.create_account': 'ఖాతా సృష్టించండి',
+  'login.remember_me': 'నన్ను గుర్తుంచుకో',
+  'login.back_to_signin': 'సైన్ ఇన్‌కు తిరిగి వెళ్ళండి',
 };
 
 const kn = {
@@ -1003,6 +1027,14 @@ const kn = {
   'settings.tab.language': 'ಭಾಷೆ',
   'settings.tab.language_desc': 'ಆದ್ಯತೆಯ ಭಾಷೆ',
   'settings.manage': 'ನಿರ್ವಹಿಸಿ',
+  'login.card.agent.short': 'ಸ್ಕ್ರೀನ್ & ಕ್ಯಾಪ್ಚರ್',
+  'login.card.mo.short': 'ಪರಿಶೀಲನೆ & ನಿರ್ಣಯ',
+  'login.card.admin.short': 'ನಿರ್ವಹಣೆ & ಮೇಲ್ವಿಚಾರಣೆ',
+  'login.welcome_back': 'ಮರಳಿ ಸ್ವಾಗತ',
+  'login.welcome_subtitle': 'ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'login.create_account': 'ಖಾತೆ ರಚಿಸಿ',
+  'login.remember_me': 'ನನ್ನನ್ನು ನೆನಪಿಡಿ',
+  'login.back_to_signin': 'ಸೈನ್ ಇನ್‌ಗೆ ಹಿಂತಿರುಗಿ',
 };
 
 const mr = {
@@ -1243,6 +1275,14 @@ const mr = {
   'settings.tab.language': 'भाषा',
   'settings.tab.language_desc': 'पसंतीची भाषा',
   'settings.manage': 'व्यवस्थापन',
+  'login.card.agent.short': 'स्क्रीन & कॅप्चर',
+  'login.card.mo.short': 'आढावा & निर्णय',
+  'login.card.admin.short': 'व्यवस्थापन & देखरेख',
+  'login.welcome_back': 'परत स्वागत आहे',
+  'login.welcome_subtitle': 'सुरू ठेवण्यासाठी साइन इन करा',
+  'login.create_account': 'खाते तयार करा',
+  'login.remember_me': 'मला लक्षात ठेवा',
+  'login.back_to_signin': 'साइन इन वर परत जा',
 };
 
 const or = {
@@ -1483,6 +1523,14 @@ const or = {
   'settings.tab.language': 'ଭାଷା',
   'settings.tab.language_desc': 'ପସନ୍ଦ ଭାଷା',
   'settings.manage': 'ପରିଚାଳନା',
+  'login.card.agent.short': 'ସ୍କ୍ରିନ & କ୍ୟାପ୍ଚର',
+  'login.card.mo.short': 'ସମୀକ୍ଷା & ନିଷ୍ପତ୍ତି',
+  'login.card.admin.short': 'ପରିଚାଳନା & ତଦାରଖ',
+  'login.welcome_back': 'ପୁଣି ସ୍ୱାଗତ',
+  'login.welcome_subtitle': 'ଜାରି ରଖିବାକୁ ସାଇନ ଇନ କରନ୍ତୁ',
+  'login.create_account': 'ଖାତା ତିଆରି କରନ୍ତୁ',
+  'login.remember_me': 'ମୋତେ ମନେ ରଖନ୍ତୁ',
+  'login.back_to_signin': 'ସାଇନ ଇନକୁ ଫେରି ଯାନ୍ତୁ',
 };
 
 export const DICTIONARIES = { en, hi, te, kn, mr, or };

@@ -24,18 +24,15 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function Login() {
   const { t, lang, setLang, languages } = useTranslation();
   const nav = useNavigate();
-  const [mobileRole, setMobileRole] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('agent');
 
-  const CARDS = [
-    { role: 'agent', color: 'var(--brand)', title: t('login.card.agent.title'), desc: t('login.card.agent.desc'), icon: <AgentIcon /> },
-    { role: 'mo', color: 'var(--accent)', title: t('login.card.mo.title'), desc: t('login.card.mo.desc'), icon: <MOIcon /> },
-    { role: 'admin', color: '#4f46e5', title: t('login.card.admin.title'), desc: t('login.card.admin.desc'), icon: <AdminIcon />, loginOnly: true },
+  const ROLES = [
+    { role: 'agent', color: 'var(--brand)', title: t('login.card.agent.title'), short: t('login.card.agent.short'), icon: <AgentIcon />, loginOnly: false },
+    { role: 'mo', color: 'var(--accent)', title: t('login.card.mo.title'), short: t('login.card.mo.short'), icon: <MOIcon />, loginOnly: false },
+    { role: 'admin', color: '#4f46e5', title: t('login.card.admin.title'), short: t('login.card.admin.short'), icon: <AdminIcon />, loginOnly: true },
   ];
 
-  const renderCard = (c) => (
-    <AuthCard key={c.role} role={c.role} color={c.color} title={c.title} desc={c.desc} icon={c.icon} loginOnly={c.loginOnly} t={t} nav={nav} />
-  );
-  const selectedCard = CARDS.find((c) => c.role === mobileRole);
+  const currentRole = ROLES.find((r) => r.role === selectedRole);
 
   return (
     <div
@@ -48,94 +45,70 @@ export default function Login() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Subtle white veil */}
       <div className="absolute inset-0 bg-white/55 pointer-events-none" aria-hidden />
 
-      {/* ===== Header bar ===== */}
+      {/* Header */}
       <header className="sticky top-0 z-30 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="w-full px-4 sm:px-5 h-16 sm:h-[72px] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 shrink-0">
+        <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 shrink-0">
             <span className="brand-mark"><Logo /></span>
             <div className="leading-tight">
               <div className="font-bold tracking-wide text-sm t-ink">TELE-LEPROSY</div>
               <div className="text-[9px] uppercase tracking-[0.16em] t-muted">{t('brand.subtitle')}</div>
             </div>
           </div>
-
-          <h1 className="hidden md:block flex-1 text-center text-base lg:text-lg xl:text-xl font-bold tracking-tight t-ink whitespace-nowrap">
-            AI-assisted triage for community health workers.
-          </h1>
-
-          <div className="shrink-0">
-            <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
-          </div>
+          <LanguagePicker lang={lang} setLang={setLang} languages={languages} />
         </div>
       </header>
 
-      {/* ===== Main – grows with content, pushes footer down ===== */}
-      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 md:py-3 flex flex-col items-center justify-center">
-        {/* Mobile-only heading */}
-        <div className="md:hidden text-center mb-3 px-1">
-          <h1 className="text-2xl font-bold leading-tight tracking-tight t-ink">
-            AI-assisted triage for community health workers.
-          </h1>
-        </div>
+      {/* Main */}
+      <main className="relative z-10 flex-1 w-full px-4 sm:px-6 lg:px-10 py-8 lg:py-12 flex items-center justify-center">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-16 items-center">
 
-        {/* Feature pills */}
-        <ul className="hidden sm:flex flex-wrap items-center justify-center gap-2 mb-4">
-          {FEATURES.map((f) => (
-            <li key={f.key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium t-soft bg-white/80 backdrop-blur-sm border border-white/60 shadow-card">
-              <span className="text-[color:var(--brand)]"><FeatureIcon name={f.icon} /></span>
-              {t(f.key)}
-            </li>
-          ))}
-        </ul>
-
-        {/* Desktop / Tablet: responsive grid */}
-        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7 xl:gap-9 w-full max-w-7xl mx-auto items-start">
-          {CARDS.map((c) => (
-            <div key={c.role} className="min-w-0">
-              {renderCard(c)}
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile: role picker or single card */}
-        <div className="md:hidden w-full max-w-sm mx-auto mt-4">
-          {!selectedCard ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs t-muted text-center font-medium uppercase tracking-wider mb-1">{t('login.choose_role')}</p>
-              {CARDS.map((c) => (
-                <button
-                  key={c.role}
-                  type="button"
-                  onClick={() => setMobileRole(c.role)}
-                  className="w-full flex items-center gap-3 text-left bg-white/80 backdrop-blur-sm border border-white/60 rounded-2xl px-4 py-3.5 shadow-card active:scale-[0.99] transition-transform"
+          {/* Left: Hero */}
+          <div className="hidden lg:flex flex-col">
+            <h1 className="text-4xl xl:text-5xl font-extrabold tracking-tight t-ink leading-[1.15]">
+              AI-assisted triage for community health workers.
+            </h1>
+            <p className="mt-4 text-base t-muted leading-relaxed">
+              Screen patients and capture intake in the field, connect communities to specialist care.
+            </p>
+            <div className="mt-8 grid grid-cols-2 xl:grid-cols-3 gap-3">
+              {FEATURES.map((f) => (
+                <div
+                  key={f.key}
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-white/65 backdrop-blur-sm border border-white/70 shadow-card"
                 >
-                  <span className="w-10 h-10 rounded-xl grid place-items-center text-white shrink-0" style={{ background: c.color }}>{c.icon}</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold t-ink">{c.title} — {t('login.signin')}</span>
-                    <span className="block text-xs t-muted leading-snug mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.desc}</span>
-                  </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="t-muted shrink-0"><path d="M9 18l6-6-6-6" /></svg>
-                </button>
+                  <span className="text-[color:var(--brand)] shrink-0"><FeatureIcon name={f.icon} /></span>
+                  <span className="text-xs font-medium t-soft leading-tight">{t(f.key)}</span>
+                </div>
               ))}
             </div>
-          ) : (
-            <div>
-              <button type="button" onClick={() => setMobileRole(null)} className="inline-flex items-center gap-1.5 mb-4 text-sm t-muted active:opacity-70">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-                {t('login.all_options')}
-              </button>
-              {renderCard(selectedCard)}
+          </div>
+
+          {/* Right: Auth card */}
+          <div className="w-full max-w-md mx-auto lg:mx-0">
+            {/* Mobile hero */}
+            <div className="lg:hidden text-center mb-6 px-1">
+              <h1 className="text-2xl font-extrabold tracking-tight t-ink leading-snug">
+                AI-assisted triage for community health workers.
+              </h1>
             </div>
-          )}
+            <AuthCard
+              roles={ROLES}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
+              currentRole={currentRole}
+              t={t}
+              nav={nav}
+            />
+          </div>
         </div>
       </main>
 
-      {/* ===== Footer – pushed down by main content ===== */}
-      <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md mt-4">
-        <div className="w-full px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-md">
+        <div className="w-full px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
             <ShieldIcon />
             <div className="min-w-0">
@@ -143,27 +116,28 @@ export default function Login() {
               <p className="text-[11px] t-muted leading-relaxed mt-0.5">{t('login.note')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0 self-center sm:self-auto">
-            <PartnerLogos size="sm" />
-          </div>
+          <PartnerLogos size="sm" />
         </div>
       </footer>
     </div>
   );
 }
 
-/* ===================== Auth card (per role) ===================== */
-function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
+/* ===================== Single unified auth card ===================== */
+function AuthCard({ roles, selectedRole, setSelectedRole, currentRole, t, nav }) {
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [touched, setTouched] = useState({});
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  const { role, color, loginOnly } = currentRole;
 
   const phoneDigits = phone.replace(/\D/g, '');
   const emailError =
@@ -185,6 +159,18 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
         { ok: password.length >= 6, label: '≥6' },
       ]
     : [];
+
+  const handleRoleChange = (newRole) => {
+    setSelectedRole(newRole);
+    setMode('signin');
+    setError(null);
+    setNotice(null);
+    setTouched({});
+    setEmail('');
+    setPassword('');
+    setName('');
+    setPhone('');
+  };
 
   const switchMode = () => {
     setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
@@ -241,147 +227,148 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
   };
 
   return (
-    // Increased min-height to ensure all cards are perfectly equal in sign-in mode
-    <div className="card-elev flex flex-col !p-0 h-full w-full min-h-[32rem]">
-      {/* Coloured header strip */}
-      <div className="px-6 sm:px-7 pt-6 pb-5 border-b border-[color:var(--border-cool)]">
-        <div className="flex items-start gap-4">
-          <span
-            className="w-14 h-14 rounded-2xl grid place-items-center text-white shrink-0 shadow-card"
-            style={{ background: color }}
-          >
-            {icon}
-          </span>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold t-ink leading-tight">{title}</h2>
-            <p className="text-sm t-muted mt-1 leading-snug">{desc}</p>
-          </div>
-        </div>
+    <div className="card-elev w-full !p-0 overflow-hidden">
+      {/* Card heading */}
+      <div className="px-6 sm:px-8 pt-7 pb-5 border-b border-[color:var(--border-cool)]">
+        <h2 className="text-2xl font-bold t-ink text-center">{t('login.welcome_back')} 👋</h2>
+        <p className="text-sm t-muted text-center mt-1 leading-snug">{t('login.welcome_subtitle')}</p>
 
-        {/* Sign in / Register toggle */}
-        {loginOnly ? (
-          <div className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
-            <div
-              className="flex-1 px-3 py-2.5 rounded-lg text-base font-semibold text-white text-center shadow-card"
-              style={{ background: color }}
-            >
-              {t('login.signin')}
-            </div>
-          </div>
-        ) : (
-          <div role="tablist" className="flex p-1 rounded-xl mt-5 border border-[color:var(--border-cool)] bg-[color:var(--surface-2)]">
-            {[
-              { k: 'signin', label: t('login.signin') },
-              { k: 'signup', label: t('login.register') },
-            ].map((opt) => {
-              const active = mode === opt.k;
-              return (
-                <button
-                  key={opt.k}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => active || switchMode()}
-                  className={`flex-1 px-3 py-2.5 rounded-lg text-base font-semibold transition-all ${
-                    active ? 'text-white shadow-card -translate-y-px' : 't-soft hover:t-ink'
-                  }`}
-                  style={active ? { background: color } : undefined}
+        {/* Role selector */}
+        <div className="grid grid-cols-3 gap-2 mt-5">
+          {roles.map((r) => {
+            const active = selectedRole === r.role;
+            return (
+              <button
+                key={r.role}
+                type="button"
+                onClick={() => handleRoleChange(r.role)}
+                className={`flex flex-col items-center gap-2 rounded-xl p-3 border-2 transition-all duration-150 ${
+                  active
+                    ? 'shadow-card -translate-y-px'
+                    : 'border-[color:var(--border)] hover:border-[color:var(--border-strong)] hover:-translate-y-px'
+                }`}
+                style={active ? { borderColor: r.color } : undefined}
+              >
+                <span
+                  className="w-10 h-10 rounded-full grid place-items-center shrink-0 transition-colors duration-150"
+                  style={active ? { background: r.color, color: '#fff' } : { background: 'var(--surface-2)', color: r.color }}
                 >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  {r.icon}
+                </span>
+                <div className="text-center">
+                  <div
+                    className="text-xs font-semibold leading-tight"
+                    style={active ? { color: r.color } : { color: 'var(--ink)' }}
+                  >
+                    {r.title}
+                  </div>
+                  <div className="text-[10px] t-muted mt-0.5 leading-tight">{r.short}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Form */}
-      <form onSubmit={submit} noValidate className="px-6 sm:px-7 py-5 space-y-4 flex-1 flex flex-col justify-between">
-        <div className="space-y-4">
-          {mode === 'signup' && (
-            <Field label={t('common.name')} required error={nameError}>
-              <input
-                className={inputCls(nameError)}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={() => setTouched((s) => ({ ...s, name: true }))}
-                placeholder="Jane Doe"
-              />
-            </Field>
-          )}
-
-          {mode === 'signup' && (
-            <Field label={t('login.phone_label')} required error={phoneError}>
-              <input
-                className={inputCls(phoneError)}
-                inputMode="numeric"
-                maxLength={10}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
-                placeholder={t('login.phone_placeholder')}
-              />
-              <p className="text-[11px] t-muted mt-1.5">{t('login.phone_hint')}</p>
-            </Field>
-          )}
-
-          <Field label={t('common.email')} required error={emailError}>
+      <form onSubmit={submit} noValidate className="px-6 sm:px-8 py-6 space-y-4">
+        {mode === 'signup' && (
+          <Field label={t('common.name')} required error={nameError}>
             <input
-              className={inputCls(emailError)}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setTouched((s) => ({ ...s, email: true }))}
-              placeholder="you@example.com"
-              autoComplete="email"
+              className={inputCls(nameError)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, name: true }))}
+              placeholder="Jane Doe"
             />
           </Field>
+        )}
 
-          <Field label={t('common.password')} required error={passwordError}>
-            <div className="relative">
-              <input
-                className={inputCls(passwordError) + ' pr-10'}
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => setTouched((s) => ({ ...s, password: true }))}
-                placeholder="••••••••"
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 t-muted hover:t-ink"
-                tabIndex={-1}
-                aria-label={showPw ? 'Hide password' : 'Show password'}
-              >
-                {showPw ? <EyeOff /> : <Eye />}
-              </button>
-            </div>
-            {mode === 'signup' && passwordRules.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {passwordRules.map((r, i) => (
-                  <span
-                    key={i}
-                    className={`text-[10px] px-2 py-0.5 rounded font-semibold tracking-wide ${
-                      r.ok
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                        : 'bg-[color:var(--surface-2)] t-muted'
-                    }`}
-                  >
-                    {r.ok ? '✓ ' : '· '}{r.label}
-                  </span>
-                ))}
-              </div>
-            )}
+        {mode === 'signup' && (
+          <Field label={t('login.phone_label')} required error={phoneError}>
+            <input
+              className={inputCls(phoneError)}
+              inputMode="numeric"
+              maxLength={10}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              onBlur={() => setTouched((s) => ({ ...s, phone: true }))}
+              placeholder={t('login.phone_placeholder')}
+            />
+            <p className="text-[11px] t-muted mt-1.5">{t('login.phone_hint')}</p>
           </Field>
+        )}
 
-          {notice && <Banner kind="info">{notice}</Banner>}
-          {error && <Banner kind="error">{error}</Banner>}
-        </div>
+        <Field label={t('common.email')} required error={emailError}>
+          <input
+            className={inputCls(emailError)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setTouched((s) => ({ ...s, email: true }))}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+        </Field>
+
+        <Field label={t('common.password')} required error={passwordError}>
+          <div className="relative">
+            <input
+              className={inputCls(passwordError) + ' pr-10'}
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setTouched((s) => ({ ...s, password: true }))}
+              placeholder="••••••••"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 t-muted hover:t-ink"
+              tabIndex={-1}
+              aria-label={showPw ? 'Hide password' : 'Show password'}
+            >
+              {showPw ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+          {mode === 'signup' && passwordRules.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {passwordRules.map((r, i) => (
+                <span
+                  key={i}
+                  className={`text-[10px] px-2 py-0.5 rounded font-semibold tracking-wide ${
+                    r.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-[color:var(--surface-2)] t-muted'
+                  }`}
+                >
+                  {r.ok ? '✓ ' : '· '}{r.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </Field>
+
+        {mode === 'signin' && (
+          <div className="flex items-center gap-2">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded cursor-pointer"
+              style={{ accentColor: color }}
+            />
+            <label htmlFor="remember-me" className="text-sm t-soft cursor-pointer select-none">
+              {t('login.remember_me')}
+            </label>
+          </div>
+        )}
+
+        {notice && <Banner kind="info">{notice}</Banner>}
+        {error && <Banner kind="error">{error}</Banner>}
 
         <button
-          className="neu-btn-primary w-full mt-4"
+          className="neu-btn-primary w-full"
           disabled={busy}
           style={{ background: color }}
         >
@@ -394,18 +381,23 @@ function AuthCard({ role, color, title, desc, icon, loginOnly, t, nav }) {
           )}
         </button>
 
-        {!loginOnly && mode === 'signin' && (
-          <p className="text-center text-xs t-muted mt-2">
-            {t('login.new_here')}{' '}
-            <button type="button" onClick={switchMode} className="link font-semibold">
-              {role === 'mo' ? t('login.create_mo_link') : t('login.create_agent_link')}
-            </button>
+        {!loginOnly ? (
+          <p className="text-center text-sm t-muted pt-1">
+            {mode === 'signin' ? (
+              <>
+                {t('login.new_here')}{' '}
+                <button type="button" onClick={switchMode} className="link font-semibold">
+                  {t('login.create_account')}
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={switchMode} className="link font-semibold">
+                {t('login.back_to_signin')}
+              </button>
+            )}
           </p>
-        )}
-        {loginOnly && (
-          <p className="text-center text-xs t-muted mt-2">
-            {t('login.admin_provisioned')}
-          </p>
+        ) : (
+          <p className="text-center text-xs t-muted pt-1">{t('login.admin_provisioned')}</p>
         )}
       </form>
     </div>
@@ -419,8 +411,8 @@ function inputCls(error) {
 
 function Banner({ kind, children }) {
   const cls = kind === 'error'
-    ? 'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900/40'
-    : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/40';
+    ? 'border-red-200 bg-red-50 text-red-700'
+    : 'border-emerald-200 bg-emerald-50 text-emerald-800';
   return <div className={`text-sm rounded-lg border px-3.5 py-2.5 ${cls}`}>{children}</div>;
 }
 
@@ -432,24 +424,28 @@ function Field({ label, required, error, children }) {
         {required && <span className="text-red-500" aria-hidden>*</span>}
       </label>
       {children}
-      {error && <p className="text-[11px] text-red-600 dark:text-red-400 mt-1.5 font-medium">{error}</p>}
+      {error && <p className="text-[11px] text-red-600 mt-1.5 font-medium">{error}</p>}
     </div>
   );
 }
 
 function LanguagePicker({ lang, setLang, languages }) {
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value)}
-        className="rounded-lg pl-3 pr-7 py-1.5 text-xs font-medium appearance-none cursor-pointer border border-[color:var(--border)] bg-[color:var(--surface)] t-ink shadow-card"
+        className="rounded-lg pl-3 pr-7 py-1.5 text-xs font-medium appearance-none cursor-pointer border border-[color:var(--border)] t-ink shadow-card"
+        style={{ background: 'var(--surface)' }}
       >
         {languages.map((l) => (
           <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>
         ))}
       </select>
-      <svg className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none t-muted" width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+      <svg
+        className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none t-muted"
+        width="10" height="10" viewBox="0 0 20 20" fill="currentColor"
+      >
         <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" />
       </svg>
     </div>
@@ -466,7 +462,7 @@ function Logo() {
 
 function AgentIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
@@ -475,8 +471,8 @@ function AgentIcon() {
 
 function MOIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4.8 2.3A.3.3 0 1 0 5 2.3a.3.3 0 0 0-.2 0" /><path d="M8 2v3a4 4 0 0 0 8 0V2" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v3a4 4 0 0 0 8 0V2" />
       <path d="M6 5a6 6 0 0 0 6 6 6 6 0 0 0 6-6" /><path d="M12 11v4a4 4 0 0 0 8 0v-1" />
       <circle cx="20" cy="14" r="2" />
     </svg>
@@ -485,7 +481,7 @@ function MOIcon() {
 
 function AdminIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z" /><circle cx="12" cy="11" r="2.5" />
       <path d="M12 13.5V16" />
     </svg>
