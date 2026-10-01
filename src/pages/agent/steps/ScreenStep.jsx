@@ -46,6 +46,7 @@ function YesNo({ value, onChange }) {
 export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [s, setS] = useState(() => {
     const init = initial || {};
     return {
@@ -227,12 +228,22 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       {/* Images */}
       <section className="border-t border-[color:var(--border)] pt-5 mt-5">
         <div className="section-title mb-3">{t('screen.images')}</div>
-        <div onClick={() => fileInputRef.current?.click()}
-          className="border border-dashed border-[color:var(--border-strong)] rounded-md p-6 text-center cursor-pointer hover:bg-[color:var(--surface-2)]">
+        <div className="border border-dashed border-[color:var(--border-strong)] rounded-md p-6 text-center">
           <div className="w-10 h-10 rounded-md bg-brand-50 grid place-items-center mx-auto mb-2 text-brand-700"><UploadIcon /></div>
-          <div className="text-sm font-medium t-ink">Click to upload or take photo</div>
-          <div className="text-xs t-muted mt-0.5">PNG, JPG · up to 10MB each</div>
-          <input ref={fileInputRef} type="file" multiple accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
+          <div className="text-sm font-medium t-ink">Add lesion photos</div>
+          <div className="text-xs t-muted mt-0.5 mb-3">PNG, JPG · up to 10MB each</div>
+          <div className="flex gap-2 justify-center">
+            <button type="button" onClick={() => cameraInputRef.current?.click()}
+              className="px-3 py-2 text-sm rounded-md border border-[color:var(--border-strong)] hover:bg-[color:var(--surface-2)]">
+              Take photo
+            </button>
+            <button type="button" onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-2 text-sm rounded-md border border-[color:var(--border-strong)] hover:bg-[color:var(--surface-2)]">
+              Choose from gallery
+            </button>
+          </div>
+          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
+          <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" />
         </div>
         <Thumbs urls={s.image_urls} blobs={s.image_blobs} onRemoveUrl={(i) => removeAt('image_urls', i)} onRemoveBlob={(id) => removeBlob('image_blobs', id)} />
       </section>
