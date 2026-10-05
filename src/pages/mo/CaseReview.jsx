@@ -181,7 +181,7 @@ export default function CaseReview() {
           <DataGrid>
             <DataRow label="Full name" value={c.patient_name} />
             <DataRow label="Age" value={c.patient_age ? `${c.patient_age} years` : null} />
-            <DataRow label="Sex" value={cap(c.patient_sex)} />
+            <DataRow label="Gender" value={cap(c.patient_sex)} />
             <DataRow label="Phone" value={c.patient_phone} mono />
           </DataGrid>
 
