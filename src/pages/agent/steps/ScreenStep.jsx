@@ -53,6 +53,7 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       symptoms: {},
       duration_months: init.duration_months ?? '',
       family_history_leprosy: typeof init.family_history_leprosy === 'boolean' ? init.family_history_leprosy : null,
+      mdt_history: typeof init.mdt_history === 'boolean' ? init.mdt_history : null,
       image_urls: [], image_blobs: [], lab_urls: [], lab_blobs: [],
       notes: '', geolocation: null,
       ...init,
@@ -124,6 +125,10 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
       setError('Please select whether there is household contact with leprosy.');
       return;
     }
+    if (typeof s.mdt_history !== 'boolean') {
+      setError('Please select whether the patient has a history of MDT intake.');
+      return;
+    }
     setBusy(true);
     try {
       const payload = {
@@ -131,6 +136,7 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
         symptoms_checklist: SYMPTOMS.filter((q) => s.symptoms[q.key] === true).map((q) => q.key),
         duration_months: Number(s.duration_months),
         family_history_leprosy: s.family_history_leprosy,
+        mdt_history: s.mdt_history,
         screened_at: s.screened_at ? new Date(s.screened_at).toISOString() : new Date().toISOString(),
         geolocation: s.geolocation,
         image_urls: s.image_urls, image_blobs: s.image_blobs,
@@ -221,6 +227,13 @@ export default function ScreenStep({ onDone, initial, busy: parentBusy }) {
               <span className="text-red-600 ml-0.5" aria-hidden>*</span>
             </label>
             <YesNo value={s.family_history_leprosy} onChange={(v) => set('family_history_leprosy', v)} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium t-soft mb-1.5">
+              History of Multi-Drug Therapy (MDT) intake
+              <span className="text-red-600 ml-0.5" aria-hidden>*</span>
+            </label>
+            <YesNo value={s.mdt_history} onChange={(v) => set('mdt_history', v)} />
           </div>
         </div>
       </section>

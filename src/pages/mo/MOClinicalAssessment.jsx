@@ -83,7 +83,7 @@ function nervesFromList(list) {
 /** MO Clinical Assessment — the PDF1 "Teleconsultation" block.
  *  Required before the MO can send a final decision.
  */
-export default function MOClinicalAssessment({ caseId, initial, onSaved, readOnly = false }) {
+export default function MOClinicalAssessment({ caseId, initial, onSaved }) {
   const [confirmed, setConfirmed] = useState(initial?.confirmed_leprosy ?? null);
   const [lesion, setLesion] = useState(initial?.lesion_count || '');
   const [nerves, setNerves] = useState(() => nervesFromList(initial?.nerve_involvement));
@@ -177,12 +177,7 @@ export default function MOClinicalAssessment({ caseId, initial, onSaved, readOnl
       </button>
 
       {open && (
-      <fieldset disabled={readOnly} className="space-y-5 border-0 p-0 m-0 min-w-0 disabled:opacity-80">
-        {readOnly && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
-            <span className="font-semibold">Read-only.</span> This session has expired — the assessment cannot be changed.
-          </div>
-        )}
+      <fieldset className="space-y-5 border-0 p-0 m-0 min-w-0">
         {/* Confirmed Y/N */}
         <Row num={1} label="Confirmed case of leprosy" required>
           <YesNo value={confirmed} onChange={setConfirmed} />
